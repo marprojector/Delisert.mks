@@ -1,0 +1,21 @@
+{
+  "name": "@delisert.mks-1/api",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@delisert.mks-1/db": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@delisert.mks-1/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

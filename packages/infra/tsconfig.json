@@ -1,0 +1,4 @@
+{
+  "extends": "@delisert.mks-1/config/tsconfig.base.json",
+  "include": ["alchemy.run.ts"]
+}
