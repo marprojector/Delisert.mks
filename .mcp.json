@@ -15,6 +15,14 @@
     "shadcn": {
       "command": "npx",
       "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "@google/stitch@latest", "mcp", "start"],
+      "env": {
+        "STITCH_API_KEY": "${STITCH_API_KEY}",
+        "STITCH_PROJECT_ID": "${STITCH_PROJECT_ID:-delisert premium website ui design}"
+      }
     }
   }
 }

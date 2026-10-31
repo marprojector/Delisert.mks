@@ -1,6 +1,7 @@
 {
   "extends": "@delisert.mks-1/config/tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node", "bun", "@cloudflare/workers-types"]
   }
 }

@@ -1,0 +1,179 @@
+import { asc, eq } from "drizzle-orm";
+import { z } from "zod";
+import { productCategories, productVariants, products } from "@delisert.mks-1/db/schema/index";
+import { publicProcedure, router } from "../index";
+
+const availabilityEnum = z.enum(["available", "preorder", "soldout"]);
+
+export const productRouter = router({
+  list: publicProcedure
+    .input(
+      z
+        .object({
+          category: z.string().optional(),
+          featuredOnly: z.boolean().optional(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({
+          id: products.id,
+          slug: products.slug,
+          name: products.name,
+          description: products.description,
+          priceCents: products.priceCents,
+          imageUrl: products.imageUrl,
+          imageAlt: products.imageAlt,
+          availability: products.availability,
+          isFeatured: products.isFeatured,
+          displayOrder: products.displayOrder,
+          categorySlug: productCategories.slug,
+          categoryName: productCategories.name,
+        })
+        .from(products)
+        .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+        .orderBy(asc(products.displayOrder), asc(products.id));
+
+      const filtered = rows.filter((row) => {
+        if (input?.category && row.categorySlug !== input.category) return false;
+        if (input?.featuredOnly && !row.isFeatured) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) return [];
+
+      const variantRows = await ctx.db
+        .select()
+        .from(productVariants)
+        .orderBy(asc(productVariants.displayOrder), asc(productVariants.id));
+
+      const variantsByProduct = new Map<number, typeof variantRows>();
+      for (const variant of variantRows) {
+        const list = variantsByProduct.get(variant.productId) ?? [];
+        list.push(variant);
+        variantsByProduct.set(variant.productId, list);
+      }
+
+      return filtered.map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        description: row.description,
+        priceCents: row.priceCents,
+        imageUrl: row.imageUrl,
+        imageAlt: row.imageAlt,
+        availability: availabilityEnum.parse(row.availability),
+        isFeatured: row.isFeatured,
+        category: { slug: row.categorySlug, name: row.categoryName },
+        variants: (variantsByProduct.get(row.id) ?? []).map((variant) => ({
+          id: variant.id,
+          name: variant.name,
+          priceCents: variant.priceCents,
+          isAvailable: variant.isAvailable,
+        })),
+      }));
+    }),
+
+  bySlug: publicProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const row = await ctx.db
+        .select({
+          id: products.id,
+          slug: products.slug,
+          name: products.name,
+          description: products.description,
+          priceCents: products.priceCents,
+          imageUrl: products.imageUrl,
+          imageAlt: products.imageAlt,
+          availability: products.availability,
+          categoryId: products.categoryId,
+          categorySlug: productCategories.slug,
+          categoryName: productCategories.name,
+        })
+        .from(products)
+        .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+        .where(eq(products.slug, input.slug))
+        .get();
+
+      if (!row) return null;
+
+      const variantRows = await ctx.db
+        .select()
+        .from(productVariants)
+        .where(eq(productVariants.productId, row.id))
+        .orderBy(asc(productVariants.displayOrder), asc(productVariants.id));
+
+      const relatedRows = await ctx.db
+        .select({
+          slug: products.slug,
+          name: products.name,
+          imageUrl: products.imageUrl,
+        })
+        .from(products)
+        .orderBy(asc(products.displayOrder), asc(products.id))
+        .limit(5);
+
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        description: row.description,
+        priceCents: row.priceCents,
+        imageUrl: row.imageUrl,
+        imageAlt: row.imageAlt,
+        availability: availabilityEnum.parse(row.availability),
+        category: { slug: row.categorySlug, name: row.categoryName },
+        variants: variantRows.map((variant) => ({
+          id: variant.id,
+          name: variant.name,
+          priceCents: variant.priceCents,
+          isAvailable: variant.isAvailable,
+        })),
+        related: relatedRows
+          .filter((related) => related.slug !== row.slug)
+          .slice(0, 4)
+          .map((related) => ({
+            slug: related.slug,
+            name: related.name,
+            imageUrl: related.imageUrl,
+          })),
+      };
+    }),
+
+  categories: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db
+      .select({
+        slug: productCategories.slug,
+        name: productCategories.name,
+        description: productCategories.description,
+        displayOrder: productCategories.displayOrder,
+      })
+      .from(productCategories)
+      .where(eq(productCategories.isActive, true))
+      .orderBy(asc(productCategories.displayOrder), asc(productCategories.id));
+
+    const counts = await ctx.db
+      .select({ categoryId: products.categoryId })
+      .from(products);
+
+    const countByCategory = new Map<number, number>();
+    for (const row of counts) {
+      countByCategory.set(row.categoryId, (countByCategory.get(row.categoryId) ?? 0) + 1);
+    }
+
+    const idBySlug = await ctx.db
+      .select({ id: productCategories.id, slug: productCategories.slug })
+      .from(productCategories);
+
+    const idMap = new Map(idBySlug.map((row) => [row.slug, row.id]));
+
+    return rows.map((row) => ({
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      productCount: countByCategory.get(idMap.get(row.slug) ?? -1) ?? 0,
+    }));
+  }),
+});

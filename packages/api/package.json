@@ -12,6 +12,7 @@
     "@delisert.mks-1/db": "workspace:*",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
+    "drizzle-orm": "1.0.0-rc.5",
     "zod": "catalog:"
   },
   "devDependencies": {

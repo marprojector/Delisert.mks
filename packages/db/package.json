@@ -8,7 +8,8 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:deploy": "drizzle-kit migrate"
+    "db:migrate:deploy": "drizzle-kit migrate",
+    "db:seed:local": "bun run src/seed.local.ts"
   },
   "dependencies": {
     "@libsql/client": "catalog:",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@delisert.mks-1/config": "workspace:*",
+    "@types/bun": "^1.4.4",
     "drizzle-kit": "1.0.0-rc.5",
     "typescript": "catalog:",
     "varlock": "catalog:"
