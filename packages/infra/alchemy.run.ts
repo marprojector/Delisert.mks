@@ -24,6 +24,13 @@ function requiredSecret(name: "ADMIN_PASSWORD" | "ADMIN_SESSION_SECRET") {
   return Redacted.make(value);
 }
 
+/**
+ * Token Cloudflare berizin "Account Analytics Read" untuk statistik pengunjung
+ * di dashboard admin. Opsional: tanpa token, dashboard menampilkan petunjuk
+ * pemasangan alih-alih grafik.
+ */
+const analyticsToken = process.env.CF_ANALYTICS_API_TOKEN;
+
 export const db = Cloudflare.D1.Database("database", {
   migrations: "../../packages/db/src/migrations",
   importFiles: ["../../packages/db/src/seed.production.sql"],
@@ -44,6 +51,7 @@ export const web = Cloudflare.Website.Vite("web", {
     PHOTOS: photos,
     ADMIN_PASSWORD: requiredSecret("ADMIN_PASSWORD"),
     ADMIN_SESSION_SECRET: requiredSecret("ADMIN_SESSION_SECRET"),
+    ...(analyticsToken ? { CF_ANALYTICS_API_TOKEN: Redacted.make(analyticsToken) } : {}),
   },
   dev: {
     port: 3001,

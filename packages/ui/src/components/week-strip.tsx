@@ -42,8 +42,11 @@ export function WeekStrip({
   className,
   liveHours,
   cfdHours,
+  week,
 }: {
   className?: string;
+  /** Jenis tiap hari Senin → Minggu. Bawaan: Senin libur, Sel–Sab live, Minggu CFD. */
+  week?: readonly Kind[];
   /** Jam TikTok Live, mis. "10:30 – 14:30". Ditampilkan di Selasa–Sabtu. */
   liveHours?: string;
   /** Jam CFD Minggu, mis. "06.00 – 10.00". */
@@ -54,7 +57,8 @@ export function WeekStrip({
 
   return (
     <ol className={cn("grid grid-cols-7 gap-1.5 lg:gap-3", className)} aria-label="Jadwal minggu ini">
-      {WEEK.map((day, index) => {
+      {WEEK.map((base, index) => {
+        const day = { ...base, kind: week?.[index] ?? base.kind };
         const isToday = index === today;
         return (
           <li

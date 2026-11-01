@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { DEFAULT_SITE_CONTENT, resolveSiteContent, siteContentSchema } from "./site-content";
+import { DEFAULT_SITE_CONTENT, resolveSiteContent, siteContentSchema, weekSummary } from "./site-content";
 
 describe("site content", () => {
   test("defaults are valid and keep the copy the site already shows", () => {
@@ -35,5 +35,20 @@ describe("site content", () => {
       whatsappNumber: "085190021421",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("weekSummary", () => {
+  test("groups consecutive days of the same kind", () => {
+    expect(weekSummary(DEFAULT_SITE_CONTENT.schedule.week, "TikTok Live")).toEqual([
+      "Sel–Sab · TikTok Live",
+      "Minggu · CFD",
+      "Senin · Libur",
+    ]);
+    expect(weekSummary(["live", "off", "live", "live", "off", "cfd", "cfd"], "Live")).toEqual([
+      "Senin, Rab–Kam · Live",
+      "Sab–Min · CFD",
+      "Selasa, Jumat · Libur",
+    ]);
   });
 });

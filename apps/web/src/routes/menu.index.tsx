@@ -1,4 +1,4 @@
-import { productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
+import { productOrderMessage } from "@delisert.mks-1/api/data/business";
 import { CategoryChips } from "@delisert.mks-1/ui/components/category-chips";
 import { EmptyState } from "@delisert.mks-1/ui/components/empty-state";
 import { ProductCard } from "@delisert.mks-1/ui/components/product-card";
@@ -9,6 +9,7 @@ import { useMemo, useRef } from "react";
 import { z } from "zod";
 
 import { useFlipFilter, useReveal } from "@/lib/motion";
+import { useWaLink } from "@/lib/site";
 
 import { useTRPC } from "@/utils/trpc";
 import { canonical } from "@/utils/seo";
@@ -48,6 +49,7 @@ export const Route = createFileRoute("/menu/")({
 
 function MenuComponent() {
   const trpc = useTRPC();
+  const waLink = useWaLink();
   const navigate = useNavigate({ from: "/menu/" });
   const search = useSearch({ from: "/menu/" });
   const activeCategory = search.category;

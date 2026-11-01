@@ -1,6 +1,11 @@
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
-import { productCategories, productVariants, products } from "@delisert.mks-1/db/schema/index";
+import {
+  productCategories,
+  productFlavors,
+  productVariants,
+  products,
+} from "@delisert.mks-1/db/schema/index";
 import { publicProcedure, router } from "../index";
 
 const availabilityEnum = z.enum(["available", "preorder", "soldout"]);
@@ -50,6 +55,17 @@ export const productRouter = router({
         .from(productVariants)
         .orderBy(asc(productVariants.displayOrder), asc(productVariants.id));
 
+      const flavorRows = await ctx.db
+        .select()
+        .from(productFlavors)
+        .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+      const flavorsByProduct = new Map<number, typeof flavorRows>();
+      for (const flavor of flavorRows) {
+        const list = flavorsByProduct.get(flavor.productId) ?? [];
+        list.push(flavor);
+        flavorsByProduct.set(flavor.productId, list);
+      }
+
       const variantsByProduct = new Map<number, typeof variantRows>();
       for (const variant of variantRows) {
         const list = variantsByProduct.get(variant.productId) ?? [];
@@ -73,6 +89,11 @@ export const productRouter = router({
           name: variant.name,
           priceCents: variant.priceCents,
           isAvailable: variant.isAvailable,
+        })),
+        flavors: (flavorsByProduct.get(row.id) ?? []).map((flavor) => ({
+          id: flavor.id,
+          name: flavor.name,
+          isAvailable: flavor.isAvailable,
         })),
       }));
     }),
@@ -107,6 +128,12 @@ export const productRouter = router({
         .where(eq(productVariants.productId, row.id))
         .orderBy(asc(productVariants.displayOrder), asc(productVariants.id));
 
+      const flavorRows = await ctx.db
+        .select()
+        .from(productFlavors)
+        .where(eq(productFlavors.productId, row.id))
+        .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+
       const relatedRows = await ctx.db
         .select({
           slug: products.slug,
@@ -134,6 +161,11 @@ export const productRouter = router({
           name: variant.name,
           priceCents: variant.priceCents,
           isAvailable: variant.isAvailable,
+        })),
+        flavors: flavorRows.map((flavor) => ({
+          id: flavor.id,
+          name: flavor.name,
+          isAvailable: flavor.isAvailable,
         })),
         related: relatedRows
           .filter((related) => related.slug !== row.slug)

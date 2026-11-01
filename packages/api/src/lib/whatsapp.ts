@@ -19,7 +19,10 @@ export function waLink(message: string): string {
 export function productOrderMessage(input: {
   productName: string;
   variantName?: string;
+  /** Rasa pilihan, mis. "Matcha Oreo". */
+  flavorName?: string;
 }): string {
-  const variant = input.variantName ? ` (${input.variantName})` : "";
+  const details = [input.variantName, input.flavorName ? `rasa ${input.flavorName}` : undefined].filter(Boolean);
+  const variant = details.length > 0 ? ` (${details.join(", ")})` : "";
   return `Halo Delisert, saya ingin memesan ${input.productName}${variant}. Apakah masih tersedia?`;
 }

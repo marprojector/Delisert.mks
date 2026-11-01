@@ -24,3 +24,14 @@ describe("waLink", () => {
     expect(link).not.toContain(" ");
   });
 });
+
+describe("order message with flavour", () => {
+  test("mentions the size and the flavour", () => {
+    expect(
+      productOrderMessage({ productName: "Artisanal Mochi Daifuku", variantName: "Isi 4 pcs", flavorName: "Matcha Oreo" }),
+    ).toBe("Halo Delisert, saya ingin memesan Artisanal Mochi Daifuku (Isi 4 pcs, rasa Matcha Oreo). Apakah masih tersedia?");
+    expect(productOrderMessage({ productName: "Mille Crepes", flavorName: "Coklat" })).toBe(
+      "Halo Delisert, saya ingin memesan Mille Crepes (rasa Coklat). Apakah masih tersedia?",
+    );
+  });
+});

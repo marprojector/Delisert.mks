@@ -1,4 +1,5 @@
-import { CFD, TIKTOK_LIVE, productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
+import { productOrderMessage } from "@delisert.mks-1/api/data/business";
+import type { SiteContent } from "@delisert.mks-1/api/lib/site-content";
 import type { RouterOutputs } from "@delisert.mks-1/api/routers/index";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { ProductCard } from "@delisert.mks-1/ui/components/product-card";
@@ -20,6 +21,7 @@ import {
   useParallax,
   useReveal,
 } from "@/lib/motion";
+import { ORDER_MESSAGE, useSiteContent, useWaLink } from "@/lib/site";
 import { canonical } from "@/utils/seo";
 import { useTRPC } from "@/utils/trpc";
 
@@ -51,8 +53,6 @@ export const Route = createFileRoute("/")({
   component: HomeComponent,
 });
 
-const orderHref = (product: Product) => waLink(productOrderMessage({ productName: product.name }));
-
 function HomeComponent() {
   const trpc = useTRPC();
   const featured = useQuery(trpc.product.list.queryOptions({ featuredOnly: true }));
@@ -62,6 +62,9 @@ function HomeComponent() {
 
   const featuredProducts = featured.data ?? initial.featured;
   const categoryList = categories.data ?? initial.categories;
+  const content = useSiteContent();
+  const waLink = useWaLink();
+  const orderHref = (product: Product) => waLink(productOrderMessage({ productName: product.name }));
 
   const pageRef = useRef<HTMLDivElement>(null);
   // Pin dulu: jarak scroll pin harus sudah ada sebelum reveal mengukur posisi.
@@ -72,35 +75,46 @@ function HomeComponent() {
 
   return (
     <div ref={pageRef} data-motion-scope className="flex flex-col">
-      <Hero products={featuredProducts} />
-      <ScheduleStrip />
-      <Featured products={featuredProducts} />
-      <Categories categories={categoryList} />
-      <Story />
+      <Hero products={featuredProducts} home={content.home} orderHref={waLink(ORDER_MESSAGE)} />
+      <ScheduleStrip schedule={content.schedule} />
+      <Featured products={featuredProducts} home={content.home} orderHref={orderHref} />
+      {content.home.showCategories ? <Categories categories={categoryList} /> : null}
+      {content.home.showStory ? <Story home={content.home} /> : null}
     </div>
   );
 }
 
-function Hero({ products }: { products: Product[] }) {
+function Hero({
+  products,
+  home,
+  orderHref,
+}: {
+  products: Product[];
+  home: SiteContent["home"];
+  orderHref: string;
+}) {
   const [main, second, third] = products;
+  // Foto hero dari admin → Konten diutamakan; sisanya memakai foto produk unggulan.
+  const [image1, image2, image3] = home.heroImages.filter(Boolean);
   return (
     <section className="cn-shell grid gap-8 pt-5 pb-4 lg:grid-cols-[minmax(0,620fr)_minmax(0,516fr)] lg:items-center lg:gap-16 lg:pt-12 lg:pb-20">
       <div className="flex flex-col gap-4 lg:gap-6">
         {/* Tiap baris yang benar-benar tampil di-mask oleh SplitText (motion.ts). */}
         <h1 className="text-[2.75rem] leading-[1.08] font-semibold text-balance text-foreground sm:text-6xl lg:text-[4.25rem] lg:leading-[1.06]">
           <span data-hero-line className="block">
-            Mochi lembut,
+            {home.heroTitleLine1}
           </span>
-          <span data-hero-line className="block">
-            dibuat setiap hari.
-          </span>
+          {home.heroTitleLine2 ? (
+            <span data-hero-line className="block">
+              {home.heroTitleLine2}
+            </span>
+          ) : null}
         </h1>
         <p
           data-hero-fade
           className="max-w-[30rem] text-[0.9375rem]/relaxed text-muted-foreground lg:text-lg/relaxed"
         >
-          Mochi, pancake durian, mango sticky rice, dan mille crepes homemade. Pesan langsung lewat
-          WhatsApp.
+          {home.heroLead}
         </p>
         <div data-hero-fade className="flex flex-wrap gap-2.5 pt-1 lg:gap-3 lg:pt-2">
           <Link
@@ -111,7 +125,7 @@ function Hero({ products }: { products: Product[] }) {
           </Link>
           <WhatsAppButton
             tone="outline"
-            href={waLink("Halo Delisert, saya ingin memesan.")}
+            href={orderHref}
             className="lg:h-14 lg:px-7 lg:text-base"
           >
             Pesan via WhatsApp
@@ -120,10 +134,10 @@ function Hero({ products }: { products: Product[] }) {
       </div>
 
       <div className="grid h-[19rem] grid-cols-[1.6fr_1fr] gap-2.5 sm:h-[26rem] lg:h-[35rem] lg:gap-4">
-        <HeroMedia product={main} slug="mochi" className="h-full" parallax={1} />
+        <HeroMedia product={main} image={image1} slug="mochi" className="h-full" parallax={1} />
         <div className="flex flex-col gap-2.5 pt-10 lg:gap-4 lg:pt-16">
-          <HeroMedia product={second} slug="mango-sticky-rice" className="flex-[1.3]" parallax={2} />
-          <HeroMedia product={third} slug="pancake-durian" className="flex-1" parallax={2} />
+          <HeroMedia product={second} image={image2} slug="mango-sticky-rice" className="flex-[1.3]" parallax={2} />
+          <HeroMedia product={third} image={image3} slug="pancake-durian" className="flex-1" parallax={2} />
         </div>
       </div>
     </section>
@@ -132,11 +146,13 @@ function Hero({ products }: { products: Product[] }) {
 
 function HeroMedia({
   product,
+  image,
   slug,
   className,
   parallax,
 }: {
   product: Product | undefined;
+  image?: string;
   slug: string;
   className?: string;
   parallax: number;
@@ -151,7 +167,18 @@ function HeroMedia({
         className="absolute inset-x-0"
         style={{ top: -parallaxOverscanPx(parallax), bottom: -parallaxOverscanPx(parallax) }}
       >
-        {product?.imageUrl ? (
+        {image ? (
+          <img
+            src={image}
+            srcSet={photoSrcSet(image)}
+            sizes="(min-width: 1024px) 30vw, 60vw"
+            alt="Dessert Delisert Makassar"
+            width={660}
+            height={1080}
+            fetchPriority="high"
+            className="size-full object-cover"
+          />
+        ) : product?.imageUrl ? (
           <img
             src={product.imageUrl}
             srcSet={photoSrcSet(product.imageUrl)}
@@ -171,32 +198,41 @@ function HeroMedia({
   );
 }
 
-function ScheduleStrip() {
+function ScheduleStrip({ schedule }: { schedule: SiteContent["schedule"] }) {
+  const cfdPlaces = schedule.cfdLocations.map((location) => location.name.replace(/^CFD\s+/i, "")).join(" & ");
   return (
     <section aria-label="Jadwal jualan" className="cn-shell grid gap-2.5 pt-4 lg:grid-cols-2 lg:gap-5 lg:pt-0">
       <ScheduleCard
         tone="rosewood"
         icon={Play}
-        eyebrow={TIKTOK_LIVE.label}
-        title={`${TIKTOK_LIVE.days} · ${TIKTOK_LIVE.hours}`}
+        eyebrow={schedule.liveLabel}
+        title={`${schedule.liveDays} · ${schedule.liveHours}`}
       />
       <ScheduleCard
         tone="cream"
         icon={Sun}
         eyebrow="CFD Minggu"
-        title={`${CFD.hours} · Boulevard & UNHAS`}
+        title={cfdPlaces ? `${schedule.cfdHours} · ${cfdPlaces}` : schedule.cfdHours}
       />
     </section>
   );
 }
 
-function Featured({ products }: { products: Product[] }) {
+function Featured({
+  products,
+  home,
+  orderHref,
+}: {
+  products: Product[];
+  home: SiteContent["home"];
+  orderHref: (product: Product) => string;
+}) {
   return (
     // Pembungkus blok (bukan flex) supaya ScrollTrigger bisa memberi jarak pin.
     <div data-pin-parent>
       <section data-pin-section className="flex flex-col gap-5 overflow-x-clip pt-14 lg:gap-7 lg:pt-24">
         <div className="cn-shell flex items-end justify-between gap-4">
-          <SectionHeading eyebrow="Menu Andalan" title="Yang paling sering dipesan" />
+          <SectionHeading eyebrow={home.featuredEyebrow} title={home.featuredTitle} />
           <Link
             to="/menu"
             className="hidden h-[2.875rem] shrink-0 items-center gap-2 rounded-full border border-border px-5.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary sm:inline-flex"
@@ -285,7 +321,7 @@ function Categories({ categories }: { categories: Category[] }) {
   );
 }
 
-function Story() {
+function Story({ home }: { home: SiteContent["home"] }) {
   return (
     <section className="cn-shell pt-14 pb-16 lg:pt-24 lg:pb-24">
       <div
@@ -293,16 +329,28 @@ function Story() {
         className="grid gap-6 rounded-3xl bg-secondary p-5 lg:grid-cols-[420px_1fr] lg:items-center lg:gap-16 lg:rounded-[2.25rem] lg:p-14"
       >
         <div className="aspect-[4/3] overflow-hidden rounded-[1.25rem] lg:aspect-auto lg:h-80 lg:rounded-[1.75rem]">
-          <PhotoPlaceholder categorySlug="mochi" />
+          {home.storyImage ? (
+            <img
+              src={home.storyImage}
+              srcSet={photoSrcSet(home.storyImage)}
+              sizes="(min-width: 1024px) 420px, 100vw"
+              alt="Cerita Delisert"
+              width={420}
+              height={320}
+              loading="lazy"
+              className="size-full object-cover"
+            />
+          ) : (
+            <PhotoPlaceholder categorySlug="mochi" />
+          )}
         </div>
         <div className="flex flex-col gap-3 lg:gap-4">
-          <span className="cn-eyebrow text-primary">Cerita kami</span>
+          {home.storyEyebrow ? <span className="cn-eyebrow text-primary">{home.storyEyebrow}</span> : null}
           <h2 className="text-[1.75rem] leading-[1.15] font-semibold text-balance text-foreground lg:text-[2.5rem]">
-            Dimulai dari satu mangkuk mochi di CFD Boulevard.
+            {home.storyTitle}
           </h2>
           <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:text-[1.0625rem]/relaxed">
-            Sejak 2021 dapur kecil kami di Makassar membuat dessert dalam batch terbatas, supaya
-            setiap porsi tetap segar.
+            {home.storyText}
           </p>
           <Link
             to="/tentang"

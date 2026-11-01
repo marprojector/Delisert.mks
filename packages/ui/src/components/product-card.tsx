@@ -1,6 +1,7 @@
 import { formatRupiah, summariseVariantPrice } from "@delisert.mks-1/ui/lib/price";
 import type { ProductAvailability } from "@delisert.mks-1/ui/components/availability-badge";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
+import { FlavorPreview } from "@delisert.mks-1/ui/components/flavor-picker";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
@@ -19,6 +20,8 @@ export type ProductCardData = {
   availability: ProductAvailability;
   category: { slug: string; name: string };
   variants: Array<{ id: number; name: string; priceCents: number | null; isAvailable: boolean }>;
+  /** Varian rasa; opsional supaya data lama tetap bisa dirender. */
+  flavors?: Array<{ id: number; name: string; isAvailable: boolean }>;
 };
 
 export function ProductPrice({
@@ -131,6 +134,9 @@ export function ProductCard({
           variants={product.variants}
           className="text-sm font-semibold text-foreground lg:text-base"
         />
+        {product.flavors && product.flavors.length > 0 ? (
+          <FlavorPreview flavors={product.flavors} className="pt-1" />
+        ) : null}
       </div>
     </article>
   );

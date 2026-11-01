@@ -5,6 +5,7 @@
 #   CLOUDFLARE_ACCOUNT_ID  ID akun Cloudflare tujuan
 #   ADMIN_PASSWORD         kata sandi dashboard admin
 #   ADMIN_SESSION_SECRET   rahasia HMAC sesi admin (minimal 32 karakter acak)
+#   CF_ANALYTICS_API_TOKEN token "Account Analytics Read" untuk grafik pengunjung di admin (opsional)
 name: Deploy to Cloudflare
 
 on:
@@ -52,3 +53,4 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
           ADMIN_SESSION_SECRET: ${{ secrets.ADMIN_SESSION_SECRET }}
+          CF_ANALYTICS_API_TOKEN: ${{ secrets.CF_ANALYTICS_API_TOKEN }}

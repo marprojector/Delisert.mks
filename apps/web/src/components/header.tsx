@@ -1,4 +1,4 @@
-import { NAV_LINKS, TIKTOK_LIVE, waLink } from "@delisert.mks-1/api/data/business";
+import { NAV_LINKS } from "@delisert.mks-1/api/data/business";
 import { Button } from "@delisert.mks-1/ui/components/button";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { Link, useRouterState } from "@tanstack/react-router";
@@ -6,12 +6,15 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { useMenuOverlay } from "@/lib/motion";
+import { useSiteContent, useWaLink } from "@/lib/site";
 
 const ORDER_MESSAGE = "Halo Delisert, saya ingin bertanya tentang produk.";
 
 export default function Header() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [open, setOpen] = useState(false);
+  const { schedule } = useSiteContent();
+  const waLink = useWaLink();
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef<HTMLButtonElement>(null);
@@ -174,7 +177,7 @@ export default function Header() {
           <div className="mt-auto flex flex-col gap-4 pt-14" data-menu-item>
             <div className="h-px bg-primary-foreground/20" />
             <p className="text-sm text-primary-foreground/80">
-              {TIKTOK_LIVE.label} {TIKTOK_LIVE.days} · {TIKTOK_LIVE.hours}
+              {schedule.liveLabel} {schedule.liveDays} · {schedule.liveHours}
             </p>
             <Button
               className="h-[3.375rem] w-full gap-2.5 rounded-full bg-primary-foreground text-[0.9375rem] font-semibold text-primary hover:bg-primary-foreground/90"

@@ -123,3 +123,37 @@ describe("analytics", () => {
     expect(result.status).toBe("error");
   });
 });
+
+describe("flavours", () => {
+  test("public catalogue lists mochi flavours in order; admin can add, rename, hide and remove", async () => {
+    const { db } = await createTestDb();
+    const anon = appRouter.createCaller(testCtx(db));
+    const mochi = await anon.product.bySlug({ slug: "artisanal-mochi-daifuku" });
+    expect(mochi!.flavors.map((flavor) => flavor.name)).toEqual([
+      "Strawberry Choco",
+      "Choco Crunchy",
+      "Matcha Oreo",
+      "Vanilla",
+      "Red Velvet",
+      "Mango Cheesecream",
+      "Grape Choco",
+      "Oreo Cheesecream",
+      "Lotus Biscoff",
+    ]);
+    const crepes = (await anon.product.list()).find((product) => product.slug === "mille-crepes")!;
+    expect(crepes.flavors.map((flavor) => flavor.name)).toEqual(["Lotus Biscoff", "Red Velvet", "Coklat"]);
+    expect(crepes.variants).toEqual([]);
+
+    const admin = await adminCaller(db);
+    const added = await admin.adminProduct.addFlavor({ productId: mochi!.id, name: "Taro" });
+    await admin.adminProduct.moveFlavor({ id: added.id, direction: "up" });
+    await admin.adminProduct.updateFlavor({ id: added.id, isAvailable: false });
+    let flavors = (await admin.adminProduct.byId({ id: mochi!.id })).flavors;
+    expect(flavors.at(-2)!.name).toBe("Taro");
+    expect(flavors.at(-2)!.isAvailable).toBe(false);
+
+    await admin.adminProduct.removeFlavor({ id: added.id });
+    flavors = (await admin.adminProduct.byId({ id: mochi!.id })).flavors;
+    expect(flavors.some((flavor) => flavor.name === "Taro")).toBe(false);
+  });
+});

@@ -1,13 +1,7 @@
-import {
-  CFD,
-  DELIVERY_METHODS,
-  PICKUP_INSTRUCTION,
-  TIKTOK_LIVE,
-  productOrderMessage,
-  waLink,
-} from "@delisert.mks-1/api/data/business";
+import { productOrderMessage } from "@delisert.mks-1/api/data/business";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { Disclosure } from "@delisert.mks-1/ui/components/disclosure";
+import { FlavorPicker, availableFlavorName } from "@delisert.mks-1/ui/components/flavor-picker";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
 import { StickyOrderBar } from "@delisert.mks-1/ui/components/sticky-order-bar";
@@ -27,6 +21,7 @@ import { useRef, useState } from "react";
 
 import { AnimatedPrice } from "@/components/animated-price";
 import { useReveal, useSlideUp } from "@/lib/motion";
+import { useSiteContent, useWaLink } from "@/lib/site";
 import { useTRPC } from "@/utils/trpc";
 import { absoluteUrl, canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
@@ -114,9 +109,12 @@ function ProductDetailComponent() {
   const { data: product } = useQuery(trpc.product.bySlug.queryOptions({ slug }));
   const initial = Route.useLoaderData();
   const [choice, setChoice] = useState<VariantChoice>(null);
+  const [flavorChoice, setFlavorChoice] = useState<VariantChoice>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   useReveal(pageRef, [slug]);
   useSlideUp(pageRef);
+  const { contact, schedule } = useSiteContent();
+  const waLink = useWaLink();
 
   const current = product ?? initial;
   if (!current) return <ProductNotFound />;
@@ -128,9 +126,15 @@ function ProductDetailComponent() {
   // Varian yang dipesan selalu yang benar-benar tersedia (atau tanpa varian bila semua habis).
   const variantName = availableVariantName(current.variants, choiceForProduct(choice, current.slug));
   const variant = current.variants.find((item) => item.name === variantName);
+  const flavorName = availableFlavorName(current.flavors, choiceForProduct(flavorChoice, current.slug));
+  const orderLabel = [variantName, flavorName].filter(Boolean).join(" · ");
   const priceCents = variant ? variant.priceCents : current.priceCents;
   const orderHref = waLink(
-    productOrderMessage({ productName: current.name, variantName: variantName ?? undefined }),
+    productOrderMessage({
+      productName: current.name,
+      variantName: variantName ?? undefined,
+      flavorName: flavorName ?? undefined,
+    }),
   );
 
   const share = async () => {
@@ -210,34 +214,52 @@ function ProductDetailComponent() {
           {current.variants.length > 0 ? (
             <VariantPicker
               name={`varian-${current.slug}`}
+              legend="Pilih ukuran"
               variants={current.variants}
               value={variantName}
               onChange={(name) => setChoice({ slug: current.slug, name })}
             />
           ) : null}
 
+          <FlavorPicker
+            name={`rasa-${current.slug}`}
+            flavors={current.flavors}
+            value={flavorName}
+            onChange={(name) => setFlavorChoice(name ? { slug: current.slug, name } : null)}
+            note={
+              current.variants.some((item) => /isi\s*\d/i.test(item.name))
+                ? "Mau campur beberapa rasa dalam satu kotak? Sebutkan saja rasanya di chat WhatsApp."
+                : undefined
+            }
+          />
+
           <div className="hidden flex-col gap-3 lg:flex">
             <WhatsAppButton href={orderHref} size="lg" fullWidth className="h-[3.75rem] text-[1.0625rem]">
-              {variantName ? `Pesan ${variantName} via WhatsApp` : "Pesan via WhatsApp"}
+              {orderLabel ? `Pesan ${orderLabel} via WhatsApp` : "Pesan via WhatsApp"}
             </WhatsAppButton>
             <p className="text-[0.8125rem] text-muted-foreground">
-              Pesan WhatsApp sudah terisi nama produk dan ukuran. Stok dikonfirmasi oleh tim.
+              Pesan WhatsApp sudah terisi nama produk{current.variants.length > 0 ? ", ukuran" : ""}
+              {current.flavors.length > 0 ? ", dan rasa" : ""}. Stok dikonfirmasi oleh tim.
             </p>
           </div>
 
           <div className="border-t border-border">
             <Disclosure title="Cara ambil & kirim">
-              <p>{PICKUP_INSTRUCTION}</p>
+              <p>{contact.pickupInstruction}</p>
               <p className="pt-2">
-                Pengiriman: {DELIVERY_METHODS.map((method) => method.name).join(", ")}. Ketersediaan
-                dan ongkir dikonfirmasi saat memesan.
+                Pengiriman: {contact.deliveryMethods.join(", ")}. {contact.deliveryNote}
               </p>
             </Disclosure>
             <Disclosure title="Jadwal jualan">
               <p>
-                {TIKTOK_LIVE.label}: {TIKTOK_LIVE.days}, {TIKTOK_LIVE.hours}.
+                {schedule.liveLabel}: {schedule.liveDays}, {schedule.liveHours}.
               </p>
-              <p className="pt-2">CFD Minggu: {CFD.hours}, di CFD Boulevard dan CFD UNHAS.</p>
+              <p className="pt-2">
+                CFD Minggu: {schedule.cfdHours}
+                {schedule.cfdLocations.length > 0
+                  ? `, di ${schedule.cfdLocations.map((location) => location.name).join(" dan ")}.`
+                  : "."}
+              </p>
             </Disclosure>
           </div>
         </div>
@@ -280,7 +302,7 @@ function ProductDetailComponent() {
       ) : null}
 
       <StickyOrderBar
-        label={variantName ? `${current.name} · ${variantName}` : current.name}
+        label={orderLabel ? `${current.name} · ${orderLabel}` : current.name}
         priceText={<AnimatedPrice cents={priceCents} />}
         href={orderHref}
       />

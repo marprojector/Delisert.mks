@@ -15,6 +15,7 @@ import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { FloatingWhatsApp } from "../components/floating-whatsapp";
 import { Footer } from "../components/footer";
 import Header from "../components/header";
+import { AnnouncementBar } from "../components/announcement-bar";
 import { SkipLink } from "../components/skip-link";
 import { motionGateScript } from "../lib/motion-gate";
 import { analyticsScripts } from "../utils/analytics";
@@ -76,6 +77,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
   }),
 
+  // Konten website dipakai header, footer, dan semua halaman publik.
+  loader: async ({ context }) => {
+    await context.queryClient
+      .ensureQueryData({ ...context.trpc.site.content.queryOptions(), staleTime: 60_000 })
+      .catch(() => undefined);
+  },
+
   component: RootDocument,
 });
 
@@ -95,6 +103,7 @@ function RootDocument() {
       <body>
         <SkipLink />
         <div className="flex min-h-svh flex-col">
+          {isAdmin ? null : <AnnouncementBar />}
           {isAdmin ? null : <Header />}
           <main
             id="main-content"

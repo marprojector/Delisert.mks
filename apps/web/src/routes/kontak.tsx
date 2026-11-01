@@ -1,15 +1,9 @@
-import {
-  DELIVERY_METHODS,
-  PICKUP_INSTRUCTION,
-  SOCIAL_MEDIA,
-  WHATSAPP_DISPLAY,
-  waLink,
-} from "@delisert.mks-1/api/data/business";
 import { SocialLinks } from "@delisert.mks-1/ui/components/social-links";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
 
 import { useReveal } from "@/lib/motion";
+import { ORDER_MESSAGE, useSiteContent, useWaLink } from "@/lib/site";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/kontak")({
@@ -30,15 +24,15 @@ export const Route = createFileRoute("/kontak")({
   component: ContactComponent,
 });
 
-const STEPS = [
-  "Pilih produk dan ukuran di Menu",
-  "Tekan \"Pesan via WhatsApp\" — pesan sudah terisi",
-  "Konfirmasi stok, harga, dan pengiriman",
-] as const;
-
 function ContactComponent() {
   const pageRef = useRef<HTMLDivElement>(null);
   useReveal(pageRef);
+  const { brand, contact } = useSiteContent();
+  const waLink = useWaLink();
+  const socials = [
+    { id: "instagram", platform: "Instagram", url: brand.instagramUrl, handle: brand.instagramHandle },
+    { id: "tiktok", platform: "TikTok", url: brand.tiktokUrl, handle: brand.tiktokHandle },
+  ];
 
   return (
     <div
@@ -48,7 +42,7 @@ function ContactComponent() {
       <div className="flex flex-col gap-2 lg:col-start-1 lg:gap-3">
         <h1 className="text-4xl leading-tight font-semibold text-foreground lg:text-[4rem]">Kontak & Pesan</h1>
         <p className="text-sm/relaxed text-muted-foreground lg:text-lg">
-          Semua pesanan lewat WhatsApp. Tidak perlu daftar akun.
+          {contact.intro}
         </p>
       </div>
 
@@ -61,12 +55,12 @@ function ContactComponent() {
             <span aria-hidden="true" className="size-2.5 rounded-full bg-[#25d366]" />
             WhatsApp
           </span>
-          <p className="cn-font-display text-[1.75rem] font-semibold lg:text-[2.75rem]">{WHATSAPP_DISPLAY}</p>
+          <p className="cn-font-display text-[1.75rem] font-semibold lg:text-[2.75rem]">{brand.whatsappDisplay}</p>
           <p className="text-sm/relaxed text-background/75 lg:text-base/relaxed">
-            Sertakan nama produk dan ukuran supaya kami bisa membalas lebih cepat.
+            {contact.whatsappNote}
           </p>
           <a
-            href={waLink("Halo Delisert, saya ingin memesan.")}
+            href={waLink(ORDER_MESSAGE)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex h-[3.125rem] items-center justify-center rounded-full bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-transform active:scale-[0.97] lg:h-[3.625rem] lg:text-base"
@@ -74,15 +68,15 @@ function ContactComponent() {
             Chat sekarang
           </a>
         </section>
-        <SocialLinks items={SOCIAL_MEDIA} />
+        <SocialLinks items={socials} />
       </aside>
 
       <div className="flex flex-col gap-8 lg:col-start-1 lg:gap-7">
         <section data-reveal className="flex flex-col gap-3 lg:gap-4">
           <h2 className="text-[1.375rem] font-semibold text-foreground lg:text-2xl">Cara pesan</h2>
           <ol className="flex flex-col gap-3">
-            {STEPS.map((step, index) => (
-              <li key={step} className="flex items-center gap-3 lg:gap-3.5">
+            {contact.orderSteps.map((step, index) => (
+              <li key={`${index}-${step}`} className="flex items-center gap-3 lg:gap-3.5">
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-[0.8125rem] font-bold text-primary lg:size-10 lg:text-[0.9375rem]">
                   {index + 1}
                 </span>
@@ -97,24 +91,24 @@ function ContactComponent() {
             Saat mengambil pesanan
           </h2>
           <p className="text-[0.8125rem]/relaxed text-muted-foreground lg:text-[0.9375rem]/relaxed">
-            {PICKUP_INSTRUCTION}
+            {contact.pickupInstruction}
           </p>
         </section>
 
         <section data-reveal className="flex flex-col gap-2.5 lg:gap-3">
           <h2 className="text-[1.375rem] font-semibold text-foreground lg:text-2xl">Pengiriman</h2>
           <ul className="flex flex-wrap gap-2 lg:gap-2.5">
-            {DELIVERY_METHODS.map((method) => (
+            {contact.deliveryMethods.map((method) => (
               <li
-                key={method.id}
+                key={method}
                 className="rounded-[0.875rem] border border-border px-3.5 py-2.5 text-[0.8125rem] font-medium text-foreground lg:px-4 lg:text-sm"
               >
-                {method.name}
+                {method}
               </li>
             ))}
           </ul>
           <p className="text-xs text-muted-foreground lg:text-[0.8125rem]">
-            Ketersediaan dan ongkir dikonfirmasi saat memesan.
+            {contact.deliveryNote}
           </p>
         </section>
       </div>

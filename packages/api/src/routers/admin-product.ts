@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   productCategories,
+  productFlavors,
   productVariants,
   products,
 } from "@delisert.mks-1/db/schema/index";
@@ -170,10 +171,17 @@ export const adminProductRouter = router({
         .where(eq(productVariants.productId, input.id))
         .orderBy(asc(productVariants.displayOrder), asc(productVariants.id));
 
+      const flavors = await ctx.db
+        .select()
+        .from(productFlavors)
+        .where(eq(productFlavors.productId, input.id))
+        .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+
       return {
         ...row,
         availability: availabilityEnum.parse(row.availability),
         variants,
+        flavors,
       };
     }),
 
@@ -234,6 +242,7 @@ export const adminProductRouter = router({
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(productVariants).where(eq(productVariants.productId, input.id));
+      await ctx.db.delete(productFlavors).where(eq(productFlavors.productId, input.id));
       const deleted = await ctx.db
         .delete(products)
         .where(eq(products.id, input.id))
@@ -277,6 +286,73 @@ export const adminProductRouter = router({
         await ctx.db.update(products).set({ displayOrder: item.displayOrder }).where(eq(products.id, item.id));
       }
       return { moved: true };
+    }),
+
+  /** Varian rasa: tidak mengubah harga, hanya pilihan rasa saat memesan. */
+  addFlavor: adminProcedure
+    .input(z.object({ productId: z.number().int().positive(), name: z.string().trim().min(1).max(60) }))
+    .mutation(async ({ ctx, input }) => {
+      const existing = await ctx.db
+        .select({ displayOrder: productFlavors.displayOrder })
+        .from(productFlavors)
+        .where(eq(productFlavors.productId, input.productId));
+      const next = existing.reduce((highest, row) => Math.max(highest, row.displayOrder), 0) + 1;
+      return ctx.db
+        .insert(productFlavors)
+        .values({ productId: input.productId, name: input.name, displayOrder: next })
+        .returning()
+        .get();
+    }),
+
+  updateFlavor: adminProcedure
+    .input(
+      z.object({
+        id: z.number().int().positive(),
+        name: z.string().trim().min(1).max(60).optional(),
+        isAvailable: z.boolean().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { id, ...changes } = input;
+      if (Object.keys(changes).length === 0) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Tidak ada perubahan." });
+      }
+      const updated = await ctx.db
+        .update(productFlavors)
+        .set(changes)
+        .where(eq(productFlavors.id, id))
+        .returning()
+        .get();
+      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Rasa tidak ditemukan." });
+      return updated;
+    }),
+
+  moveFlavor: adminProcedure
+    .input(z.object({ id: z.number().int().positive(), direction: z.enum(["up", "down"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const flavor = await ctx.db.select().from(productFlavors).where(eq(productFlavors.id, input.id)).get();
+      if (!flavor) throw new TRPCError({ code: "NOT_FOUND", message: "Rasa tidak ditemukan." });
+      const siblings = await ctx.db
+        .select({ id: productFlavors.id })
+        .from(productFlavors)
+        .where(eq(productFlavors.productId, flavor.productId))
+        .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+      const order = moveInOrder(siblings.map((row) => row.id), input.id, input.direction);
+      if (!order) return { moved: false };
+      for (const item of order) {
+        await ctx.db
+          .update(productFlavors)
+          .set({ displayOrder: item.displayOrder })
+          .where(eq(productFlavors.id, item.id));
+      }
+      return { moved: true };
+    }),
+
+  removeFlavor: adminProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db.delete(productFlavors).where(eq(productFlavors.id, input.id));
+      return { ok: true as const };
     }),
 
   addVariant: adminProcedure.input(variantInput).mutation(async ({ ctx, input }) => {

@@ -1,25 +1,9 @@
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, test } from "bun:test";
-import { relations } from "@delisert.mks-1/db/relations";
-import { seed } from "@delisert.mks-1/db/seed";
+import { createTestDb } from "../test-db";
 import { appRouter } from "./index";
 
-const MIGRATION = join(
-  import.meta.dir,
-  "../../../db/src/migrations/20261031071817_overjoyed_slipstream/migration.sql",
-);
-
 async function setup() {
-  const client = new Database(":memory:");
-  for (const statement of readFileSync(MIGRATION, "utf8").split("--> statement-breakpoint")) {
-    if (statement.trim()) client.exec(statement);
-  }
-  const db = drizzle({ client, relations });
-  await seed(db);
-  return { client, db };
+  return createTestDb();
 }
 
 const baseCtx = (db: never) => ({

@@ -76,3 +76,46 @@ WHERE NOT EXISTS (SELECT 1 FROM product_variants)
   AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'catalogue');
 
 INSERT OR IGNORE INTO _seed_state (key) VALUES ('catalogue');
+
+-- Varian rasa (sekali saja, ditandai 'flavors' di _seed_state):
+--   * Mochi: 9 rasa; Mille Crepes dan Slice Cake: 3 rasa.
+--   * Lotus Biscoff / Red Velvet / Coklat pada Mille Crepes dan Slice Cake
+--     dulu disimpan sebagai varian ukuran; dipindah menjadi rasa.
+-- Setelah penanda ada, rasa yang dihapus pemilik tidak muncul lagi.
+WITH seed (slug, name, display_order) AS (
+  VALUES
+    ('artisanal-mochi-daifuku', 'Strawberry Choco', 1),
+    ('artisanal-mochi-daifuku', 'Choco Crunchy', 2),
+    ('artisanal-mochi-daifuku', 'Matcha Oreo', 3),
+    ('artisanal-mochi-daifuku', 'Vanilla', 4),
+    ('artisanal-mochi-daifuku', 'Red Velvet', 5),
+    ('artisanal-mochi-daifuku', 'Mango Cheesecream', 6),
+    ('artisanal-mochi-daifuku', 'Grape Choco', 7),
+    ('artisanal-mochi-daifuku', 'Oreo Cheesecream', 8),
+    ('artisanal-mochi-daifuku', 'Lotus Biscoff', 9),
+    ('slice-cake', 'Lotus Biscoff', 1),
+    ('slice-cake', 'Red Velvet', 2),
+    ('slice-cake', 'Coklat', 3),
+    ('mille-crepes', 'Lotus Biscoff', 1),
+    ('mille-crepes', 'Red Velvet', 2),
+    ('mille-crepes', 'Coklat', 3)
+)
+INSERT INTO product_flavors (product_id, name, is_available, display_order)
+SELECT p.id, seed.name, 1, seed.display_order
+FROM seed
+JOIN products AS p ON p.slug = seed.slug
+WHERE NOT EXISTS (SELECT 1 FROM product_flavors AS f WHERE f.product_id = p.id)
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'flavors');
+
+DELETE FROM product_variants
+WHERE name IN ('Lotus Biscoff', 'Red Velvet', 'Coklat')
+  AND product_id IN (SELECT id FROM products WHERE slug IN ('slice-cake', 'mille-crepes'))
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'flavors');
+
+UPDATE products
+SET description = REPLACE(description, '8 varian rasa', '9 varian rasa')
+WHERE slug = 'artisanal-mochi-daifuku'
+  AND description LIKE '%8 varian rasa%'
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'flavors');
+
+INSERT OR IGNORE INTO _seed_state (key) VALUES ('flavors');

@@ -42,6 +42,21 @@ export const productVariants = sqliteTable("product_variants", {
 });
 
 /**
+ * Varian rasa produk (mis. Matcha Oreo, Lotus Biscoff). Terpisah dari
+ * product_variants yang menyatakan ukuran/harga: mochi punya 3 ukuran × 9 rasa.
+ * Rasa tidak mengubah harga.
+ */
+export const productFlavors = sqliteTable("product_flavors", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  isAvailable: integer("is_available", { mode: "boolean" }).notNull().default(true),
+  displayOrder: integer("display_order").notNull().default(0),
+});
+
+/**
  * Konten website yang bisa diubah pemilik dari admin (teks beranda, jadwal,
  * tentang, kontak, sosial media). Satu baris per bagian; `value` berisi JSON
  * yang divalidasi di packages/api/src/lib/site-content.ts. Bagian yang belum

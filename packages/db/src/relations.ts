@@ -17,6 +17,16 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.products.id,
       to: r.productVariants.productId,
     }),
+    flavors: r.many.productFlavors({
+      from: r.products.id,
+      to: r.productFlavors.productId,
+    }),
+  },
+  productFlavors: {
+    product: r.one.products({
+      from: r.productFlavors.productId,
+      to: r.products.id,
+    }),
   },
   productVariants: {
     product: r.one.products({

@@ -193,7 +193,7 @@ export const DEFAULT_SITE_CONTENT: SiteContent = {
       "Respons yang datang membuat lini produk berkembang. Dapur kami menambah pancake durian, mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake — semua tetap dibuat dalam batch terbatas agar kualitas terjaga.",
     stats: [
       { value: "2021", label: "mulai berjualan di CFD" },
-      { value: "8", label: "varian rasa mochi" },
+      { value: "9", label: "varian rasa mochi" },
       { value: "6", label: "kategori dessert" },
     ],
     steps: [
@@ -251,4 +251,31 @@ export function resolveSiteContent(rows: ReadonlyArray<{ key: string; value: str
 /** Tautan wa.me dengan nomor dari konten website. */
 export function waLinkFor(number: string, message: string): string {
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+}
+
+const DAY_SHORT = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"] as const;
+const DAY_LONG = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"] as const;
+
+/**
+ * Ringkasan jadwal mingguan untuk footer, mis. ["Sel–Sab · TikTok Live",
+ * "Minggu · CFD", "Senin · Libur"]. Hari berurutan dengan jenis sama digabung.
+ */
+export function weekSummary(week: readonly DayKind[], liveLabel: string): string[] {
+  const label: Record<DayKind, string> = { live: liveLabel, cfd: "CFD", off: "Libur" };
+  const lines: string[] = [];
+  for (const kind of ["live", "cfd", "off"] as const) {
+    const ranges: string[] = [];
+    let start = -1;
+    for (let day = 0; day <= week.length; day += 1) {
+      const match = week[day] === kind;
+      if (match && start === -1) start = day;
+      if (!match && start !== -1) {
+        const end = day - 1;
+        ranges.push(start === end ? DAY_LONG[start]! : `${DAY_SHORT[start]}–${DAY_SHORT[end]}`);
+        start = -1;
+      }
+    }
+    if (ranges.length > 0) lines.push(`${ranges.join(", ")} · ${label[kind]}`);
+  }
+  return lines;
 }

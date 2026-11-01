@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { productCategories, productVariants, products } from "./schema";
+import { productCategories, productFlavors, productVariants, products } from "./schema";
 
 /**
  * Data seed resmi dari pemilik bisnis. Sumber: docs/DESIGN_AUDIT.md §2.
@@ -22,7 +22,23 @@ type ProductSeed = {
   isFeatured: boolean;
   displayOrder: number;
   variants?: Array<{ name: string; priceCents: number | null; displayOrder: number }>;
+  /** Varian rasa (tidak mengubah harga). */
+  flavors?: string[];
 };
+
+export const MOCHI_FLAVORS = [
+  "Strawberry Choco",
+  "Choco Crunchy",
+  "Matcha Oreo",
+  "Vanilla",
+  "Red Velvet",
+  "Mango Cheesecream",
+  "Grape Choco",
+  "Oreo Cheesecream",
+  "Lotus Biscoff",
+];
+
+export const CAKE_FLAVORS = ["Lotus Biscoff", "Red Velvet", "Coklat"];
 
 const PRODUCTS: Record<string, ProductSeed[]> = {
   mochi: [
@@ -30,7 +46,7 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       slug: "artisanal-mochi-daifuku",
       name: "Artisanal Mochi Daifuku",
       description:
-        "Mochi lembut buatan tangan dengan isian krim pilihan. Tersedia dalam 8 varian rasa dan tiga ukuran porsi — 1 pcs, isi 4, dan isi 8. Varian rasa boleh dicampur sesuai selera.",
+        "Mochi lembut buatan tangan dengan isian krim pilihan. Tersedia dalam 9 varian rasa dan tiga ukuran porsi — 1 pcs, isi 4, dan isi 8. Varian rasa boleh dicampur sesuai selera.",
       priceCents: 8000,
       isFeatured: true,
       displayOrder: 1,
@@ -39,6 +55,7 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
         { name: "Isi 4 pcs", priceCents: 30000, displayOrder: 2 },
         { name: "Isi 8 pcs", priceCents: 50000, displayOrder: 3 },
       ],
+      flavors: MOCHI_FLAVORS,
     },
   ],
   "mango-sticky-rice": [
@@ -82,11 +99,9 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       priceCents: 16000,
       isFeatured: true,
       displayOrder: 5,
-      variants: [
-        { name: "Lotus Biscoff", priceCents: 16000, displayOrder: 1 },
-        { name: "Red Velvet", priceCents: 16000, displayOrder: 2 },
-        { name: "Coklat", priceCents: 16000, displayOrder: 3 },
-      ],
+      // Ketiga rasa seharga; tidak ada pilihan ukuran.
+      variants: [],
+      flavors: CAKE_FLAVORS,
     },
   ],
   "mille-crepes": [
@@ -98,11 +113,9 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       priceCents: 16000,
       isFeatured: true,
       displayOrder: 6,
-      variants: [
-        { name: "Lotus Biscoff", priceCents: 16000, displayOrder: 1 },
-        { name: "Red Velvet", priceCents: 16000, displayOrder: 2 },
-        { name: "Coklat", priceCents: 16000, displayOrder: 3 },
-      ],
+      // Ketiga rasa seharga; tidak ada pilihan ukuran.
+      variants: [],
+      flavors: CAKE_FLAVORS,
     },
   ],
 };
@@ -173,8 +186,16 @@ export async function seed(db: SeedDb) {
         productId = (await db.insert(products).values(values).returning().get()).id;
       }
 
+      if (item.flavors) {
+        await db.delete(productFlavors).where(eq(productFlavors.productId, productId));
+        await db.insert(productFlavors).values(
+          item.flavors.map((name, index) => ({ productId, name, displayOrder: index + 1 })),
+        );
+      }
+
       if (item.variants) {
         await db.delete(productVariants).where(eq(productVariants.productId, productId));
+        if (item.variants.length === 0) continue;
         await db.insert(productVariants).values(
           item.variants.map((variant) => ({
             productId,

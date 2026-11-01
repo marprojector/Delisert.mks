@@ -1,11 +1,12 @@
-import { waLink } from "@delisert.mks-1/api/data/business";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { SectionHeading } from "@delisert.mks-1/ui/components/section-heading";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
 
 import { useCountUp, useHeroIntro, useReveal } from "@/lib/motion";
+import { ASK_MESSAGE, useSiteContent, useWaLink } from "@/lib/site";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/tentang")({
@@ -26,32 +27,13 @@ export const Route = createFileRoute("/tentang")({
   component: AboutComponent,
 });
 
-const STATS = [
-  { value: "2021", label: "mulai berjualan di CFD" },
-  { value: "8", label: "varian rasa mochi" },
-  { value: "6", label: "kategori dessert" },
-] as const;
-
-const STEPS = [
-  {
-    title: "Batch harian terbatas",
-    body: "Dibuat segar setiap hari. Ketersediaan dipastikan ulang lewat WhatsApp sebelum diproses.",
-  },
-  {
-    title: "Pesan lewat WhatsApp",
-    body: "Pesan lewat WhatsApp, lalu dikirim via layanan antar yang tersedia.",
-  },
-  {
-    title: "Hadir setiap Minggu di CFD",
-    body: "Titik jual di CFD Boulevard dan CFD UNHAS.",
-  },
-] as const;
-
 function AboutComponent() {
   const pageRef = useRef<HTMLDivElement>(null);
   useHeroIntro(pageRef);
   useReveal(pageRef);
   useCountUp(pageRef);
+  const { about } = useSiteContent();
+  const waLink = useWaLink();
 
   return (
     <div ref={pageRef} data-motion-scope className="flex flex-col pb-16 lg:pb-24">
@@ -61,11 +43,13 @@ function AboutComponent() {
         </span>
         <h1 className="max-w-[62rem] text-[2.125rem] leading-[1.15] font-semibold text-foreground lg:text-[4rem] lg:leading-[1.1]">
           <span data-hero-line className="block">
-            Dapur kecil di Makassar yang
+            {about.titleLine1}
           </span>
-          <span data-hero-line className="block">
-            memulai dari satu mangkuk mochi.
-          </span>
+          {about.titleLine2 ? (
+            <span data-hero-line className="block">
+              {about.titleLine2}
+            </span>
+          ) : null}
         </h1>
       </section>
 
@@ -74,26 +58,35 @@ function AboutComponent() {
           data-hero-media
           className="relative h-52 overflow-hidden rounded-3xl lg:h-80 lg:rounded-[2.25rem]"
         >
-          <PhotoPlaceholder categorySlug="mochi" label="" />
+          {about.image ? (
+            <img
+              src={about.image}
+              srcSet={photoSrcSet(about.image)}
+              sizes="100vw"
+              alt="Dapur Delisert Makassar"
+              width={1200}
+              height={320}
+              className="size-full object-cover"
+            />
+          ) : (
+            <PhotoPlaceholder categorySlug="mochi" label="" />
+          )}
         </div>
       </div>
 
       <section className="cn-shell flex flex-col gap-7 pt-8 lg:gap-14 lg:pt-20">
         <div data-reveal className="grid gap-3.5 lg:grid-cols-2 lg:gap-16">
           <p className="text-base/relaxed text-foreground lg:text-[1.625rem]/[1.45] lg:font-medium">
-            Delisert dimulai pada 2021 dengan satu produk andalan: mochi buatan sendiri, dijual
-            sepanjang Jalan Boulevard saat Car Free Day.
+            {about.storyLead}
           </p>
           <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:pt-1.5 lg:text-[1.0625rem]/relaxed">
-            Respons yang datang membuat lini produk berkembang. Dapur kami menambah pancake durian,
-            mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake — semua tetap dibuat
-            dalam batch terbatas agar kualitas terjaga.
+            {about.storyBody}
           </p>
         </div>
-        <ul className="grid grid-cols-3 gap-2.5 lg:gap-6">
-          {STATS.map((stat) => (
+        <ul className={about.stats.length === 4 ? "grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-6" : "grid grid-cols-3 gap-2.5 lg:gap-6"}>
+          {about.stats.map((stat) => (
             <li
-              key={stat.value}
+              key={`${stat.value}-${stat.label}`}
               data-reveal
               className="flex flex-col gap-1.5 rounded-[1.125rem] bg-secondary p-3.5 lg:gap-3 lg:rounded-[1.75rem] lg:px-8 lg:py-7"
             >
@@ -112,9 +105,9 @@ function AboutComponent() {
       <section className="cn-shell flex flex-col gap-4 pt-12 lg:gap-7 lg:pt-24">
         <SectionHeading title="Cara kerja kami" />
         <ol className="grid gap-3 lg:grid-cols-3 lg:gap-6">
-          {STEPS.map((step, index) => (
+          {about.steps.map((step, index) => (
             <li
-              key={step.title}
+              key={`${index}-${step.title}`}
               data-reveal
               className="flex gap-3.5 rounded-[1.25rem] border border-border p-4 lg:flex-col lg:gap-3.5 lg:rounded-[1.75rem] lg:p-7"
             >
@@ -139,15 +132,15 @@ function AboutComponent() {
         >
           <div className="flex flex-col gap-2 lg:gap-3">
             <h2 className="text-2xl leading-tight font-semibold lg:text-[2.5rem]">
-              Ada pertanyaan soal produk?
+              {about.ctaTitle}
             </h2>
             <p className="text-sm/relaxed text-primary-foreground/80 lg:text-[1.0625rem]">
-              Sebutkan nama produknya, tim kami membalas di jam operasional.
+              {about.ctaText}
             </p>
           </div>
           <WhatsAppButton
             tone="light"
-            href={waLink("Halo Delisert, saya ingin bertanya.")}
+            href={waLink(ASK_MESSAGE)}
             className="w-fit lg:h-[3.625rem] lg:px-7 lg:text-base"
           >
             Chat via WhatsApp

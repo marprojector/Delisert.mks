@@ -68,11 +68,11 @@ export function VariantEditor({ productId }: { productId: number }) {
   return (
     <section className="flex flex-col gap-3 rounded-[1.25rem] bg-background p-4.5 lg:gap-3.5 lg:rounded-[1.375rem] lg:p-7">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-sans text-base font-semibold text-foreground lg:text-lg">Varian</h2>
+        <h2 className="font-sans text-base font-semibold text-foreground lg:text-lg">Varian ukuran &amp; harga</h2>
         <span className="text-xs text-muted-foreground lg:text-[0.8125rem]">Tersimpan otomatis</span>
       </div>
       <p className="text-[0.8125rem]/relaxed text-muted-foreground">
-        Pilihan ukuran atau rasa. Matikan sakelar bila varian sedang habis.
+        Pilihan yang harganya berbeda, mis. 1 pcs / isi 4 / isi 8. Rasa diatur di bagian Varian rasa. Matikan sakelar bila varian sedang habis.
       </p>
 
       {variants.length === 0 ? (

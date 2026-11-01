@@ -9,6 +9,7 @@ import { PhotoDropzone } from "@/components/admin/photo-dropzone";
 import { SaveBar } from "@/components/admin/save-bar";
 import { Segmented } from "@/components/admin/segmented";
 import { Toggle } from "@/components/admin/toggle";
+import { FlavorEditor } from "@/components/flavor-editor";
 import { VariantEditor } from "@/components/variant-editor";
 import { adminHeaders, readAdminToken, rupiahToCents } from "@/utils/admin-client";
 import { resizePhoto } from "@/utils/image-resize";
@@ -424,10 +425,13 @@ function ProductEditor() {
           {/* Varian hanya bisa dikelola setelah produk punya id. */}
           {isNew ? (
             <p className="rounded-[1.25rem] bg-background p-4.5 text-sm text-muted-foreground lg:p-7">
-              Simpan produk dulu, lalu tambahkan varian ukuran atau rasa.
+              Simpan produk dulu, lalu tambahkan varian rasa dan ukuran.
             </p>
           ) : (
-            <VariantEditor productId={Number(id)} />
+            <>
+              <FlavorEditor productId={Number(id)} />
+              <VariantEditor productId={Number(id)} />
+            </>
           )}
         </div>
       </form>

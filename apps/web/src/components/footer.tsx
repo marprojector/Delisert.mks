@@ -1,16 +1,24 @@
-import { NAV_LINKS, SOCIAL_MEDIA, WHATSAPP_DISPLAY, waLink } from "@delisert.mks-1/api/data/business";
+import { NAV_LINKS } from "@delisert.mks-1/api/data/business";
+import { weekSummary } from "@delisert.mks-1/api/lib/site-content";
 import { Link } from "@tanstack/react-router";
 
-const SCHEDULE = ["Sel–Sab · TikTok Live", "Minggu · CFD", "Senin · Libur"] as const;
+import { ASK_MESSAGE, useSiteContent, useWaLink } from "@/lib/site";
 
 export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean }) {
+  const { brand, schedule } = useSiteContent();
+  const waLink = useWaLink();
+  const lines = weekSummary(schedule.week, schedule.liveLabel);
+  const socials = [
+    { id: "instagram", platform: "Instagram", url: brand.instagramUrl, handle: brand.instagramHandle },
+    { id: "tiktok", platform: "TikTok", url: brand.tiktokUrl, handle: brand.tiktokHandle },
+  ];
   return (
     <footer className="bg-foreground text-background">
       <div className="cn-shell grid gap-10 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:py-16">
         <div className="flex flex-col gap-4">
           <span className="cn-font-display text-[1.75rem] font-bold lg:text-[2rem]">Delisert</span>
           <p className="max-w-sm text-sm/relaxed text-background/75">
-            Dessert homemade Makassar sejak 2021. Pesan langsung lewat WhatsApp.
+            {brand.footerBlurb}
           </p>
         </div>
 
@@ -31,7 +39,7 @@ export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean })
           <div className="flex flex-col gap-3">
             <h2 className="cn-eyebrow font-sans text-accent">Jadwal</h2>
             <ul className="flex flex-col gap-2.5 text-sm">
-              {SCHEDULE.map((line) => (
+              {lines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
@@ -43,15 +51,15 @@ export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean })
           <ul className="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-2.5">
             <li>
               <a
-                href={waLink("Halo Delisert, saya ingin bertanya.")}
+                href={waLink(ASK_MESSAGE)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex rounded-full border border-background/20 px-3.5 py-2 transition-colors hover:border-accent hover:text-accent lg:border-0 lg:p-0"
               >
-                {WHATSAPP_DISPLAY}
+                {brand.whatsappDisplay}
               </a>
             </li>
-            {SOCIAL_MEDIA.map((social) => (
+            {socials.map((social) => (
               <li key={social.id}>
                 <a
                   href={social.url}
