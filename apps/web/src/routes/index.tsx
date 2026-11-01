@@ -302,6 +302,7 @@ function CfdSection() {
             <h2 className="text-3xl leading-tight text-balance sm:text-4xl">
               Car Free Day, setiap hari Minggu.
             </h2>
+            <p className="cn-eyebrow text-muted-foreground">Minggu · {CFD.hours}</p>
             <p className="text-base/relaxed text-muted-foreground">{CFD.description}</p>
             <Link
               to="/jadwal"

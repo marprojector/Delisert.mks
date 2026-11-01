@@ -50,7 +50,7 @@ export const CFD = {
     },
   ],
   scheduleNote:
-    "Jam operasional kedua titik diumumkan melalui media sosial Delisert. Tidak ada jaminan kedua lokasi aktif setiap Minggu.",
+    "Kedua titik bersifat sementara dan bukan cabang tetap. Tidak ada jaminan kedua lokasi aktif setiap Minggu — lokasi terkini diumumkan melalui media sosial Delisert.",
 } as const;
 
 export const CLOSED_DAY = {
