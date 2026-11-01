@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { VariantEditor } from "@/components/variant-editor";
 import { useTRPC } from "@/utils/trpc";
 import {
   adminHeaders,
@@ -326,6 +327,9 @@ function ProductEditor() {
           </button>
         </div>
       </form>
+
+      {/* Varian hanya bisa dikelola setelah produk punya id. */}
+      {!isNew ? <VariantEditor productId={Number(id)} /> : null}
     </div>
   );
 }
