@@ -21,6 +21,9 @@ export function WhatsAppButton({
     <Button
       variant={variant}
       size={size}
+      // Elemen yang dirender adalah <a>, bukan <button> — beri tahu Base UI
+      // agar semantik tombol native tidak dipaksakan.
+      nativeButton={false}
       className={cn(fullWidth && "w-full", className)}
       render={
         <a href={href} target="_blank" rel="noopener noreferrer">
