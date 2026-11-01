@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { useTRPC } from "@/utils/trpc";
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/admin/login")({
 function LoginPage() {
   const trpc = useTRPC();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -25,13 +26,20 @@ function LoginPage() {
     trpc.adminAuth.login.mutationOptions({
       onSuccess: ({ token }) => {
         writeAdminToken(token);
+        // Hasil session lama (authenticated: false) masih di cache selama
+        // staleTime. Tanpa ini layout admin membuang token baru dan
+        // mengembalikan pengguna ke halaman login.
+        queryClient.removeQueries(trpc.adminAuth.session.queryFilter());
         void navigate({ to: "/admin" });
       },
       onError: (mutationError) => {
+        const code = mutationError.data?.code;
         setError(
-          mutationError.data?.code === "UNAUTHORIZED"
+          code === "UNAUTHORIZED"
             ? "Kata sandi salah. Coba lagi."
-            : "Tidak dapat masuk. Periksa koneksi lalu coba lagi.",
+            : code === "TOO_MANY_REQUESTS" || code === "PRECONDITION_FAILED"
+              ? mutationError.message
+              : "Tidak dapat masuk. Periksa koneksi lalu coba lagi.",
         );
       },
     }),

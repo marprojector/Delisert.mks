@@ -9,6 +9,7 @@ import {
 import { TRPCError } from "@trpc/server";
 
 import { adminProcedure, router } from "../index";
+import { photoKeysForUrl } from "../lib/image";
 
 const availabilityEnum = z.enum(["available", "preorder", "soldout"]);
 
@@ -64,6 +65,24 @@ const errorText = (error: unknown): string => {
 
 const isUniqueViolation = (error: unknown): boolean =>
   /UNIQUE constraint failed/i.test(errorText(error));
+
+/**
+ * Hapus foto R2 yang tidak dipakai lagi, termasuk semua ukurannya. Hanya
+ * foto unggahan sendiri (/api/photos/products/...) yang dihapus; URL HTTPS
+ * eksternal dibiarkan.
+ * Gagal menghapus tidak boleh menggagalkan simpan/hapus produk.
+ */
+async function deleteUnusedPhoto(
+  ctx: { deletePhoto?: (key: string) => Promise<void> },
+  url: string | null | undefined,
+): Promise<void> {
+  if (!ctx.deletePhoto || !url) return;
+  try {
+    await Promise.all(photoKeysForUrl(url).map((key) => ctx.deletePhoto!(key)));
+  } catch {
+    /* objek yatim lebih baik daripada simpan yang gagal */
+  }
+}
 
 export const adminProductRouter = router({
   categories: adminProcedure.query(async ({ ctx }) => {
@@ -141,6 +160,15 @@ export const adminProductRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tidak ada perubahan." });
       }
 
+      const before =
+        changes.imageUrl !== undefined
+          ? await ctx.db
+              .select({ imageUrl: products.imageUrl })
+              .from(products)
+              .where(eq(products.id, id))
+              .get()
+          : undefined;
+
       try {
         const updated = await ctx.db
           .update(products)
@@ -150,6 +178,9 @@ export const adminProductRouter = router({
           .get();
         if (!updated) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
+        }
+        if (before?.imageUrl && before.imageUrl !== updated.imageUrl) {
+          await deleteUnusedPhoto(ctx, before.imageUrl);
         }
         return updated;
       } catch (error) {
@@ -172,6 +203,7 @@ export const adminProductRouter = router({
       if (!deleted) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
       }
+      await deleteUnusedPhoto(ctx, deleted.imageUrl);
       return { ok: true as const };
     }),
 

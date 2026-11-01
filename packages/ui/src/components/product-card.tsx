@@ -2,6 +2,7 @@ import { formatRupiah, summariseVariantPrice } from "@delisert.mks-1/ui/lib/pric
 import type { ProductAvailability } from "@delisert.mks-1/ui/components/availability-badge";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { Card } from "@delisert.mks-1/ui/components/card";
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { MessageCircle } from "lucide-react";
 
@@ -72,6 +73,9 @@ export function ProductCard({
         {product.imageUrl ? (
           <img
             src={product.imageUrl}
+            srcSet={photoSrcSet(product.imageUrl)}
+            // Kartu tampil 1 kolom di HP, 2 di tablet, 3–4 di desktop.
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             alt={product.imageAlt ?? `Foto ${product.name} Delisert Makassar`}
             width={640}
             height={480}

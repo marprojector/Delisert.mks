@@ -19,12 +19,20 @@ export function joinOrigin(origin: string, path: string): string {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+// Origin diambil dari Host request yang benar-benar diterima Worker. Jangan
+// percaya X-Forwarded-Host: header itu bebas diisi klien, dan hasilnya masuk
+// ke canonical, JSON-LD, dan sitemap.xml yang di-cache publik.
 export const siteUrl = createIsomorphicFn()
-  .server(() => getRequestUrl({ xForwardedHost: true }).origin)
+  .server(() => getRequestUrl().origin)
   .client(() => window.location.origin);
 
 export function canonical(path: string, origin?: string): string {
   return joinOrigin(origin ?? siteUrl(), path);
+}
+
+/** URL yang sudah absolut dibiarkan; path relatif digabung dengan origin. */
+export function absoluteUrl(url: string, origin?: string): string {
+  return /^https?:\/\//i.test(url) ? url : joinOrigin(origin ?? siteUrl(), url);
 }
 
 type JsonLd = Record<string, unknown>;
@@ -62,7 +70,7 @@ export function productJsonLd(
   },
   origin?: string,
 ): JsonLd {
-  // priceCents menyimpan rupiah ×100, jadi nilainya langsung dipakai
+  // priceCents menyimpan rupiah utuh, jadi nilainya langsung dipakai
   // sebagai nominal rupiah di schema.org (Rp 8.000 → 8000).
   const price = product.priceCents !== null ? priceToNumber(product.priceCents) : undefined;
   const base = origin ?? siteUrl();
@@ -79,7 +87,9 @@ export function productJsonLd(
     name: product.name,
     ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
     ...(product.description ? { description: product.description } : {}),
-    ...(product.imageUrl ? { image: [product.imageUrl] } : {}),
+    // Foto unggahan disimpan sebagai path relatif (/api/photos/...);
+    // schema.org butuh URL absolut.
+    ...(product.imageUrl ? { image: [absoluteUrl(product.imageUrl, base)] } : {}),
     brand: { "@type": "Brand", name: "Delisert" },
     // Tanpa harga, `offers` sengaja dihilangkan — jangan pernah mengarang
     // harga 0 untuk produk yang harganya belum ditentukan.

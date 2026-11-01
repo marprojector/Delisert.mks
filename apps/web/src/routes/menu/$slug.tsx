@@ -1,6 +1,7 @@
 import { productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,7 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { useTRPC } from "@/utils/trpc";
-import { canonical, productJsonLd, siteUrl } from "@/utils/seo";
+import { absoluteUrl, canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
 export const Route = createFileRoute("/menu/$slug")({
   loader: async ({ context, params }) => {
@@ -44,7 +45,9 @@ export const Route = createFileRoute("/menu/$slug")({
         },
         { property: "og:type", content: "product" },
         { property: "og:url", content: canonical(`/menu/${product.slug}`) },
-        ...(product.imageUrl ? [{ property: "og:image", content: product.imageUrl }] : []),
+        ...(product.imageUrl
+          ? [{ property: "og:image", content: absoluteUrl(product.imageUrl) }]
+          : []),
       ],
       links: [{ rel: "canonical", href: canonical(`/menu/${product.slug}`) }],
       scripts: [
@@ -262,6 +265,8 @@ function ProductDetailComponent() {
                     {related.imageUrl ? (
                       <img
                         src={related.imageUrl}
+                        srcSet={photoSrcSet(related.imageUrl)}
+                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
                         alt={`Foto ${related.name} Delisert Makassar`}
                         width={320}
                         height={240}

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { useTRPC } from "@/utils/trpc";
@@ -28,6 +28,7 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const token = readAdminToken();
   const isLogin = pathname === "/admin/login";
 
@@ -44,9 +45,10 @@ function AdminLayout() {
   useEffect(() => {
     if (!isLogin && token && session.data && !session.data.authenticated) {
       clearAdminToken();
+      queryClient.removeQueries(trpc.adminAuth.session.queryFilter());
       void navigate({ to: "/admin/login" });
     }
-  }, [isLogin, token, session.data, navigate]);
+  }, [isLogin, token, session.data, navigate, queryClient, trpc]);
 
   if (isLogin) return <Outlet />;
 
@@ -68,6 +70,7 @@ function AdminLayout() {
             type="button"
             onClick={() => {
               clearAdminToken();
+              queryClient.removeQueries(trpc.adminAuth.session.queryFilter());
               void navigate({ to: "/admin/login" });
             }}
             className="inline-flex h-9 items-center border border-border px-3 text-sm transition-colors hover:border-primary hover:text-primary"

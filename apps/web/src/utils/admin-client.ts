@@ -33,7 +33,7 @@ export function adminHeaders(token: string | null): Record<string, string> {
   return token ? { authorization: `Bearer ${token}` } : {};
 }
 
-/** Rupiah utuh → nilai yang disimpan di price_cents (rupiah × 100). */
+/** Teks rupiah dari form → nilai price_cents. Kolom ini menyimpan rupiah utuh (Rp 8.000 → 8000), bukan sen. */
 export function rupiahToCents(value: string): number | null {
   const digits = value.replace(/[^\d]/g, "");
   if (!digits) return null;

@@ -1,9 +1,9 @@
 /**
  * Formatting dan ringkasan harga Delisert.
  *
- * `price_cents` menyimpan rupiah ×100 (Rp 8.000 disimpan sebagai 8000),
- * sehingga format langsung memakai nilai tersebut. Jangan pernah membagi
- * lagi — lihat docs/DESIGN_AUDIT.md §2 untuk daftar harga resmi.
+ * Walaupun namanya `price_cents`, kolom ini menyimpan RUPIAH UTUH, bukan sen
+ * (Rp 8.000 disimpan sebagai 8000). Format langsung memakai nilai tersebut;
+ * jangan dikali atau dibagi 100. Daftar harga resmi: docs/DESIGN_AUDIT.md §2.
  */
 
 export function formatRupiah(cents: number): string {

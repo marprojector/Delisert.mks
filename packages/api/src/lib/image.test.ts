@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { MAX_IMAGE_BYTES, validateImageUpload } from "./image";
+import { MAX_IMAGE_BYTES, photoKeysForUrl, sizedPhotoKey, validateImageUpload } from "./image";
 
 const base = { filename: "mochi.jpg", contentType: "image/jpeg", size: 1024 };
 
@@ -39,5 +39,30 @@ describe("validateImageUpload", () => {
 
   test("rejects an empty file", () => {
     expect(validateImageUpload({ ...base, size: 0 }).ok).toBe(false);
+  });
+});
+
+describe("photoKeysForUrl", () => {
+  const ID = "0f8fad5b-d9cb-469f-a165-70867728950e";
+
+  test("returns every size of a sized photo", () => {
+    expect(photoKeysForUrl(`/api/photos/products/${ID}-w1600.webp`)).toEqual([
+      `products/${ID}-w480.webp`,
+      `products/${ID}-w960.webp`,
+      `products/${ID}-w1600.webp`,
+    ]);
+  });
+
+  test("returns the single key of an older photo", () => {
+    expect(photoKeysForUrl(`/api/photos/products/${ID}.jpg`)).toEqual([`products/${ID}.jpg`]);
+  });
+
+  test("never returns keys for external or traversal URLs", () => {
+    expect(photoKeysForUrl("https://example.com/a.jpg")).toEqual([]);
+    expect(photoKeysForUrl("/api/photos/products/../secret")).toEqual([]);
+  });
+
+  test("builds sized keys", () => {
+    expect(sizedPhotoKey(ID, 960, "webp")).toBe(`products/${ID}-w960.webp`);
   });
 });

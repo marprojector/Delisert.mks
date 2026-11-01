@@ -76,3 +76,29 @@ describe("seed", () => {
     ]);
   });
 });
+
+describe("seed.production.sql", () => {
+  const PRODUCTION_SEED = readFileSync(join(import.meta.dir, "seed.production.sql"), "utf8");
+  const counts = (client: Database) => ({
+    products: (client.query("select count(*) as n from products").get() as { n: number }).n,
+    variants: (client.query("select count(*) as n from product_variants").get() as { n: number }).n,
+  });
+
+  test("repeated imports do not duplicate variants", () => {
+    const { client } = makeDb();
+    client.exec(PRODUCTION_SEED);
+    expect(counts(client)).toEqual({ products: 6, variants: 9 });
+    client.exec(PRODUCTION_SEED);
+    client.exec(PRODUCTION_SEED);
+    expect(counts(client)).toEqual({ products: 6, variants: 9 });
+  });
+
+  test("a product the owner deleted stays deleted after a redeploy", () => {
+    const { client } = makeDb();
+    client.exec(PRODUCTION_SEED);
+    client.exec("delete from product_variants where product_id = (select id from products where slug = 'mille-crepes')");
+    client.exec("delete from products where slug = 'mille-crepes'");
+    client.exec(PRODUCTION_SEED);
+    expect(counts(client)).toEqual({ products: 5, variants: 6 });
+  });
+});

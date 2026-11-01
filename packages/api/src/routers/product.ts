@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { productCategories, productVariants, products } from "@delisert.mks-1/db/schema/index";
 import { publicProcedure, router } from "../index";
@@ -33,6 +33,8 @@ export const productRouter = router({
         })
         .from(products)
         .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+        // Kategori nonaktif menyembunyikan semua produknya dari situs publik.
+        .where(eq(productCategories.isActive, true))
         .orderBy(asc(products.displayOrder), asc(products.id));
 
       const filtered = rows.filter((row) => {
@@ -94,7 +96,7 @@ export const productRouter = router({
         })
         .from(products)
         .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
-        .where(eq(products.slug, input.slug))
+        .where(and(eq(products.slug, input.slug), eq(productCategories.isActive, true)))
         .get();
 
       if (!row) return null;
@@ -112,6 +114,8 @@ export const productRouter = router({
           imageUrl: products.imageUrl,
         })
         .from(products)
+        .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
+        .where(eq(productCategories.isActive, true))
         .orderBy(asc(products.displayOrder), asc(products.id))
         .limit(5);
 
@@ -145,6 +149,7 @@ export const productRouter = router({
   categories: publicProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
       .select({
+        id: productCategories.id,
         slug: productCategories.slug,
         name: productCategories.name,
         description: productCategories.description,
@@ -163,17 +168,11 @@ export const productRouter = router({
       countByCategory.set(row.categoryId, (countByCategory.get(row.categoryId) ?? 0) + 1);
     }
 
-    const idBySlug = await ctx.db
-      .select({ id: productCategories.id, slug: productCategories.slug })
-      .from(productCategories);
-
-    const idMap = new Map(idBySlug.map((row) => [row.slug, row.id]));
-
     return rows.map((row) => ({
       slug: row.slug,
       name: row.name,
       description: row.description,
-      productCount: countByCategory.get(idMap.get(row.slug) ?? -1) ?? 0,
+      productCount: countByCategory.get(row.id) ?? 0,
     }));
   }),
 });

@@ -6,11 +6,137 @@
 | **Nama Produk** | Website Delisert |
 | **Kategori Bisnis** | Dessert & Homemade Food (UMKM) |
 | **Lokasi** | Makassar, Sulawesi Selatan, Indonesia |
-| **Versi Dokumen** | 1.2 |
-| **Tanggal** | 30 Oktober 2026 |
+| **Versi Dokumen** | 1.3 |
+| **Tanggal** | 30 Oktober 2026 (dibuat) · 1 November 2026 (diperbarui) |
 | **Status** | MVP + Admin terimplementasi — menunggu review pemilik dan deploy |
 | **Pemilik Dokumen** | Product / Engineering |
 | **Sumber Kebenaran** | Dokumen ini adalah *single source of truth* untuk desain UI (Google Stitch, wajib) dan implementasi kode (Claude Code) |
+| **Untuk agent AI** | **Baca bagian 0 lebih dulu.** Bagian 0 menjelaskan bagian mana yang sudah usang dan aturan yang tidak boleh dilanggar. |
+
+---
+
+## 0. Cara Membaca Dokumen Ini (Wajib untuk Agent AI)
+
+> Bagian ini ditambahkan di versi 1.3 supaya agent AI (termasuk model yang lebih kecil) tidak salah paham. Bagian ini **tidak mengubah** keputusan atau alur di bagian 1–17. Bagian ini hanya menjelaskan cara membacanya dan menunjukkan kondisi kode yang sebenarnya.
+
+### 0.1 Kalau dua bagian terlihat bertentangan
+
+Dokumen ini ditulis bertahap. Bagian 1–15 sebagian besar ditulis **sebelum** kode dibuat (versi 1.0–1.1). Sebagian isinya sudah tidak sesuai dengan kode sekarang. Ikuti urutan prioritas ini:
+
+1. **Catatan bertanda "Status aktual (v1.3)"** di dalam dokumen ini dan **tabel di §0.3** — paling baru.
+2. **Kode di repository** — kenyataan yang berjalan.
+3. **§16.2 (status implementasi)** dan **riwayat versi §17.3**.
+4. **Bagian lain dokumen ini** — rencana awal.
+5. **`docs/DESIGN_AUDIT.md` §2** khusus untuk **harga** (daftar harga resmi dari pemilik).
+
+Kalau tetap ragu: **jangan menebak.** Tanyakan ke pengguna, atau catat pertanyaannya di `docs/OPEN_QUESTIONS.md`.
+
+### 0.2 Ringkasan kondisi sekarang (per 1 November 2026)
+
+| Hal | Kondisi sebenarnya |
+|---|---|
+| Halaman publik | `/`, `/tentang`, `/menu`, `/menu/$slug`, `/jadwal`, `/kontak` — semua sudah ada |
+| Halaman admin | `/admin/login`, `/admin` (ringkasan), `/admin/produk`, `/admin/produk/$id` — sudah ada |
+| Login | **Ada, tetapi hanya untuk admin (pemilik bisnis).** Satu kata sandi (`ADMIN_PASSWORD`). Pelanggan **tidak pernah** login dan tidak punya akun |
+| Pemesanan | Tetap lewat WhatsApp (`wa.me` dengan pesan terisi). **Tidak ada** checkout, keranjang, atau pembayaran |
+| Data produk | Di **Cloudflare D1**: tabel `product_categories`, `products`, `product_variants` |
+| Foto produk | Di **Cloudflare R2** (binding `PHOTOS`), diunggah dari admin, disajikan lewat `/api/photos/...` |
+| Jadwal, lokasi CFD, alamat, pengiriman, sosial media | **Konstanta kode** di `packages/api/src/data/business.ts`, bukan tabel database |
+| Harga | **Sudah dikonfirmasi pemilik** untuk 8 item dan **ditampilkan sebagai angka**. Daftar resmi: `docs/DESIGN_AUDIT.md` §2. Bila harga kosong (`null`), tampilkan "Harga menyusul" |
+| Jam CFD Minggu | **Sudah dikonfirmasi:** 06.00–10.00 WITA (Q-09). Ada di `packages/api/src/data/business.ts`. Kedua titik CFD tetap ditulis sebagai sementara dan tidak dijamin aktif setiap Minggu |
+| Bahasa & tema | `<html lang="id">`, tema terang, warna merek rosewood |
+| Foto responsif | Foto yang diunggah lewat admin otomatis dibuat 480/960/1600 px WebP dan tampil dengan `srcset`. Logika nama file: `packages/ui/src/lib/photo.ts` |
+| Analitik | Cloudflare Web Analytics sudah disiapkan di kode, **belum aktif** sampai token diisi di `apps/web/src/utils/analytics.ts` |
+| Deploy produksi | **Belum dilakukan** — menunggu persetujuan pemilik |
+
+### 0.3 Bagian yang sudah usang dan penggantinya
+
+Teks lama **tidak dihapus** agar sejarah keputusan tetap terbaca. Saat membaca bagian di kolom kiri, pakai kolom kanan.
+
+| Bagian | Yang tertulis | Yang benar sekarang |
+|---|---|---|
+| §1, §6.2, §10.1 | "Tidak ada autentikasi / tidak ada halaman login" | Berlaku untuk **pelanggan**. Admin pemilik bisnis punya login sendiri (§0.2) |
+| §7.6.4 aturan 6, R-02 di §14 | "Harga tidak boleh muncul sebagai angka" / "Hubungi untuk harga" | Aturan itu berlaku **sebelum** harga dikonfirmasi. Harga dari `DESIGN_AUDIT.md` §2 boleh tampil. Tetap **jangan mengarang** harga yang tidak ada di sana atau di database |
+| §7.6.4 aturan 7, R-06 di §14 | "Jam CFD pasti" belum terverifikasi | Jam CFD sudah dikonfirmasi: 06.00–10.00 WITA. Yang **masih** belum pasti: apakah kedua titik aktif setiap Minggu (Q-10) |
+| `OPEN_QUESTIONS.md` Q-04 dan Q-30 | Q-04 "sebagian", harga Mille Crepes "perlu konfirmasi" | `DESIGN_AUDIT.md` §2 (diperbarui 2026-10-31) sudah mencantumkan Mille Crepes Rp 16.000. Untuk **harga**, `DESIGN_AUDIT.md` §2 yang dipakai |
+| §8.2, §13.1, §13.3 | Dashboard admin (FR-101) dan manajemen produk (FR-102) = Future | **Sudah dibangun.** Lihat `docs/ADMIN_GUIDE.md`. FR-103 sampai FR-109 tetap Future |
+| §10.2 | Struktur folder berisi "KOSONG", "perlu diisi", "perlu ditulis ulang" | Itu kondisi scaffold awal. Semua file tersebut sudah diisi |
+| §10.3 | Status route "Baru" / "Perlu ditulis ulang" | Semua route sudah dibuat. Ada juga route admin, `/api/upload`, `/api/photos/$`, `/sitemap.xml`, `/robots.txt` |
+| §10.4 | "Router saat ini hanya memiliki `healthCheck`" | Router sekarang: `healthCheck`, `product`, `schedule`, `adminAuth`, `adminProduct` (`packages/api/src/routers/`) |
+| §10.5 | Tabel `selling_schedules`, `selling_locations`, `operational_address`, `delivery_methods`, `social_media` | Tabel itu **tidak dibuat**. Datanya ada di `packages/api/src/data/business.ts` (sesuai keputusan hibrida §10.7) |
+| §10.7 | Kategori produk = konstanta kode | Kategori disimpan di **D1** (`product_categories`, 6 kategori termasuk Slice Cake) karena produk merujuk ke kategori lewat `category_id` |
+| §10.8 | "Schema env saat ini hanya mendefinisikan `NODE_ENV`" | `apps/web/.env.schema` sudah berisi `SITE_URL`, `WHATSAPP_NUMBER`, `INSTAGRAM_URL`, `TIKTOK_URL`. Rahasia admin ada di `packages/infra/.env.schema` |
+| §17.3 versi 1.2 | "harga rupiah ×100" | Penulisan itu **menyesatkan**. Lihat penjelasan `price_cents` di §0.5 |
+
+### 0.4 Aturan yang tidak boleh dilanggar
+
+**Selalu:**
+
+1. Arahkan setiap pemesanan ke WhatsApp nomor `6285190021421` (tampilan: 0851 9002 1421) lewat `wa.me` dengan pesan terisi.
+2. Tulis semua teks yang dilihat pengunjung dalam **Bahasa Indonesia**.
+3. Pakai data yang sudah ada: harga dari database / `DESIGN_AUDIT.md` §2, data bisnis dari `packages/api/src/data/business.ts`.
+4. Tandai ketersediaan dengan teks, bukan hanya warna: **Tersedia**, **Pre-Order**, **Habis**.
+5. Pastikan setiap halaman punya tepat **satu `<h1>`**, dan setiap foto punya `alt`.
+6. Periksa token admin di **server** (`adminProcedure` di `packages/api/src/index.ts`). Pengecekan di halaman admin hanya untuk tampilan, bukan pengaman.
+
+**Jangan pernah:**
+
+1. Menambah keranjang, checkout, pembayaran daring, atau akun pelanggan.
+2. Mengarang data: harga, jam, testimoni, kisah pendiri, penghargaan, tarif atau estimasi pengiriman. Pakai hanya angka yang sudah tercatat (§0.2).
+3. Menampilkan "100% HALAL" sebagai sertifikasi resmi, atau klaim "Pelopor 1 Mochi" (belum diverifikasi, lihat A5).
+4. Menyebut alamat operasional sebagai "toko" atau "cabang", atau menampilkan jam buka toko untuk alamat itu.
+5. Menampilkan kode pos (90233 atau 90234) sebelum pemilik mengonfirmasi.
+6. Menampilkan status "LIVE SEKARANG" untuk TikTok Live. Tampilkan jadwal statis saja.
+7. Menulis API key atau kata sandi di file yang dilacak git (`.mcp.json`, kode, dokumen).
+8. Mengganti stack (TanStack Start, tRPC, Drizzle, D1, Bun, Turborepo, Alchemy) tanpa persetujuan eksplisit.
+9. Memutuskan warna merek baru lewat Stitch tanpa aset logo/foto asli dari pemilik.
+
+### 0.5 Istilah yang sering membingungkan
+
+| Istilah | Arti |
+|---|---|
+| **`price_cents`** | Nama kolom harga. Walaupun namanya "cents", isinya **rupiah utuh**, bukan sen. Rp 8.000 disimpan sebagai `8000`. **Jangan** dikali atau dibagi 100. Format tampilan: `formatRupiah()` di `packages/ui/src/lib/price.ts` |
+| **Varian** | Pilihan ukuran atau rasa dalam satu produk (mis. Mochi "1 Pcs / Isi 4 pcs / Isi 8 pcs"). Tabel `product_variants`. Harga varian boleh berbeda dari harga produk |
+| **Ketersediaan** | Nilai `availability` produk: `available` (Tersedia), `preorder` (Pre-Order), `soldout` (Habis) |
+| **Slug** | Bagian URL produk, huruf kecil + angka + tanda hubung. Contoh: `/menu/artisanal-mochi-daifuku` |
+| **Produk unggulan** | Produk dengan `is_featured = true`; tampil di beranda |
+| **Kategori aktif** | Kategori dengan `is_active = true`. Produk di kategori nonaktif tidak tampil di situs publik |
+| **CFD** | Car Free Day hari Minggu. Delisert berjualan di CFD Boulevard dan CFD UNHAS. Titik ini **sementara**, bukan cabang |
+| **TikTok Live** | Jualan live Selasa–Sabtu, 10:30–14:30 WITA |
+| **WITA** | Waktu Indonesia Tengah (UTC+8), zona waktu Makassar |
+| **PO / batch** | Pre-order bergelombang. Produk bisa tidak selalu tersedia |
+| **MVP** | Fitur rilis pertama (FR-001 – FR-016) |
+| **Future** | Fitur setelah MVP. Jangan dikerjakan tanpa permintaan eksplisit |
+| **Stitch** | Google Stitch, alat desain UI wajib (§7.6). Hasilnya desain, bukan kode |
+| **D1 / R2** | D1 = database SQLite Cloudflare. R2 = penyimpanan file Cloudflare (foto) |
+| **Alchemy** | Alat deploy infrastruktur Cloudflare (`packages/infra/alchemy.run.ts`) |
+| **Seed** | Data katalog awal. `seed.production.sql` hanya mengisi katalog yang **masih kosong**, jadi tidak menimpa perubahan pemilik di admin |
+
+### 0.6 Di mana mengubah apa
+
+| Ingin mengubah… | File |
+|---|---|
+| Nomor WA, jadwal Live, info CFD, alamat, metode pengiriman, sosial media, instruksi pengambilan | `packages/api/src/data/business.ts` |
+| Isi pesan WhatsApp otomatis | `packages/api/src/lib/whatsapp.ts` dan `packages/api/src/data/business.ts` |
+| Produk, harga, varian, foto | Lewat halaman admin `/admin/produk` (bukan lewat kode) |
+| Katalog awal untuk database baru | `packages/db/src/seed.production.sql` |
+| Struktur tabel | `packages/db/src/schema/index.ts`, lalu `bun run db:generate` |
+| API publik produk | `packages/api/src/routers/product.ts` |
+| API admin | `packages/api/src/routers/admin-product.ts`, `admin-auth.ts` |
+| Halaman | `apps/web/src/routes/*.tsx` |
+| Komponen bersama (ProductCard, WhatsAppButton, dll.) | `packages/ui/src/components/` |
+| Warna dan tipografi | `packages/ui/src/styles/globals.css` |
+| Ukuran foto dan `srcset` | `packages/ui/src/lib/photo.ts`, `apps/web/src/utils/image-resize.ts`, `apps/web/src/routes/api/upload.ts` |
+| Token Cloudflare Web Analytics | `apps/web/src/utils/analytics.ts` |
+| SEO, canonical, JSON-LD | `apps/web/src/utils/seo.ts` |
+| Binding Cloudflare dan rahasia | `packages/infra/alchemy.run.ts` |
+
+### 0.7 Langkah standar sebelum menyelesaikan perubahan kode
+
+1. Baca file yang akan diubah sampai selesai. Jangan mengubah dari ingatan.
+2. Setelah mengubah, jalankan `bun test packages` (unit test) dan `npx tsc --noEmit` di `apps/web`.
+3. Tes di `apps/web/src/routes/__tests__/` dan `apps/web/src/routes/menu/__tests__/` butuh dev server di `http://localhost:3001` (`bun run dev`). Tanpa server, tes itu gagal dengan `ConnectionRefused` — itu bukan bug kode.
+4. Laporkan apa adanya: tes yang gagal, langkah yang dilewati, dan hal yang belum diverifikasi.
 
 ---
 
@@ -28,6 +154,8 @@ Website Delisert akan berfungsi sebagai **etalase digital premium** dan **platfo
 6. Meningkatkan engagement Instagram dan TikTok.
 
 **Keputusan arsitektural utama:** Tidak ada *checkout* atau pembayaran daring pada MVP. Seluruh pemesanan dialihkan ke WhatsApp dengan pesan terisi otomatis (*prefilled message*). Ini menghilangkan kebutuhan autentikasi, manajemen pembayaran, dan manajemen inventaris pada versi awal.
+
+> **Status aktual (v1.3):** keputusan "tanpa checkout, semua ke WhatsApp" tetap berlaku. "Tanpa autentikasi" berlaku untuk **pelanggan**; pemilik bisnis kini punya login admin. Lihat §0.2.
 
 **Keputusan teknologi:** Stack sudah ditetapkan dan di-*scaffold* menggunakan Better-T-Stack (TanStack Start, tRPC, Drizzle ORM, Cloudflare D1, Bun, Turborepo). Dokumen ini menghormati stack tersebut dan tidak mengusulkan penggantian framework.
 
@@ -321,6 +449,8 @@ graph TD
 | **Filter kategori pada /menu** | Lima kategori cukup untuk filter sederhana, bukan pencarian kompleks |
 | **Halaman Jadwal terpisah dari Kontak** | Jadwal adalah informasi yang sering dicari; memisahkannya mengurangi beban kognitif |
 
+> **Status aktual (v1.3):** baris "Tidak ada halaman login/akun" berlaku untuk pelanggan. Halaman `/admin/login` khusus pemilik bisnis sudah ada. Filter kategori sekarang berisi 6 kategori (termasuk Slice Cake).
+
 ### 6.3 Spesifikasi Halaman
 
 #### A. Homepage (`/`)
@@ -612,6 +742,7 @@ Aturan alur:
 4. **Varian eksplorasi** diperbolehkan untuk menemukan arah visual, dengan batas `--creative-range EXPLORE` dan `--count` 2–3 agar tidak membuang kuota.
 5. **Warna merek tidak boleh diputuskan oleh Stitch** sebelum logo dan foto produk asli diterima (Q-01, Q-02, Q-03). Selama belum ada, gunakan arah netral hangat dari bagian 7.3.
 6. **Harga tidak boleh muncul sebagai angka** di desain mana pun selama Q-04 belum terjawab. Gunakan pola "Hubungi untuk harga".
+   > **Status aktual (v1.3):** harga resmi sudah tercatat di `docs/DESIGN_AUDIT.md` §2 dan boleh tampil sebagai angka. Untuk produk tanpa harga, situs menampilkan "Harga menyusul". Harga di luar daftar resmi tetap dilarang.
 7. **Tidak ada klaim yang belum terverifikasi** di desain: sertifikasi halal (Q-11), klaim "Pelopor" (Q-14), jam CFD pasti (Q-09), dan status kedua titik CFD aktif setiap Minggu (Q-10).
 8. **Setiap screen yang disetujui** harus dicatat di `docs/OPEN_QUESTIONS.md` atau dokumen desain terpisah sebagai artefak yang dapat ditelusuri.
 
@@ -711,6 +842,8 @@ Sumber lengkap dengan acceptance criteria: `docs/PRODUCT_REQUIREMENTS.md`.
 | FR-108 | Integrasi status TikTok Live real-time | Future |
 | FR-109 | Notifikasi stok / restock | Future |
 
+> **Status aktual (v1.3):** FR-101 (dashboard admin) dan FR-102 (manajemen produk, termasuk varian dan foto) **sudah dibangun**. FR-103 sampai FR-109 masih Future: jangan dikerjakan tanpa permintaan eksplisit.
+
 ---
 
 ## 9. Kebutuhan Non-Fungsional
@@ -759,7 +892,11 @@ Sumber lengkap: `docs/TECHNICAL_ARCHITECTURE.md`.
 
 **Tidak ada autentikasi. Tidak ada pembayaran. Tidak ada backend runtime terpisah.**
 
+> **Status aktual (v1.3):** ada autentikasi **khusus admin** (kata sandi tunggal + token HMAC 12 jam). Tambahan binding: R2 `PHOTOS` untuk foto. Pembayaran tetap tidak ada; backend tetap di dalam Worker yang sama.
+
 ### 10.2 Struktur Folder (Berdasarkan Scaffold Aktual)
+
+> **Status aktual (v1.3):** pohon di bawah menggambarkan scaffold **awal**. Label "KOSONG", "perlu diisi", dan "perlu ditulis ulang" sudah tidak berlaku. Untuk lokasi file saat ini, pakai tabel §0.6.
 
 ```
 delisert.mks-1/
@@ -820,9 +957,13 @@ delisert.mks-1/
 | `/kontak` | `apps/web/src/routes/kontak.tsx` | Baru |
 | `/api/trpc/$` | `apps/web/src/routes/api/trpc/$.ts` | Sudah ada |
 
+> **Status aktual (v1.3):** semua route di atas sudah dibuat. `/menu` memakai `menu.tsx` (layout) + `menu.index.tsx` (katalog). Route tambahan: `/admin`, `/admin/login`, `/admin/produk`, `/admin/produk/$id`, `/api/upload`, `/api/photos/$`, `/sitemap.xml`, `/robots.txt`.
+
 ### 10.4 Arsitektur API (tRPC)
 
 Router saat ini hanya memiliki `healthCheck`. Router yang diperlukan:
+
+> **Status aktual (v1.3):** router sudah dibangun: `healthCheck`, `product` (`list`, `bySlug`, `categories`), `schedule` (`all`), `adminAuth` (`login`, `logout`, `session`), dan `adminProduct` (CRUD produk dan varian). Kode di bawah adalah rancangan awal.
 
 ```typescript
 // packages/api/src/routers/index.ts (target)
@@ -851,6 +992,8 @@ export const appRouter = router({
 ### 10.5 Model Data
 
 Detail lengkap: `docs/TECHNICAL_ARCHITECTURE.md` §5.
+
+> **Status aktual (v1.3):** yang benar-benar dibuat di D1 hanya `product_categories`, `products`, dan `product_variants`. Jadwal, lokasi CFD, alamat, pengiriman, dan sosial media ada di `packages/api/src/data/business.ts`. Jangan membuat tabel-tabel lainnya tanpa permintaan.
 
 Ringkasan entitas:
 
@@ -908,6 +1051,8 @@ cd packages/infra && bunx alchemy deploy --stage production
 
 **Alternatif yang ditolak:** Menyimpan semua di database memerlukan admin dashboard (FR-101) yang eksplisit ditunda ke Future.
 
+> **Status aktual (v1.3):** pendekatan hibrida tetap dipakai, dengan satu perbedaan: **kategori** disimpan di D1 (`product_categories`), bukan konstanta kode, karena produk merujuk kategori lewat `category_id`.
+
 ### 10.8 Konfigurasi Environment
 
 Schema env saat ini hanya mendefinisikan `NODE_ENV`. Variabel yang mungkin diperlukan:
@@ -922,6 +1067,8 @@ Schema env saat ini hanya mendefinisikan `NODE_ENV`. Variabel yang mungkin diper
 | `ANALYTICS_ID` | string | Tidak | ID analytics (jika digunakan) |
 
 **Catatan:** Schema env dikelola Varlock. Setelah mengubah `apps/web/.env.schema`, jalankan `bun run env:generate`.
+
+> **Status aktual (v1.3):** `apps/web/.env.schema` sudah berisi `NODE_ENV`, `SITE_URL`, `WHATSAPP_NUMBER`, `INSTAGRAM_URL`, `TIKTOK_URL` (`ANALYTICS_ID` belum). Rahasia admin `ADMIN_PASSWORD` dan `ADMIN_SESSION_SECRET` ada di `packages/infra/.env.schema` dan wajib diisi; deploy berhenti bila kosong.
 
 ---
 
@@ -1034,6 +1181,8 @@ Target: pelanggan di Makassar yang mencari "dessert Makassar", "mochi Makassar",
 - Integrasi TikTok Live real-time
 - Blog / konten
 
+> **Status aktual (v1.3):** dashboard admin dan manajemen produk via UI sudah dibangun di luar ruang lingkup awal (lihat §16.2). Item lain di daftar ini tetap tidak termasuk.
+
 ### 13.2 Roadmap
 
 ```mermaid
@@ -1144,6 +1293,11 @@ Status per 2026-11-01. Hanya butir yang benar-benar diverifikasi yang dicentang.
 - [ ] Deploy produksi berhasil di Cloudflare — **belum dijalankan**; menunggu persetujuan pemilik (lihat README)
 - [ ] Pemilik bisnis melakukan review dan persetujuan — **belum dilakukan**
 
+**Tambahan per 1 November 2026 (v1.3):**
+
+- [x] Optimasi gambar (NFR-003, NFR-004, §11.4) — foto unggahan otomatis dikecilkan ke WebP 480/960/1600 px di browser admin, dan semua foto produk memakai `srcset` + `sizes` (diuji unit test). Foto lama tanpa versi kecil tetap tampil apa adanya
+- [ ] Analitik (§12.2) — kode Cloudflare Web Analytics siap di `apps/web/src/utils/analytics.ts`, **belum aktif**: token baru bisa dibuat setelah domain produksi ada (Q-18). Pelacakan klik WhatsApp/sosial belum dibuat karena Cloudflare Web Analytics tidak mendukung event khusus
+
 **Tambahan di luar ruang lingkup awal:** dashboard admin (FR-101, FR-102) sudah dibangun — login satu pengguna, ringkasan, CRUD produk, unggah foto ke R2, dan toggle ketersediaan. Lihat `docs/ADMIN_GUIDE.md`.
 
 ---
@@ -1181,7 +1335,8 @@ Repositori: https://github.com/google-labs-code/stitch-sdk
 |---|---|---|---|
 | 1.0 | 30 Oktober 2026 | Draft awal lengkap | Product / Engineering |
 | 1.1 | 30 Oktober 2026 | Menambahkan ketetapan wajib desain UI via Google Stitch (MCP `@google/stitch`), project `delisert premium website ui design`; konfigurasi `.mcp.json` + `.env`; Fase 0 pada roadmap; asumsi A13–A14 | Product / Engineering |
-| 1.2 | 1 November 2026 | Implementasi MVP + dashboard admin (FR-101/102). Perbaikan: harga rupiah ×100, SSR detail produk, katalog ter-render di server, canonical dari origin request, sitemap/robots dinamis, satu h1 per halaman, warna merek rosewood. Status DoD §16.2 diperbarui apa adanya | Product / Engineering |
+| 1.2 | 1 November 2026 | Implementasi MVP + dashboard admin (FR-101/102). Perbaikan: harga rupiah ×100 (*catatan v1.3: maksudnya nilai disimpan sebagai rupiah utuh, Rp 8.000 = `8000`; lihat §0.5*), SSR detail produk, katalog ter-render di server, canonical dari origin request, sitemap/robots dinamis, satu h1 per halaman, warna merek rosewood. Status DoD §16.2 diperbarui apa adanya | Product / Engineering |
+| 1.3 | 1 November 2026 | Menambahkan §0 (panduan membaca untuk agent AI: prioritas saat bertentangan, kondisi aktual, aturan wajib, glosarium, peta file) dan catatan "Status aktual (v1.3)" pada bagian yang usang. Isi, keputusan, dan urutan bagian 1–17 tidak diubah | Product / Engineering |
 
 ---
 

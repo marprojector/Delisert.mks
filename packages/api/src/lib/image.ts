@@ -38,3 +38,33 @@ export function validateImageUpload(input: ImageUploadInput): ImageUploadResult 
   }
   return { ok: true, key: `products/${crypto.randomUUID()}.${extension}`, extension };
 }
+
+/** Lebar standar foto bertingkat. Sama dengan PHOTO_WIDTHS di packages/ui/src/lib/photo.ts. */
+export const PHOTO_WIDTHS = [480, 960, 1600] as const;
+export const MAX_PHOTO_WIDTH = 1600;
+
+/** Kunci R2 untuk satu lebar foto bertingkat: products/<uuid>-w<lebar>.<ext>. */
+export function sizedPhotoKey(id: string, width: number, extension: string): string {
+  return `products/${id}-w${width}.${extension}`;
+}
+
+const SIZED_PHOTO_KEY = /^(products\/[0-9a-f-]{36})-w(\d+)\.(webp|jpg)$/;
+
+/**
+ * Semua kunci R2 milik satu foto, dari URL yang disimpan di database.
+ * Foto bertingkat punya beberapa objek; foto lama hanya satu.
+ * URL di luar /api/photos/products/ menghasilkan daftar kosong.
+ */
+export function photoKeysForUrl(url: string): string[] {
+  const prefix = "/api/photos/";
+  if (!url.startsWith(`${prefix}products/`)) return [];
+  const key = url.slice(prefix.length);
+  if (key.includes("..")) return [];
+  const match = SIZED_PHOTO_KEY.exec(key);
+  if (!match) return [key];
+  const [, base, maxText, extension] = match as unknown as [string, string, string, string];
+  const max = Number(maxText);
+  return [...PHOTO_WIDTHS.filter((width) => width < max), max].map(
+    (width) => `${base}-w${width}.${extension}`,
+  );
+}

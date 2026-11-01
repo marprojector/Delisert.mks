@@ -1,6 +1,6 @@
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 
 import { useTRPC } from "@/utils/trpc";
 
@@ -32,6 +32,13 @@ function AdminProductList() {
   );
 
   const rows = products.data ?? [];
+
+  // /admin/produk/$id dirender lewat <Outlet/> di sini. Saat editor terbuka,
+  // tampilkan editornya saja — jangan di bawah seluruh daftar.
+  const isEditing = useRouterState({
+    select: (state) => state.location.pathname.replace(/\/$/, "") !== "/admin/produk",
+  });
+  if (isEditing) return <Outlet />;
 
   return (
     <>
@@ -102,7 +109,6 @@ function AdminProductList() {
         </ul>
       )}
       </div>
-      <Outlet />
     </>
   );
 }

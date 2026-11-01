@@ -3,8 +3,8 @@
 | Metadata | |
 |---|---|
 | **Dokumen** | Kebutuhan Fungsional & Non-Fungsional |
-| **Versi** | 1.0 |
-| **Tanggal** | 30 Oktober 2026 |
+| **Versi** | 1.1 |
+| **Tanggal** | 30 Oktober 2026 (dibuat) · 1 November 2026 (status FR-101, FR-102, NFR-003 diperbarui) |
 | **Terintegrasi dengan** | `docs/PRD.md` |
 
 ---
@@ -408,15 +408,15 @@ Halaman `/kontak` yang menampilkan kontak, instruksi pemesanan, instruksi pengam
 
 ### FR-101 — Dashboard Admin
 
-**Prioritas:** Future
+**Prioritas:** Future — **sudah dibangun** lebih awal (1 November 2026), di luar ruang lingkup MVP awal. Panduan pemilik: `docs/ADMIN_GUIDE.md`.
 
 **User Story:**
 > Sebagai pemilik bisnis, saya ingin mengelola konten website melalui dashboard, sehingga saya tidak perlu meminta bantuan teknis untuk memperbarui produk.
 
 **Acceptance Criteria:**
-- [ ] Autentikasi sederhana (satu pengguna)
-- [ ] Dashboard menampilkan ringkasan produk
-- [ ] Akses terbatas pada rute `/admin`
+- [x] Autentikasi sederhana (satu pengguna) — kata sandi `ADMIN_PASSWORD`, token sesi 12 jam, dibatasi 5 percobaan gagal per 15 menit
+- [x] Dashboard menampilkan ringkasan produk — total, unggulan, habis, belum ada foto
+- [x] Akses terbatas pada rute `/admin` — diperiksa di server (`adminProcedure`), bukan hanya di halaman
 
 **Dependencies:** Keputusan autentikasi, FR-102
 
@@ -424,17 +424,17 @@ Halaman `/kontak` yang menampilkan kontak, instruksi pemesanan, instruksi pengam
 
 ### FR-102 — Manajemen Produk
 
-**Prioritas:** Future
+**Prioritas:** Future — **sudah dibangun** lebih awal (1 November 2026), kecuali pratinjau sebelum publikasi.
 
 **User Story:**
 > Sebagai pemilik bisnis, saya ingin menambah, mengubah, dan menghapus produk melalui UI, sehingga katalog selalu terkini.
 
 **Acceptance Criteria:**
-- [ ] Tambah produk baru dengan foto, nama, deskripsi, harga, kategori, varian
-- [ ] Ubah produk yang ada
-- [ ] Hapus atau nonaktifkan produk
-- [ ] Unggah foto produk
-- [ ] Pratinjau perubahan sebelum publikasi
+- [x] Tambah produk baru dengan foto, nama, deskripsi, harga, kategori, varian — varian ditambahkan setelah produk disimpan pertama kali
+- [x] Ubah produk yang ada
+- [x] Hapus atau nonaktifkan produk — hapus permanen, atau tandai **Habis** lewat ketersediaan
+- [x] Unggah foto produk — ke Cloudflare R2, otomatis dikecilkan ke WebP 480/960/1600 px
+- [ ] Pratinjau perubahan sebelum publikasi — **belum ada**; perubahan langsung tampil di website setelah disimpan
 
 **Dependencies:** FR-101, penyimpanan gambar
 
@@ -589,6 +589,8 @@ Halaman `/kontak` yang menampilkan kontak, instruksi pemesanan, instruksi pengam
 
 **Verifikasi:** Inspeksi markup dan Lighthouse.
 
+**Status (1 November 2026):** foto yang diunggah lewat admin otomatis dibuat dalam lebar 480, 960, dan 1600 px berformat WebP (JPEG bila browser tidak mendukung WebP), dan semua `<img>` produk memakai `srcset` + `sizes`. Lazy loading, `fetchpriority`, dimensi eksplisit, dan alt text sudah ada. AVIF tidak dipakai. Foto yang diunggah sebelum fitur ini tetap tampil, tetapi tanpa `srcset` — unggah ulang untuk mendapat versi kecil. Lighthouse belum dijalankan.
+
 ---
 
 ### NFR-004 — SEO Teknis
@@ -685,8 +687,8 @@ Halaman `/kontak` yang menampilkan kontak, instruksi pemesanan, instruksi pengam
 
 | Kategori | MVP | Future |
 |---|---|---|
-| **Halaman** | Homepage, Tentang, Menu, Detail Produk, Jadwal, Kontak | Dashboard Admin |
-| **Fitur** | Katalog, filter, WhatsApp CTA, jadwal, lokasi, kontak | Manajemen produk, promo, inventaris, pesanan, pembayaran |
+| **Halaman** | Homepage, Tentang, Menu, Detail Produk, Jadwal, Kontak | Dashboard Admin (**sudah dibangun**, lihat FR-101) |
+| **Fitur** | Katalog, filter, WhatsApp CTA, jadwal, lokasi, kontak | Manajemen produk (**sudah dibangun**, lihat FR-102), promo, inventaris, pesanan, pembayaran |
 | **Teknis** | SEO, OG, sitemap, robots, structured data, optimasi gambar | Analitik lanjutan, notifikasi, integrasi TikTok Live |
 | **Konten** | Semua konten statis dari pemilik bisnis | Testimoni terkurasi, blog |
 

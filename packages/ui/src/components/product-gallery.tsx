@@ -1,3 +1,4 @@
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
@@ -51,6 +52,8 @@ export function ProductGallery({
       <div className="relative overflow-hidden bg-muted">
         <img
           src={active.url}
+          srcSet={photoSrcSet(active.url)}
+          sizes="(min-width: 1024px) 50vw, 100vw"
           alt={active.alt}
           width={960}
           height={720}
@@ -95,6 +98,8 @@ export function ProductGallery({
               >
                 <img
                   src={image.url}
+                  srcSet={photoSrcSet(image.url)}
+                  sizes="64px"
                   alt={image.alt}
                   width={64}
                   height={64}

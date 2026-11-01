@@ -8,6 +8,7 @@ import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import Header from "../components/header";
 import { SkipLink } from "../components/skip-link";
+import { analyticsScripts } from "../utils/analytics";
 import { localBusinessJsonLd } from "../utils/seo";
 
 import appCss from "../index.css?url";
@@ -59,6 +60,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         type: "application/ld+json",
         children: JSON.stringify(localBusinessJsonLd()),
       },
+      ...analyticsScripts(),
     ],
   }),
 

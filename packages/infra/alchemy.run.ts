@@ -10,6 +10,20 @@ import "varlock/auto-load";
  * menyerahkan diri kembali ke Bun — Bun lalu me-resolve kondisi `src/` dan
  * meminta `register-dev-mode.js` yang tidak ikut terkirim di paket terbit.
  */
+/**
+ * Rahasia admin wajib ada. Tanpa ini Worker tetap ter-deploy, tetapi setiap
+ * login gagal dengan error yang tidak menunjuk ke rahasia yang hilang.
+ */
+function requiredSecret(name: "ADMIN_PASSWORD" | "ADMIN_SESSION_SECRET") {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `${name} belum diisi. Isi di packages/infra/.env sebelum menjalankan deploy atau dev.`,
+    );
+  }
+  return Redacted.make(value);
+}
+
 export const db = Cloudflare.D1.Database("database", {
   migrations: "../../packages/db/src/migrations",
   importFiles: ["../../packages/db/src/seed.production.sql"],
@@ -28,8 +42,8 @@ export const web = Cloudflare.Website.Vite("web", {
   env: {
     DB: db,
     PHOTOS: photos,
-    ADMIN_PASSWORD: Redacted.make(process.env.ADMIN_PASSWORD ?? ""),
-    ADMIN_SESSION_SECRET: Redacted.make(process.env.ADMIN_SESSION_SECRET ?? ""),
+    ADMIN_PASSWORD: requiredSecret("ADMIN_PASSWORD"),
+    ADMIN_SESSION_SECRET: requiredSecret("ADMIN_SESSION_SECRET"),
   },
   dev: {
     port: 3001,

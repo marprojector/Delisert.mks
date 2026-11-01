@@ -1,9 +1,11 @@
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { VariantEditor } from "@/components/variant-editor";
+import { resizePhoto } from "@/utils/image-resize";
 import { useTRPC } from "@/utils/trpc";
 import {
   adminHeaders,
@@ -56,10 +58,14 @@ function ProductEditor() {
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Isi form sekali saat data produk selesai dimuat.
+  // Isi form SEKALI per produk. byId ikut di-refetch setiap kali varian
+  // berubah atau jendela kembali fokus; kalau efek ini jalan lagi, isian yang
+  // belum disimpan akan tertimpa data server.
+  const filledFor = useRef<number | null>(null);
   useEffect(() => {
     const product = existing.data;
-    if (!product) return;
+    if (!product || filledFor.current === product.id) return;
+    filledFor.current = product.id;
     setName(product.name);
     setSlug(product.slug);
     setCategoryId(product.categoryId);
@@ -141,15 +147,32 @@ function ProductEditor() {
     setUploading(true);
     try {
       const form = new FormData();
-      form.append("file", file);
+      const sized = await resizePhoto(file);
+      if (sized) {
+        const extension = sized[0]?.blob.type === "image/webp" ? "webp" : "jpg";
+        for (const { width, blob } of sized) {
+          form.append(`w${width}`, blob, `foto-${width}.${extension}`);
+        }
+      } else {
+        // Browser tidak bisa mengubah ukuran: unggah file asli apa adanya.
+        form.append("file", file);
+      }
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: adminHeaders(readAdminToken()),
         body: form,
       });
-      const body = (await response.json()) as { url?: string; error?: string };
+      if (response.status === 401) {
+        setError("Sesi admin sudah berakhir. Keluar lalu masuk lagi, kemudian unggah ulang fotonya.");
+        return;
+      }
+      // Respons error tidak selalu JSON (misalnya halaman error dari proxy).
+      const body = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
       if (!response.ok || !body.url) {
-        setError(body.error ?? "Gagal mengunggah foto.");
+        setError(body.error ?? "Gagal mengunggah foto. Coba lagi.");
         return;
       }
       setImageUrl(body.url);
@@ -275,6 +298,8 @@ function ProductEditor() {
           {imageUrl ? (
             <img
               src={imageUrl}
+              srcSet={photoSrcSet(imageUrl)}
+              sizes="240px"
               alt={imageAlt || `Foto ${name || "produk"}`}
               width={240}
               height={180}

@@ -13,6 +13,10 @@ export async function createContext({ req }: { req: Request }): Promise<ApiConte
     adminSecret: env.ADMIN_SESSION_SECRET,
     adminPassword: env.ADMIN_PASSWORD,
     authorization: req.headers.get("authorization") ?? undefined,
+    clientIp: req.headers.get("cf-connecting-ip") ?? undefined,
+    deletePhoto: async (key) => {
+      await env.PHOTOS.delete(key);
+    },
   };
 }
 

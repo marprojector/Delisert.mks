@@ -1,6 +1,14 @@
 -- Authoritative public catalogue seed for a fresh D1 deployment.
--- Prices are rupiah x100: Rp 8.000 => 8000.
--- INSERT OR IGNORE keeps repeated Alchemy imports idempotent.
+-- Prices are stored as whole rupiah: Rp 8.000 => 8000.
+--
+-- Alchemy imports this file on every deploy, so it must only fill an EMPTY
+-- catalogue and never touch what the owner has changed in /admin:
+--   * categories use INSERT OR IGNORE on their unique slug;
+--   * products are inserted only while the products table is empty, so a
+--     product the owner deleted does not come back on the next deploy;
+--   * variants are inserted in ONE statement, only while product_variants is
+--     empty. The table has no unique key, so INSERT OR IGNORE alone would add
+--     a fresh copy of every variant on each deploy.
 
 INSERT OR IGNORE INTO product_categories (slug, name, description, display_order, is_active)
 VALUES
@@ -13,49 +21,42 @@ VALUES
 
 INSERT OR IGNORE INTO products
   (category_id, slug, name, description, price_cents, currency, is_featured, availability, display_order)
-VALUES
-  ((SELECT id FROM product_categories WHERE slug = 'mochi'),
-   'artisanal-mochi-daifuku', 'Artisanal Mochi Daifuku',
-   'Mochi lembut buatan tangan dengan isian krim pilihan. Tersedia dalam 8 varian rasa dan tiga ukuran porsi — 1 pcs, isi 4, dan isi 8. Varian rasa boleh dicampur sesuai selera.',
-   8000, 'IDR', 1, 'available', 1),
-  ((SELECT id FROM product_categories WHERE slug = 'mango-sticky-rice'),
-   'authentic-mango-sticky-rice', 'Authentic Mango Sticky Rice',
-   'Ketan manis yang dikukus dengan santan, disajikan bersama potongan mangga segar. Harga datar per porsi.',
-   30000, 'IDR', 1, 'available', 2),
-  ((SELECT id FROM product_categories WHERE slug = 'pancake-durian'),
-   'pancake-durian-premium', 'Pancake Durian Premium',
-   'Pancake lembut dengan isian durian pilihan. Dijual harga datar tunggal Rp 35.000 per porsi mika, tanpa paket isi 4 atau isi 8. Wajib disimpan di chiller.',
-   35000, 'IDR', 1, 'available', 3),
-  ((SELECT id FROM product_categories WHERE slug = 'dubai-chewy-cookie'),
-   'dubai-chewy-cookie', 'Dubai Chewy Cookie',
-   'Cookie chewy premium dengan tekstur kenyal dan cokelat yang melimpah.',
-   30000, 'IDR', 1, 'available', 4),
-  ((SELECT id FROM product_categories WHERE slug = 'slice-cake'),
-   'slice-cake', 'Slice Cake',
-   'Kue lapis artisanal dengan tekstur lembut dan krim yang seimbang. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.',
-   16000, 'IDR', 1, 'available', 5),
-  ((SELECT id FROM product_categories WHERE slug = 'mille-crepes'),
-   'mille-crepes', 'Mille Crepes',
-   'Kue crepes berlapis-lapis dengan krim lembut. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.',
-   16000, 'IDR', 1, 'available', 6);
+SELECT c.id, p.slug, p.name, p.description, p.price_cents, 'IDR', 1, 'available', p.display_order
+FROM (
+  SELECT 'mochi' AS category_slug, 'artisanal-mochi-daifuku' AS slug, 'Artisanal Mochi Daifuku' AS name,
+    'Mochi lembut buatan tangan dengan isian krim pilihan. Tersedia dalam 8 varian rasa dan tiga ukuran porsi — 1 pcs, isi 4, dan isi 8. Varian rasa boleh dicampur sesuai selera.' AS description,
+    8000 AS price_cents, 1 AS display_order
+  UNION ALL SELECT 'mango-sticky-rice', 'authentic-mango-sticky-rice', 'Authentic Mango Sticky Rice',
+    'Ketan manis yang dikukus dengan santan, disajikan bersama potongan mangga segar. Harga datar per porsi.',
+    30000, 2
+  UNION ALL SELECT 'pancake-durian', 'pancake-durian-premium', 'Pancake Durian Premium',
+    'Pancake lembut dengan isian durian pilihan. Dijual harga datar tunggal Rp 35.000 per porsi mika, tanpa paket isi 4 atau isi 8. Wajib disimpan di chiller.',
+    35000, 3
+  UNION ALL SELECT 'dubai-chewy-cookie', 'dubai-chewy-cookie', 'Dubai Chewy Cookie',
+    'Cookie chewy premium dengan tekstur kenyal dan cokelat yang melimpah.',
+    30000, 4
+  UNION ALL SELECT 'slice-cake', 'slice-cake', 'Slice Cake',
+    'Kue lapis artisanal dengan tekstur lembut dan krim yang seimbang. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.',
+    16000, 5
+  UNION ALL SELECT 'mille-crepes', 'mille-crepes', 'Mille Crepes',
+    'Kue crepes berlapis-lapis dengan krim lembut. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.',
+    16000, 6
+) AS p
+JOIN product_categories AS c ON c.slug = p.category_slug
+WHERE NOT EXISTS (SELECT 1 FROM products);
 
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, '1 Pcs', 8000, 1, 1 FROM products WHERE slug = 'artisanal-mochi-daifuku';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Isi 4 pcs', 30000, 1, 2 FROM products WHERE slug = 'artisanal-mochi-daifuku';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Isi 8 pcs', 50000, 1, 3 FROM products WHERE slug = 'artisanal-mochi-daifuku';
-
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Lotus Biscoff', 16000, 1, 1 FROM products WHERE slug = 'slice-cake';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Red Velvet', 16000, 1, 2 FROM products WHERE slug = 'slice-cake';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Coklat', 16000, 1, 3 FROM products WHERE slug = 'slice-cake';
-
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Lotus Biscoff', 16000, 1, 1 FROM products WHERE slug = 'mille-crepes';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Red Velvet', 16000, 1, 2 FROM products WHERE slug = 'mille-crepes';
-INSERT OR IGNORE INTO product_variants (product_id, name, price_cents, is_available, display_order)
-SELECT id, 'Coklat', 16000, 1, 3 FROM products WHERE slug = 'mille-crepes';
+INSERT INTO product_variants (product_id, name, price_cents, is_available, display_order)
+SELECT pr.id, v.name, v.price_cents, 1, v.display_order
+FROM (
+  SELECT 'artisanal-mochi-daifuku' AS slug, '1 Pcs' AS name, 8000 AS price_cents, 1 AS display_order
+  UNION ALL SELECT 'artisanal-mochi-daifuku', 'Isi 4 pcs', 30000, 2
+  UNION ALL SELECT 'artisanal-mochi-daifuku', 'Isi 8 pcs', 50000, 3
+  UNION ALL SELECT 'slice-cake', 'Lotus Biscoff', 16000, 1
+  UNION ALL SELECT 'slice-cake', 'Red Velvet', 16000, 2
+  UNION ALL SELECT 'slice-cake', 'Coklat', 16000, 3
+  UNION ALL SELECT 'mille-crepes', 'Lotus Biscoff', 16000, 1
+  UNION ALL SELECT 'mille-crepes', 'Red Velvet', 16000, 2
+  UNION ALL SELECT 'mille-crepes', 'Coklat', 16000, 3
+) AS v
+JOIN products AS pr ON pr.slug = v.slug
+WHERE NOT EXISTS (SELECT 1 FROM product_variants);

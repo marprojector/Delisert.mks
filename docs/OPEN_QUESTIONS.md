@@ -420,6 +420,8 @@ Rincian verifikasi per screen ada di `docs/DESIGN_AUDIT.md`.
 | **Workaround saat ini** | Tampil `Rp —` dengan label "Harga menyusul" — sesuai aturan PRD "jangan mengarang harga". Tidak memakai "Rp 0" atau angka kosong |
 | **Yang Diminta** | Satu angka harga, plus konfirmasi apakah ada varian ukuran (mis. ukuran kecil/besar) dengan harga berbeda |
 
+> **Catatan 2026-11-01 — dokumen tidak sinkron:** `docs/DESIGN_AUDIT.md` §2 dan seed database (`packages/db/src/seed.production.sql`) sudah mencantumkan **Mille Crepes Rp 16.000 per slice** dengan varian Lotus Biscoff, Red Velvet, dan Coklat. Tidak ada catatan terpisah kapan pemilik mengonfirmasi angka ini. **Pemilik perlu memastikan** sebelum deploy: kalau benar, tandai Q-30 dan Q-04 selesai; kalau salah, ubah harganya lewat halaman admin (atau di seed sebelum deploy pertama).
+
 ---
 
 ## 6. Asumsi yang Digunakan dalam PRD

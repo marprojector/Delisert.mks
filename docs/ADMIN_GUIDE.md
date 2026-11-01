@@ -43,7 +43,7 @@ Setelah masuk, halaman pertama menampilkan:
 | **Harga (rupiah)** | **Tulis angka rupiah utuh.** Untuk Rp 8.000 tulis `8000`, bukan `80` dan bukan `800000`. Di bawah kolom akan muncul pratinjau harga supaya Anda bisa memeriksa. |
 | **Ketersediaan** | Tersedia / Pre-Order / Habis. |
 | **Deskripsi** | Penjelasan singkat produk. |
-| **Foto produk** | Unggah JPG, PNG, atau WebP, maksimal 5 MB. |
+| **Foto produk** | Unggah JPG, PNG, atau WebP. Foto otomatis dikecilkan dan dikompres sebelum diunggah, jadi foto langsung dari kamera HP tidak masalah. |
 | **Alt text foto** | Kalimat singkat yang dibacakan untuk pembaca layar, mis. `Mochi stroberi Delisert Makassar`. |
 | **Produk unggulan** | Centang agar muncul di beranda. |
 
@@ -98,8 +98,13 @@ produk menampilkan satu harga saja, bukan rentang.
 3. Tunggu sampai tulisan **Mengunggah…** hilang dan pratinjau foto muncul.
 4. Klik **Simpan**.
 
-Kalau foto gagal diunggah, pesan kesalahan akan muncul. Penyebab umum:
-ukuran lebih dari 5 MB, atau format bukan JPG/PNG/WebP.
+Website otomatis membuat beberapa ukuran foto (480, 960, dan 1600 px, format
+WebP) supaya halaman cepat dibuka di HP. Foto lama otomatis dihapus dari
+penyimpanan saat diganti atau saat produknya dihapus.
+
+Kalau foto gagal diunggah, pesan kesalahan akan muncul. Penyebab umum: format
+bukan JPG/PNG/WebP, atau sesi admin sudah berakhir (keluar lalu masuk lagi).
+Di browser yang sangat lama, foto diunggah apa adanya dan batasnya 5 MB.
 
 ---
 
