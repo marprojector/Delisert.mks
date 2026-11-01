@@ -51,6 +51,18 @@ export function toForm(product: {
   };
 }
 
+export type FormError = { field: "name" | "slug" | "category"; message: string };
+
+/** Validasi sebelum menyimpan. `field` dipakai editor untuk membuka isian yang dilipat. */
+export function validateProductForm(form: ProductForm): FormError | null {
+  if (!form.name.trim()) return { field: "name", message: "Nama produk wajib diisi." };
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) {
+    return { field: "slug", message: "Slug hanya boleh huruf kecil, angka, dan tanda hubung." };
+  }
+  if (form.categoryId === "") return { field: "category", message: "Pilih kategori." };
+  return null;
+}
+
 export function isDirty(initial: ProductForm, current: ProductForm): boolean {
   return (Object.keys(initial) as Array<keyof ProductForm>).some((key) => initial[key] !== current[key]);
 }

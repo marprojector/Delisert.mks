@@ -77,6 +77,17 @@ export function useHeroIntro(scope: Scope) {
   );
 }
 
+/** Jarak geser parallax per tingkat kekuatan, ke atas dan ke bawah dari posisi asal. */
+export const PARALLAX_TRAVEL_PX = 20;
+
+/**
+ * Lapisan foto parallax harus lebih tinggi dari wadahnya sebanyak ini di atas
+ * dan di bawah, supaya saat bergeser tidak pernah ada celah kosong.
+ */
+export function parallaxOverscanPx(strength: number): number {
+  return PARALLAX_TRAVEL_PX * strength + 8;
+}
+
 /** Elemen [data-parallax="n"] bergeser pelan saat halaman di-scroll. */
 export function useParallax(scope: Scope) {
   useGSAP(
@@ -85,16 +96,22 @@ export function useParallax(scope: Scope) {
       mm.add(MOTION_QUERY, () => {
         for (const element of gsap.utils.toArray<HTMLElement>("[data-parallax]", scope.current)) {
           const strength = Number(element.dataset.parallax) || 1;
-          gsap.to(element, {
-            y: strength * -40,
-            ease: "none",
-            scrollTrigger: {
-              trigger: element,
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true,
+          const travel = PARALLAX_TRAVEL_PX * strength;
+          gsap.fromTo(
+            element,
+            { y: travel },
+            {
+              y: -travel,
+              ease: "none",
+              scrollTrigger: {
+                trigger: element,
+                // clamp(): elemen di layar pertama mulai dari posisi tengah.
+                start: "clamp(top bottom)",
+                end: "clamp(bottom top)",
+                scrub: true,
+              },
             },
-          });
+          );
         }
       });
       return () => mm.revert();

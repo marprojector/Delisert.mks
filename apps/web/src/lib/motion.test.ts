@@ -23,3 +23,13 @@ describe("motion module", () => {
     }
   });
 });
+
+describe("hero parallax", () => {
+  test("the photo layer is taller than the distance it travels, so no empty strip shows", async () => {
+    const { PARALLAX_TRAVEL_PX, parallaxOverscanPx } = await import("./motion");
+    for (const strength of [1, 2]) {
+      expect(parallaxOverscanPx(strength)).toBeGreaterThanOrEqual(PARALLAX_TRAVEL_PX * strength);
+    }
+    expect(source).toContain("clamp(");
+  });
+});

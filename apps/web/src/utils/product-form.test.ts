@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { EMPTY_FORM, isDirty, toForm, toPayload } from "./product-form";
+import { EMPTY_FORM, isDirty, toForm, toPayload, validateProductForm } from "./product-form";
 
 const product = {
   name: "Artisanal Mochi Daifuku",
@@ -42,5 +42,19 @@ describe("toPayload", () => {
     expect(payload.name).toBe("Mochi");
     expect(payload.priceCents).toBeNull();
     expect(payload.description).toBeNull();
+  });
+});
+
+describe("validateProductForm", () => {
+  const valid = { ...EMPTY_FORM, name: "Mochi", slug: "mochi", categoryId: 1 as const };
+
+  test("accepts a complete form", () => {
+    expect(validateProductForm(valid)).toBeNull();
+  });
+
+  test("points slug and category errors at the folded fields so the editor can open them", () => {
+    expect(validateProductForm({ ...valid, slug: "Mochi Stroberi" })?.field).toBe("slug");
+    expect(validateProductForm({ ...valid, categoryId: "" })?.field).toBe("category");
+    expect(validateProductForm({ ...valid, name: " " })?.field).toBe("name");
   });
 });

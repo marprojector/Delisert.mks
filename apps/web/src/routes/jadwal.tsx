@@ -144,7 +144,7 @@ function ScheduleComponent() {
             {fullAddress}
           </address>
           <p className="text-xs/relaxed text-muted-foreground lg:text-sm">
-            {OPERATIONAL_ADDRESS.note} Senin tutup.
+            {OPERATIONAL_ADDRESS.note}
           </p>
         </div>
       </section>

@@ -19,6 +19,7 @@ import {
   isDirty,
   toForm,
   toPayload,
+  validateProductForm,
 } from "@/utils/product-form";
 import { useTRPC } from "@/utils/trpc";
 
@@ -63,6 +64,14 @@ function ProductEditor() {
   const [uploading, setUploading] = useState(false);
   // HP: kategori, deskripsi, dan slug dilipat. Produk baru langsung terbuka.
   const [showMore, setShowMore] = useState(isNew);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  // Simpan ada di bar bawah layar; pastikan pesan error di atas benar-benar terlihat.
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    errorRef.current?.focus({ preventScroll: true });
+  }, [error]);
 
   const set = <Key extends keyof ProductForm>(key: Key, value: ProductForm[Key]) =>
     setForm((current) => ({ ...current, [key]: value }));
@@ -91,6 +100,7 @@ function ProductEditor() {
   };
 
   const onSaveError = (mutationError: { data?: { code?: string } | null }) => {
+    if (mutationError.data?.code === "CONFLICT") setShowMore(true);
     setError(
       mutationError.data?.code === "CONFLICT"
         ? "Slug sudah dipakai produk lain."
@@ -103,11 +113,14 @@ function ProductEditor() {
 
   const submit = () => {
     setError(null);
-    if (!form.name.trim()) return setError("Nama produk wajib diisi.");
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) {
-      return setError("Slug hanya boleh huruf kecil, angka, dan tanda hubung.");
+    if (uploading) return setError("Tunggu sampai foto selesai diunggah.");
+    const invalid = validateProductForm(form);
+    if (invalid) {
+      // Kategori dan slug ada di bagian yang dilipat di HP: buka supaya bisa diperbaiki.
+      if (invalid.field !== "name") setShowMore(true);
+      return setError(invalid.message);
     }
-    if (form.categoryId === "") return setError("Pilih kategori.");
+    if (form.categoryId === "") return;
 
     const payload = toPayload({ ...form, categoryId: form.categoryId });
     if (isNew) create.mutate(payload);
@@ -265,13 +278,20 @@ function ProductEditor() {
       </div>
 
       {error ? (
-        <p role="alert" className="rounded-xl bg-[#fbe9e7] px-3.5 py-3 text-sm text-destructive">
+        <p
+          ref={errorRef}
+          role="alert"
+          tabIndex={-1}
+          className="scroll-mt-20 rounded-xl bg-[#fbe9e7] px-3.5 py-3 text-sm text-destructive outline-none"
+        >
           {error}
         </p>
       ) : null}
 
       <form
         id={FORM_ID}
+        // Validasi lewat JS: isian yang dilipat tidak bisa difokuskan browser.
+        noValidate
         onSubmit={(event) => {
           event.preventDefault();
           submit();

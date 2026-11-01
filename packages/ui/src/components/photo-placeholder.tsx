@@ -6,13 +6,16 @@ export function PhotoPlaceholder({
   categorySlug,
   label = "Foto menyusul",
   className,
+  style,
 }: {
   categorySlug?: string;
   label?: string;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
+      style={style}
       className={cn(
         "flex size-full items-end justify-start p-3 text-[0.6875rem] font-medium text-foreground/55",
         categoryTint(categorySlug),

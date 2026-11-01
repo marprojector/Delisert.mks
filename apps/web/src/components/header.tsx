@@ -15,6 +15,7 @@ export default function Header() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useMenuOverlay(open, overlayRef);
 
@@ -39,11 +40,37 @@ export default function Header() {
     };
   }, [open]);
 
+  // Halaman di belakang menu tidak bisa dijangkau Tab/pembaca layar selama menu terbuka.
+  useEffect(() => {
+    if (!open) return;
+    const background = [
+      headerRef.current,
+      document.getElementById("main-content"),
+      document.querySelector("footer"),
+    ].filter((element): element is HTMLElement => element !== null);
+    for (const element of background) element.setAttribute("inert", "");
+    return () => {
+      for (const element of background) element.removeAttribute("inert");
+    };
+  }, [open]);
+
+  // Menu ini hanya untuk HP; tutup bila layar melebar (mis. tablet diputar).
+  useEffect(() => {
+    if (!open) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setOpen(false);
+    };
+    if (desktop.matches) setOpen(false);
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+  }, [open]);
+
   const isActive = (to: string) => (to === "/" ? pathname === "/" : pathname.startsWith(to));
 
   return (
     <>
-    <header className="sticky top-0 z-50 border-b border-transparent bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-transparent bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
       <div className="cn-shell flex h-[3.75rem] items-center justify-between gap-4 lg:h-20">
         <Link
           to="/"

@@ -13,7 +13,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Play, Sun } from "lucide-react";
 import { useRef } from "react";
 
-import { useHeroIntro, useParallax, useReveal } from "@/lib/motion";
+import { parallaxOverscanPx, useHeroIntro, useParallax, useReveal } from "@/lib/motion";
 import { canonical } from "@/utils/seo";
 import { useTRPC } from "@/utils/trpc";
 
@@ -146,9 +146,13 @@ function HeroMedia({
   return (
     <div
       data-hero-media
-      className={cn("overflow-hidden rounded-3xl lg:rounded-[2rem]", className)}
+      className={cn("relative overflow-hidden rounded-3xl lg:rounded-[2rem]", className)}
     >
-      <div data-parallax={parallax} className="size-full scale-110">
+      <div
+        data-parallax={parallax}
+        className="absolute inset-x-0"
+        style={{ top: -parallaxOverscanPx(parallax), bottom: -parallaxOverscanPx(parallax) }}
+      >
         {product?.imageUrl ? (
           <img
             src={product.imageUrl}
@@ -161,8 +165,11 @@ function HeroMedia({
             className="size-full object-cover"
           />
         ) : (
-          // Lapisan parallax diperbesar 110%; label diberi jarak supaya tidak terpotong.
-          <PhotoPlaceholder categorySlug={product?.category.slug ?? slug} className="p-[9%]" />
+          // Lapisan parallax lebih tinggi dari wadah; label diberi jarak supaya tetap terlihat.
+          <PhotoPlaceholder
+            categorySlug={product?.category.slug ?? slug}
+            style={{ paddingBottom: parallaxOverscanPx(parallax) + 12 }}
+          />
         )}
       </div>
     </div>

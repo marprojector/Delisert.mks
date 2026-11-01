@@ -1,5 +1,6 @@
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Toggle } from "@/components/admin/toggle";
@@ -108,9 +109,10 @@ export function VariantEditor({ productId }: { productId: number }) {
                 onClick={() => {
                   if (window.confirm(`Hapus varian "${variant.name}"?`)) remove.mutate({ id: variant.id });
                 }}
-                className="hidden text-[0.8125rem] text-destructive sm:block"
+                className="flex size-9 shrink-0 items-center justify-center rounded-full text-destructive transition-colors hover:bg-destructive/10 sm:size-auto sm:px-1 sm:text-[0.8125rem]"
               >
-                Hapus
+                <Trash2 aria-hidden="true" className="size-4 sm:hidden" />
+                <span className="sr-only sm:not-sr-only">Hapus</span>
                 <span className="sr-only"> varian {variant.name}</span>
               </button>
             </li>
