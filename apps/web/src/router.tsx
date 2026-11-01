@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import Loader from "./components/loader";
 import { routeTree } from "./routeTree.gen";
+import { readAdminToken } from "./utils/admin-client";
 import { TRPCProvider } from "./utils/trpc";
 
 /**
@@ -50,6 +51,12 @@ export const getRouter = () => {
     links: [
       httpBatchLink({
         url: getTrpcUrl(),
+        // Token admin hanya ada di sessionStorage browser; saat SSR nilainya
+        // kosong, jadi tidak ada kebocoran kredensial ke render server.
+        headers: () => {
+          const token = readAdminToken();
+          return token ? { authorization: `Bearer ${token}` } : {};
+        },
       }),
     ],
   });
