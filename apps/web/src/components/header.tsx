@@ -153,6 +153,8 @@ export default function Header() {
                 <li key={link.to} data-menu-item>
                   <Link
                     to={link.to}
+                    // Tutup juga saat mengetuk halaman yang sedang dibuka (path tidak berubah).
+                    onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center justify-between py-3 cn-font-display text-4xl font-semibold",
                       isActive(link.to) ? "text-accent" : "text-primary-foreground",

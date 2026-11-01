@@ -60,27 +60,53 @@ export function useReveal(scope: Scope, dependencies: unknown[] = []) {
     () => {
       const mm = gsap.matchMedia();
       mm.add(MOTION_QUERY, () => {
-        const targets = gsap.utils.toArray<HTMLElement>("[data-reveal]", scope.current);
-        if (targets.length === 0) return;
+        const root = scope.current;
+        if (!root) return;
+        const handled = new WeakSet<Element>();
 
-        const fold = window.innerHeight * 0.92;
-        // Elemen tersembunyi (display:none, mis. kartu kategori lain) tidak ikut antre stagger.
-        const shown = targets.filter((element) => element.getClientRects().length > 0);
-        const visibleNow = shown.filter((element) => element.getBoundingClientRect().top < fold);
-        const later = targets.filter((element) => !visibleNow.includes(element));
-        // Yang tersembunyi tetap didaftarkan agar muncul saat filter menampilkannya.
+        const reveal = (targets: HTMLElement[], delay: number) => {
+          const fresh = targets.filter((element) => !handled.has(element));
+          if (fresh.length === 0) return;
+          for (const element of fresh) handled.add(element);
 
-        if (visibleNow.length > 0) {
-          gsap.fromTo(visibleNow, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.07, delay: 0.15 });
-        }
-        if (later.length > 0) {
-          ScrollTrigger.batch(later, {
-            start: "top 92%",
-            once: true,
-            onEnter: (batch) =>
-              gsap.fromTo(batch, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.08, overwrite: true }),
-          });
-        }
+          const fold = window.innerHeight * 0.92;
+          // Elemen tersembunyi (display:none, mis. kartu kategori lain) tidak ikut antre stagger.
+          const shown = fresh.filter((element) => element.getClientRects().length > 0);
+          const visibleNow = shown.filter((element) => element.getBoundingClientRect().top < fold);
+          const later = fresh.filter((element) => !visibleNow.includes(element));
+          // Yang tersembunyi tetap didaftarkan agar muncul saat filter menampilkannya.
+
+          if (visibleNow.length > 0) {
+            gsap.fromTo(visibleNow, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.07, delay });
+          }
+          if (later.length > 0) {
+            ScrollTrigger.batch(later, {
+              start: "top 92%",
+              once: true,
+              onEnter: (batch) =>
+                gsap.fromTo(batch, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.08, overwrite: true }),
+            });
+          }
+        };
+
+        reveal(gsap.utils.toArray<HTMLElement>("[data-reveal]", root), 0.15);
+
+        // Elemen [data-reveal] yang baru muncul setelah mount (data dimuat
+        // belakangan, daftar berubah) juga harus dimunculkan — kalau tidak, CSS
+        // gerbang animasi membiarkannya transparan sampai fallback motion-done.
+        const observer = new MutationObserver((records) => {
+          const added: HTMLElement[] = [];
+          for (const record of records) {
+            for (const node of record.addedNodes) {
+              if (!(node instanceof HTMLElement)) continue;
+              if (node.matches("[data-reveal]")) added.push(node);
+              added.push(...node.querySelectorAll<HTMLElement>("[data-reveal]"));
+            }
+          }
+          if (added.length > 0) reveal(added, 0);
+        });
+        observer.observe(root, { childList: true, subtree: true });
+        return () => observer.disconnect();
       });
       return () => mm.revert();
     },

@@ -97,6 +97,23 @@ describe("seed.production.sql", () => {
     expect(counts(client)).toEqual({ products: 6, variants: 9 });
   });
 
+  test("a catalogue the owner emptied on purpose stays empty after a redeploy", () => {
+    const { client } = makeDb();
+    client.exec(PRODUCTION_SEED);
+    client.exec("delete from product_variants");
+    client.exec("delete from products");
+    client.exec(PRODUCTION_SEED);
+    expect(counts(client)).toEqual({ products: 0, variants: 0 });
+  });
+
+  test("a database seeded before the seed marker existed gains no duplicates", () => {
+    const { client } = makeDb();
+    client.exec(PRODUCTION_SEED);
+    client.exec("drop table _seed_state");
+    client.exec(PRODUCTION_SEED);
+    expect(counts(client)).toEqual({ products: 6, variants: 9 });
+  });
+
   test("a product the owner deleted stays deleted after a redeploy", () => {
     const { client } = makeDb();
     client.exec(PRODUCTION_SEED);

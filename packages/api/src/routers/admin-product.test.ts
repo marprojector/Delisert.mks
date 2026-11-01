@@ -73,6 +73,53 @@ describe("admin product", () => {
     ]);
   });
 
+  test("lists inactive categories too, flagged, so the editor can show a product's current one", async () => {
+    const { db, client } = await setup();
+    const caller = await authedCaller(db as never);
+    client.exec("update product_categories set is_active = 0 where slug = 'mochi'");
+    const categories = await caller.adminProduct.categories();
+    expect(categories.find((category) => category.slug === "mochi")?.isActive).toBe(false);
+    expect(categories.find((category) => category.slug === "slice-cake")?.isActive).toBe(true);
+  });
+
+  test("discards an unsaved upload but never a photo a product still uses", async () => {
+    const { db, client } = await setup();
+    const deleted: string[] = [];
+    const caller = await authedCaller(db as never, {
+      deletePhoto: async (key) => {
+        deleted.push(key);
+      },
+    });
+    const id = "0f8fad5b-d9cb-469f-a165-70867728950e";
+    const used = `/api/photos/products/${id}-w480.webp`;
+    client.exec(`update products set image_url = '${used}' where slug = 'mille-crepes'`);
+
+    await caller.adminProduct.discardPhoto({ url: used });
+    expect(deleted).toEqual([]);
+
+    const orphan = "/api/photos/products/1b4e28ba-2fa1-41d2-883f-0016d3cca427-w960.webp";
+    await caller.adminProduct.discardPhoto({ url: orphan });
+    expect(deleted.sort()).toEqual([
+      "products/1b4e28ba-2fa1-41d2-883f-0016d3cca427-w480.webp",
+      "products/1b4e28ba-2fa1-41d2-883f-0016d3cca427-w960.webp",
+    ]);
+  });
+
+  test("a save still succeeds when cleaning up the old photo fails", async () => {
+    const { db, client } = await setup();
+    const caller = await authedCaller(db as never, {
+      deletePhoto: async () => {
+        throw new Error("R2 down");
+      },
+    });
+    client.exec("update products set image_url = '/api/photos/products/0f8fad5b-d9cb-469f-a165-70867728950e-w480.webp' where slug = 'mochi-x'");
+    const rows = await caller.adminProduct.list();
+    const target = rows.find((row) => row.slug === "slice-cake")!;
+    client.exec(`update products set image_url = '/api/photos/products/0f8fad5b-d9cb-469f-a165-70867728950e-w480.webp' where id = ${target.id}`);
+    const updated = await caller.adminProduct.update({ id: target.id, imageUrl: null });
+    expect(updated.imageUrl).toBeNull();
+  });
+
   test("rejects an unauthenticated caller", async () => {
     const { db } = await setup();
     const caller = appRouter.createCaller(baseCtx(db as never));

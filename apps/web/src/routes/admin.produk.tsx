@@ -169,6 +169,20 @@ function AdminProductList() {
 
       {products.isLoading ? (
         <p className="text-sm text-muted-foreground">Memuat produk…</p>
+      ) : products.isError ? (
+        // Gagal memuat ≠ katalog kosong: jangan sampai pemilik mengira semua produk hilang.
+        <div role="alert" className="flex flex-col items-start gap-3 rounded-[1.125rem] bg-background p-6">
+          <p className="text-sm text-destructive">
+            Gagal memuat produk. Periksa koneksi, atau keluar lalu masuk lagi bila sesi sudah berakhir.
+          </p>
+          <button
+            type="button"
+            onClick={() => void products.refetch()}
+            className="h-10 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground"
+          >
+            Coba lagi
+          </button>
+        </div>
       ) : rows.length === 0 ? (
         <p className="rounded-[1.125rem] bg-background p-6 text-sm text-muted-foreground">
           {(products.data ?? []).length === 0

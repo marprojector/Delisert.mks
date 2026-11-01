@@ -1,4 +1,4 @@
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, count, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -76,17 +76,23 @@ const isUniqueViolation = (error: unknown): boolean =>
 async function deleteUnusedPhoto(
   ctx: Context,
   url: string | null | undefined,
-  productId: number,
+  productId: number | null,
 ): Promise<void> {
   if (!ctx.deletePhoto || !url) return;
-  // Produk lain masih memakai foto yang sama? Biarkan di R2.
-  const stillUsed = await ctx.db
-    .select({ id: products.id })
-    .from(products)
-    .where(and(eq(products.imageUrl, url), ne(products.id, productId)))
-    .get();
-  if (stillUsed) return;
+  // Seluruhnya di dalam try: data produk sudah tersimpan saat ini dipanggil,
+  // jadi error di sini tidak boleh membuat simpan dilaporkan gagal.
   try {
+    // Produk lain masih memakai foto yang sama? Biarkan di R2.
+    const stillUsed = await ctx.db
+      .select({ id: products.id })
+      .from(products)
+      .where(
+        productId === null
+          ? eq(products.imageUrl, url)
+          : and(eq(products.imageUrl, url), ne(products.id, productId)),
+      )
+      .get();
+    if (stillUsed) return;
     await Promise.all(photoKeysForUrl(url).map((key) => ctx.deletePhoto!(key)));
   } catch {
     /* objek yatim lebih baik daripada simpan yang gagal */
@@ -94,15 +100,29 @@ async function deleteUnusedPhoto(
 }
 
 export const adminProductRouter = router({
+  /**
+   * Buang foto yang sudah diunggah tetapi tidak jadi dipakai (diganti lagi
+   * sebelum disimpan, dibatalkan, atau ditinggal). Foto yang masih dipakai
+   * produk mana pun tidak pernah dihapus.
+   */
+  discardPhoto: adminProcedure
+    .input(z.object({ url: z.string().min(1).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      await deleteUnusedPhoto(ctx, input.url, null);
+      return { ok: true as const };
+    }),
+
   categories: adminProcedure.query(async ({ ctx }) => {
     return ctx.db
       .select({
         id: productCategories.id,
         slug: productCategories.slug,
         name: productCategories.name,
+        // Kategori nonaktif ikut dikirim agar editor bisa menampilkan
+        // kategori produk saat ini; pilihan baru hanya dari yang aktif.
+        isActive: productCategories.isActive,
       })
       .from(productCategories)
-      .where(eq(productCategories.isActive, true))
       .orderBy(asc(productCategories.displayOrder), asc(productCategories.id));
   }),
 
@@ -124,13 +144,11 @@ export const adminProductRouter = router({
       .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
       .orderBy(asc(products.displayOrder), asc(products.id));
 
-    const variantRows = await ctx.db
-      .select({ productId: productVariants.productId })
-      .from(productVariants);
-    const variantCount = new Map<number, number>();
-    for (const variant of variantRows) {
-      variantCount.set(variant.productId, (variantCount.get(variant.productId) ?? 0) + 1);
-    }
+    const counts = await ctx.db
+      .select({ productId: productVariants.productId, total: count() })
+      .from(productVariants)
+      .groupBy(productVariants.productId);
+    const variantCount = new Map(counts.map((row) => [row.productId, row.total]));
 
     return rows.map((row) => ({
       ...row,

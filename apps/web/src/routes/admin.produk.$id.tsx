@@ -21,7 +21,7 @@ import {
   toPayload,
   validateProductForm,
 } from "@/utils/product-form";
-import { useTRPC } from "@/utils/trpc";
+import { useTRPC, useTRPCClient } from "@/utils/trpc";
 
 export const Route = createFileRoute("/admin/produk/$id")({
   head: () => ({
@@ -49,6 +49,7 @@ function ProductEditor() {
   const isNew = id === "baru";
 
   const trpc = useTRPC();
+  const trpcClient = useTRPCClient();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -73,6 +74,27 @@ function ProductEditor() {
     errorRef.current?.focus({ preventScroll: true });
   }, [error]);
 
+  // Foto yang sudah diunggah ke R2 tetapi belum tersimpan ke produk. Bila
+  // diganti, dibatalkan, atau editor ditinggal tanpa simpan, file-nya dibuang
+  // supaya tidak menumpuk di bucket. Server tetap menolak menghapus foto yang
+  // dipakai produk mana pun.
+  const pendingUploads = useRef(new Set<string>());
+  const discardUpload = (url: string) => {
+    if (!pendingUploads.current.delete(url)) return;
+    trpcClient.adminProduct.discardPhoto.mutate({ url }).catch(() => {
+      // Bersih-bersih bersifat opsional; kegagalan tidak boleh mengganggu editor.
+    });
+  };
+  const discardUploadsExcept = (keep: string | null) => {
+    for (const url of [...pendingUploads.current]) if (url !== keep) discardUpload(url);
+  };
+  const discardRef = useRef(discardUploadsExcept);
+  discardRef.current = discardUploadsExcept;
+  useEffect(() => () => discardRef.current(null), []);
+
+  const formRef = useRef(form);
+  formRef.current = form;
+
   const set = <Key extends keyof ProductForm>(key: Key, value: ProductForm[Key]) =>
     setForm((current) => ({ ...current, [key]: value }));
 
@@ -92,6 +114,10 @@ function ProductEditor() {
   const dirty = isNew || isDirty(initial, form);
 
   const afterSave = () => {
+    // Foto yang kini dipakai produk bukan lagi unggahan tertunda; sisanya dibuang.
+    const saved = formRef.current.imageUrl || null;
+    if (saved) pendingUploads.current.delete(saved);
+    discardUploadsExcept(null);
     void queryClient.invalidateQueries(trpc.adminProduct.list.queryFilter());
     if (!isNew) {
       void queryClient.invalidateQueries(trpc.adminProduct.byId.queryFilter({ id: Number(id) }));
@@ -161,7 +187,11 @@ function ProductEditor() {
         setError(result.error ?? "Gagal mengunggah foto. Coba lagi.");
         return;
       }
+      // Unggahan sebelumnya yang belum disimpan tidak akan dipakai lagi.
+      const previous = formRef.current.imageUrl;
+      pendingUploads.current.add(result.url);
       set("imageUrl", result.url);
+      if (previous) discardUpload(previous);
     } catch {
       setError("Gagal mengunggah foto. Periksa koneksi lalu coba lagi.");
     } finally {
@@ -235,11 +265,15 @@ function ProductEditor() {
             className={`${inputClass} appearance-none pr-10`}
           >
             <option value="">Pilih kategori…</option>
-            {(categories.data ?? []).map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {(categories.data ?? [])
+              // Kategori nonaktif tidak bisa dipilih baru, tetapi kategori produk
+              // ini tetap tampil (bertanda) agar pilihannya tidak tampak kosong.
+              .filter((category) => category.isActive || category.id === form.categoryId)
+              .map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.isActive ? category.name : `${category.name} (nonaktif)`}
+                </option>
+              ))}
           </select>
           <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
         </span>
@@ -405,6 +439,7 @@ function ProductEditor() {
         formId={FORM_ID}
         message={isNew ? "Produk baru belum disimpan" : "Ada perubahan yang belum disimpan"}
         onCancel={() => {
+          discardUploadsExcept(null);
           if (isNew) void navigate({ to: "/admin/produk" });
           else setForm(initial);
         }}

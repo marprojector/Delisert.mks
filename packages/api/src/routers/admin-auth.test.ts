@@ -96,3 +96,14 @@ describe("passwordsMatch", () => {
     expect(await passwordsMatch("abc", "abcd")).toBe(false);
   });
 });
+
+describe("LoginLimiter lockout", () => {
+  test("a lockout lasts the full window from the moment it starts", () => {
+    const limiter = new LoginLimiter(5, 60_000);
+    limiter.recordFailure("ip", 0);
+    for (let i = 0; i < 4; i += 1) limiter.recordFailure("ip", 59_000);
+    // Jendela lama berakhir di 60 detik, tetapi kunci harus tetap 60 detik sejak 59 detik.
+    expect(limiter.retryAfterMs("ip", 60_500)).toBeGreaterThan(55_000);
+    expect(limiter.retryAfterMs("ip", 119_500)).toBe(0);
+  });
+});

@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { Toggle } from "@/components/admin/toggle";
+import { rupiahToCents } from "@/utils/admin-client";
 
 import { useTRPC } from "@/utils/trpc";
 
@@ -55,11 +56,10 @@ export function VariantEditor({ productId }: { productId: number }) {
 
   const submitVariant = () => {
     if (!name.trim()) return setError("Nama varian wajib diisi.");
-    const digits = price.replace(/[^\d]/g, "");
     add.mutate({
       productId,
       name: name.trim(),
-      priceCents: digits ? Number(digits) : null,
+      priceCents: rupiahToCents(price),
       isAvailable: true,
       displayOrder: variants.length + 1,
     });

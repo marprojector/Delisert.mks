@@ -31,7 +31,7 @@ export async function passwordsMatch(given: string, expected: string): Promise<b
 export const MAX_FAILED_ATTEMPTS = 5;
 export const LOCKOUT_WINDOW_MS = 15 * 60 * 1000;
 
-type Entry = { failures: number; windowStart: number };
+type Entry = { failures: number; windowStart: number; lockedUntil?: number };
 
 export class LoginLimiter {
   private readonly entries = new Map<string, Entry>();
@@ -45,17 +45,21 @@ export class LoginLimiter {
   retryAfterMs(key: string, now: number): number {
     const entry = this.entries.get(key);
     if (!entry) return 0;
-    const elapsed = now - entry.windowStart;
-    if (elapsed >= this.windowMs) {
+    // Kunci berlaku penuh sejak saat terkunci, bukan sampai jendela hitung
+    // berakhir — kalau tidak, gagal di akhir jendela hampir tidak dikunci.
+    if (entry.lockedUntil !== undefined) {
+      if (now < entry.lockedUntil) return entry.lockedUntil - now;
       this.entries.delete(key);
       return 0;
     }
-    return entry.failures >= this.maxFailures ? this.windowMs - elapsed : 0;
+    if (now - entry.windowStart >= this.windowMs) this.entries.delete(key);
+    return 0;
   }
 
   /** Sisa percobaan gagal sebelum klien dikunci (0 = sudah terkunci). */
   remaining(key: string, now: number): number {
     const entry = this.entries.get(key);
+    if (entry?.lockedUntil !== undefined && now < entry.lockedUntil) return 0;
     if (!entry || now - entry.windowStart >= this.windowMs) return this.maxFailures;
     return Math.max(0, this.maxFailures - entry.failures);
   }
@@ -66,16 +70,23 @@ export class LoginLimiter {
   }
 
   recordFailure(key: string, now: number): void {
-    const entry = this.entries.get(key);
-    if (!entry || now - entry.windowStart >= this.windowMs) {
-      this.entries.set(key, { failures: 1, windowStart: now });
-    } else {
-      entry.failures += 1;
+    let entry = this.entries.get(key);
+    if (!entry || (entry.lockedUntil === undefined && now - entry.windowStart >= this.windowMs)) {
+      entry = { failures: 0, windowStart: now };
+      this.entries.set(key, entry);
+    }
+    entry.failures += 1;
+    if (entry.failures >= this.maxFailures && entry.lockedUntil === undefined) {
+      entry.lockedUntil = now + this.windowMs;
     }
     // Jaga ukuran map tetap kecil kalau ada banyak IP berbeda.
     if (this.entries.size > 10_000) {
       for (const [entryKey, value] of this.entries) {
-        if (now - value.windowStart >= this.windowMs) this.entries.delete(entryKey);
+        const expired =
+          value.lockedUntil !== undefined
+            ? now >= value.lockedUntil
+            : now - value.windowStart >= this.windowMs;
+        if (expired) this.entries.delete(entryKey);
       }
     }
   }

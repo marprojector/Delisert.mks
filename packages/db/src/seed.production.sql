@@ -1,26 +1,31 @@
 -- Authoritative public catalogue seed for a fresh D1 deployment.
 -- Prices are stored as whole rupiah: Rp 8.000 => 8000.
 --
--- Alchemy imports this file on every deploy, so it must only fill an EMPTY
--- catalogue and never touch what the owner has changed in /admin:
---   * categories use INSERT OR IGNORE on their unique slug;
---   * products are inserted only while the products table is empty, so a
---     product the owner deleted does not come back on the next deploy;
---   * variants are inserted in ONE statement, only while product_variants is
---     empty. The table has no unique key, so INSERT OR IGNORE alone would add
---     a fresh copy of every variant on each deploy.
+-- Alchemy imports this file on EVERY deploy (each push to main), so it must
+-- seed the catalogue exactly once and never undo what the owner did in /admin:
+--   * _seed_state records that the catalogue was seeded. Once the marker
+--     exists, nothing below runs again, so a product or variant the owner
+--     deleted (even all of them) never comes back.
+--   * Each insert also requires its table to be empty. A database seeded
+--     before the marker existed therefore gains no duplicates; the marker is
+--     simply written at the end.
+--   * Variants are inserted in ONE statement: product_variants has no unique
+--     key, so INSERT OR IGNORE alone would add a fresh copy on each deploy.
 --
 -- Rows are listed in a WITH ... AS (VALUES ...) table. Do not chain SELECTs
 -- together: Cloudflare D1 rejects that ("too many terms in compound SELECT").
 
+CREATE TABLE IF NOT EXISTS _seed_state (key TEXT PRIMARY KEY NOT NULL);
+
 INSERT OR IGNORE INTO product_categories (slug, name, description, display_order, is_active)
-VALUES
+SELECT * FROM (VALUES
   ('mochi', 'Mochi', 'Mochi lembut dengan berbagai varian rasa', 1, 1),
   ('mango-sticky-rice', 'Mango Sticky Rice', 'Ketan manis dengan mangga segar', 2, 1),
   ('pancake-durian', 'Pancake Durian', 'Pancake lembut dengan isian durian', 3, 1),
   ('dubai-chewy-cookie', 'Dubai Chewy Cookie', 'Cookie chewy premium', 4, 1),
   ('slice-cake', 'Slice Cake', 'Kue lapis artisanal per slice', 5, 1),
-  ('mille-crepes', 'Mille Crepes', 'Kue crepes berlapis-lapis per slice', 6, 1);
+  ('mille-crepes', 'Mille Crepes', 'Kue crepes berlapis-lapis per slice', 6, 1))
+WHERE NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'catalogue');
 
 WITH seed (category_slug, slug, name, description, price_cents, display_order) AS (
   VALUES
@@ -48,7 +53,8 @@ INSERT OR IGNORE INTO products
 SELECT c.id, seed.slug, seed.name, seed.description, seed.price_cents, 'IDR', 1, 'available', seed.display_order
 FROM seed
 JOIN product_categories AS c ON c.slug = seed.category_slug
-WHERE NOT EXISTS (SELECT 1 FROM products);
+WHERE NOT EXISTS (SELECT 1 FROM products)
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'catalogue');
 
 WITH seed (slug, name, price_cents, display_order) AS (
   VALUES
@@ -66,4 +72,7 @@ INSERT INTO product_variants (product_id, name, price_cents, is_available, displ
 SELECT p.id, seed.name, seed.price_cents, 1, seed.display_order
 FROM seed
 JOIN products AS p ON p.slug = seed.slug
-WHERE NOT EXISTS (SELECT 1 FROM product_variants);
+WHERE NOT EXISTS (SELECT 1 FROM product_variants)
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'catalogue');
+
+INSERT OR IGNORE INTO _seed_state (key) VALUES ('catalogue');
