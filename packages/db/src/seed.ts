@@ -31,13 +31,13 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       name: "Artisanal Mochi Daifuku",
       description:
         "Mochi lembut buatan tangan dengan isian krim pilihan. Tersedia dalam 8 varian rasa dan tiga ukuran porsi — 1 pcs, isi 4, dan isi 8. Varian rasa boleh dicampur sesuai selera.",
-      priceCents: 80000,
+      priceCents: 8000,
       isFeatured: true,
       displayOrder: 1,
       variants: [
-        { name: "1 Pcs", priceCents: 80000, displayOrder: 1 },
-        { name: "Isi 4 pcs", priceCents: 300000, displayOrder: 2 },
-        { name: "Isi 8 pcs", priceCents: 500000, displayOrder: 3 },
+        { name: "1 Pcs", priceCents: 8000, displayOrder: 1 },
+        { name: "Isi 4 pcs", priceCents: 30000, displayOrder: 2 },
+        { name: "Isi 8 pcs", priceCents: 50000, displayOrder: 3 },
       ],
     },
   ],
@@ -47,7 +47,7 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       name: "Authentic Mango Sticky Rice",
       description:
         "Ketan manis yang dikukus dengan santan, disajikan bersama potongan mangga segar. Harga datar per porsi.",
-      priceCents: 300000,
+      priceCents: 30000,
       isFeatured: true,
       displayOrder: 2,
     },
@@ -58,7 +58,7 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       name: "Pancake Durian Premium",
       description:
         "Pancake lembut dengan isian durian pilihan. Dijual harga datar tunggal Rp 35.000 per porsi mika, tanpa paket isi 4 atau isi 8. Wajib disimpan di chiller.",
-      priceCents: 350000,
+      priceCents: 35000,
       isFeatured: true,
       displayOrder: 3,
     },
@@ -68,7 +68,7 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       slug: "dubai-chewy-cookie",
       name: "Dubai Chewy Cookie",
       description: "Cookie chewy premium dengan tekstur kenyal dan cokelat yang melimpah.",
-      priceCents: 300000,
+      priceCents: 30000,
       isFeatured: true,
       displayOrder: 4,
     },
@@ -79,13 +79,13 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       name: "Slice Cake",
       description:
         "Kue lapis artisanal dengan tekstur lembut dan krim yang seimbang. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.",
-      priceCents: 160000,
+      priceCents: 16000,
       isFeatured: true,
       displayOrder: 5,
       variants: [
-        { name: "Lotus Biscoff", priceCents: 160000, displayOrder: 1 },
-        { name: "Red Velvet", priceCents: 160000, displayOrder: 2 },
-        { name: "Coklat", priceCents: 160000, displayOrder: 3 },
+        { name: "Lotus Biscoff", priceCents: 16000, displayOrder: 1 },
+        { name: "Red Velvet", priceCents: 16000, displayOrder: 2 },
+        { name: "Coklat", priceCents: 16000, displayOrder: 3 },
       ],
     },
   ],
@@ -95,13 +95,13 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
       name: "Mille Crepes",
       description:
         "Kue crepes berlapis-lapis dengan krim lembut. Dijual per slice dengan tiga pilihan varian rasa — Lotus Biscoff, Red Velvet, dan Coklat. Ketiga varian seharga.",
-      priceCents: 160000,
+      priceCents: 16000,
       isFeatured: true,
       displayOrder: 6,
       variants: [
-        { name: "Lotus Biscoff", priceCents: 160000, displayOrder: 1 },
-        { name: "Red Velvet", priceCents: 160000, displayOrder: 2 },
-        { name: "Coklat", priceCents: 160000, displayOrder: 3 },
+        { name: "Lotus Biscoff", priceCents: 16000, displayOrder: 1 },
+        { name: "Red Velvet", priceCents: 16000, displayOrder: 2 },
+        { name: "Coklat", priceCents: 16000, displayOrder: 3 },
       ],
     },
   ],
@@ -128,6 +128,14 @@ export async function seed(db: SeedDb) {
       .get();
 
     if (existing) {
+      await db
+        .update(productCategories)
+        .set({
+          name: category.name,
+          description: category.description,
+          displayOrder: category.displayOrder,
+        })
+        .where(eq(productCategories.id, existing.id));
       categoryIds.set(category.slug, existing.id);
       continue;
     }
@@ -142,26 +150,32 @@ export async function seed(db: SeedDb) {
 
     for (const item of items) {
       const existing = await db.select().from(products).where(eq(products.slug, item.slug)).get();
-      if (existing) continue;
 
-      const inserted = await db
-        .insert(products)
-        .values({
-          categoryId,
-          slug: item.slug,
-          name: item.name,
-          description: item.description,
-          priceCents: item.priceCents,
-          isFeatured: item.isFeatured,
-          displayOrder: item.displayOrder,
-        })
-        .returning()
-        .get();
+      const values = {
+        categoryId,
+        slug: item.slug,
+        name: item.name,
+        description: item.description,
+        priceCents: item.priceCents,
+        isFeatured: item.isFeatured,
+        displayOrder: item.displayOrder,
+      };
+
+      // Rekonsiliasi, bukan lewati: kalau harga pernah menyimpang dari daftar
+      // resmi, menjalankan ulang seed harus memperbaikinya.
+      let productId: number;
+      if (existing) {
+        await db.update(products).set(values).where(eq(products.id, existing.id));
+        productId = existing.id;
+      } else {
+        productId = (await db.insert(products).values(values).returning().get()).id;
+      }
 
       if (item.variants) {
+        await db.delete(productVariants).where(eq(productVariants.productId, productId));
         await db.insert(productVariants).values(
           item.variants.map((variant) => ({
-            productId: inserted.id,
+            productId,
             name: variant.name,
             priceCents: variant.priceCents,
             displayOrder: variant.displayOrder,
