@@ -118,14 +118,34 @@ Both are bound to the Worker as secrets and never reach the client bundle.
 
 `alchemy profile edit` stores the selected Axiom, Cloudflare, Neon, PlanetScale, and/or Prisma provider profiles under `~/.alchemy`; no provider-specific setup command is required by this scaffold.
 
-Deploys are staged and default to a personal `dev_<username>` stage. For production, run the deploy with an explicit stage from `packages/infra`:
+Deploys are staged and default to a personal `live_<username>` stage. Production is the `production` stage.
+
+### Automatic deploy (GitHub Actions)
+
+Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml): install, unit tests, then `alchemy deploy --stage production`. It can also be started by hand from the Actions tab (**Run workflow**). Deploys never run in parallel.
+
+Repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | API token of the target account (permissions below) |
+| `CLOUDFLARE_ACCOUNT_ID` | ID of the target Cloudflare account |
+| `ADMIN_PASSWORD` | Admin dashboard password |
+| `ADMIN_SESSION_SECRET` | At least 32 random characters |
+
+Create the token at **dash.cloudflare.com → My Profile → API Tokens → Create Token → Custom token**, scoped to the target account, with these **Account** permissions:
+
+- Workers Scripts — Edit
+- D1 — Edit
+- Workers R2 Storage — Edit
+- Secrets Store — Edit (the Alchemy state store keeps its auth token there)
+- Account Settings — Read
+
+Deploy state lives in the account's Cloudflare state store (`Cloudflare.state()` in `alchemy.run.ts`), so CI runs and local deploys share it. A manual production deploy from a laptop is still possible:
 
 ```bash
-cd packages/infra && bunx alchemy deploy --stage production
+cd packages/infra && bun run deploy -- --stage production
 ```
-
-**Production deploys require the business owner's approval** (PRD §16.2). This
-repository documents the command; it does not run it automatically.
 
 ### Admin dashboard
 

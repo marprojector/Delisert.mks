@@ -53,16 +53,18 @@ export const web = Cloudflare.Website.Vite("web", {
 export type WebEnv = Cloudflare.InferEnv<typeof web>;
 
 /**
- * State deployment disimpan lokal di `.alchemy/state`, bukan di Cloudflare
- * State Store. State Store Cloudflare memerlukan izin Secrets Store, yang
- * tidak dimiliki token deploy ini. Konsekuensinya: state hanya ada di mesin
- * yang menjalankan deploy — jangan deploy dari dua mesin berbeda sekaligus.
+ * State deployment disimpan di Cloudflare State Store (Worker
+ * `alchemy-state-store` di akun tujuan), bukan di disk lokal. Wajib untuk
+ * deploy otomatis lewat GitHub Actions: runner CI selalu mulai dari disk
+ * kosong, jadi state lokal akan hilang setiap kali dan Alchemy mencoba
+ * membuat ulang semua resource. Token deploy butuh izin Secrets Store
+ * (lihat README, bagian "Deploy otomatis").
  */
 export default Alchemy.Stack(
   "delisert.mks-1",
   {
     providers: Cloudflare.providers(),
-    state: Alchemy.localState(),
+    state: Cloudflare.state(),
   },
   Effect.gen(function* () {
     const webWorker = yield* web;
