@@ -2,10 +2,18 @@ import type { AppRouter } from "@delisert.mks-1/api/routers/index";
 import { Toaster } from "@delisert.mks-1/ui/components/sonner";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Link, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRouteWithContext,
+  useRouterState,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
+import { FloatingWhatsApp } from "../components/floating-whatsapp";
+import { Footer } from "../components/footer";
 import Header from "../components/header";
 import { SkipLink } from "../components/skip-link";
 import { analyticsScripts } from "../utils/analytics";
@@ -68,6 +76,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 });
 
 function RootDocument() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  // Admin punya kerangka sendiri; detail produk punya bar pesan sendiri.
+  const isAdmin = pathname.startsWith("/admin");
+  const isProductDetail = /^\/menu\/[^/]+\/?$/.test(pathname);
+  const showFloatingWhatsApp = !isAdmin && !isProductDetail;
+
   return (
     <html lang="id">
       <head>
@@ -76,11 +90,16 @@ function RootDocument() {
       <body>
         <SkipLink />
         <div className="flex min-h-svh flex-col">
-          <Header />
-          <main id="main-content" tabIndex={-1} className="flex-1">
+          {isAdmin ? null : <Header />}
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className={showFloatingWhatsApp ? "flex-1 pb-24 lg:pb-0" : "flex-1"}
+          >
             <Outlet />
           </main>
-          <SiteFooter />
+          {isAdmin ? null : <Footer />}
+          <FloatingWhatsApp hidden={!showFloatingWhatsApp} />
         </div>
         <Toaster richColors />
         <TanStackRouterDevtools position="bottom-left" />
@@ -88,110 +107,5 @@ function RootDocument() {
         <Scripts />
       </body>
     </html>
-  );
-}
-
-function SiteFooter() {
-  return (
-    <footer className="border-t border-border bg-secondary/40">
-      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col gap-3">
-            <span className="cn-font-display text-xl text-primary">Delisert</span>
-            <p className="text-sm/relaxed text-muted-foreground">
-              Dessert & makanan homemade Makassar. Berdiri sejak 2021.
-            </p>
-          </div>
-
-          <nav aria-label="Navigasi footer" className="flex flex-col gap-2">
-            <h2 className="cn-eyebrow text-muted-foreground">Navigasi</h2>
-            <ul className="flex flex-col gap-1.5 text-sm">
-              <li>
-                <Link to="/" className="text-muted-foreground hover:text-primary">
-                  Beranda
-                </Link>
-              </li>
-              <li>
-                <Link to="/tentang" className="text-muted-foreground hover:text-primary">
-                  Tentang
-                </Link>
-              </li>
-              <li>
-                <Link to="/menu" className="text-muted-foreground hover:text-primary">
-                  Menu
-                </Link>
-              </li>
-              <li>
-                <Link to="/jadwal" className="text-muted-foreground hover:text-primary">
-                  Jadwal & Lokasi
-                </Link>
-              </li>
-              <li>
-                <Link to="/kontak" className="text-muted-foreground hover:text-primary">
-                  Kontak
-                </Link>
-              </li>
-            </ul>
-          </nav>
-
-          <div className="flex flex-col gap-2">
-            <h2 className="cn-eyebrow text-muted-foreground">Kontak</h2>
-            <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-              <li>
-                <a
-                  href="https://wa.me/6285190021421"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary"
-                >
-                  WhatsApp 0851 9002 1421
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.instagram.com/delisert.mks/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary"
-                >
-                  Instagram @delisert.mks
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://www.tiktok.com/@delisert.mkss"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary"
-                >
-                  TikTok @delisert.mkss
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <h2 className="cn-eyebrow text-muted-foreground">Alamat Operasional</h2>
-            <address className="text-sm/relaxed text-muted-foreground not-italic">
-              Perumahan Villa Surya Mas, Cluster Harmonis 20,
-              <br />
-              Jalan Toddopuli Raya Timur No. 20,
-              <br />
-              RT.1/RW.24, Borong, Manggala,
-              <br />
-              Makassar, Sulawesi Selatan
-            </address>
-            <p className="text-xs text-muted-foreground/80">
-              Alamat operasional dapur — bukan toko ritel publik.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-10 flex flex-col gap-2 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Delisert. Seluruh hak cipta dilindungi.</p>
-          <p>Dibuat dengan sepuluh jari di Makassar.</p>
-        </div>
-      </div>
-    </footer>
   );
 }
