@@ -7,7 +7,7 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import Header from "../components/header";
-import { canonical, localBusinessJsonLd, siteUrl } from "../utils/seo";
+import { localBusinessJsonLd } from "../utils/seo";
 
 import appCss from "../index.css?url";
 export interface RouterAppContext {
@@ -51,13 +51,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Delisert" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:url", content: siteUrl() },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      ...FONT_LINKS,
-      { rel: "canonical", href: canonical("/") },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }, ...FONT_LINKS],
     scripts: [
       {
         type: "application/ld+json",

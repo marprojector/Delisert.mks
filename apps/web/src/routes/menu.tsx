@@ -35,6 +35,7 @@ export const Route = createFileRoute("/menu")({
         content: "Menu Delisert — Mochi, Pancake Durian, Mille Crepes & Dessert Makassar",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/menu") },
     ],
     links: [{ rel: "canonical", href: canonical("/menu") }],
   }),

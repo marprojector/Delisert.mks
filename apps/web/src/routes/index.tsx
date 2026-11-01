@@ -30,6 +30,7 @@ export const Route = createFileRoute("/")({
           "Dessert dan makanan homemade Makassar sejak 2021. Mochi, pancake durian, mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/") },
     ],
     links: [{ rel: "canonical", href: canonical("/") }],
   }),

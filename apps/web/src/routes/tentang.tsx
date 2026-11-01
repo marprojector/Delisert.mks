@@ -18,6 +18,7 @@ export const Route = createFileRoute("/tentang")({
       },
       { property: "og:title", content: "Tentang Delisert — Dessert & Mochi Makassar Sejak 2021" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/tentang") },
     ],
     links: [{ rel: "canonical", href: canonical("/tentang") }],
   }),

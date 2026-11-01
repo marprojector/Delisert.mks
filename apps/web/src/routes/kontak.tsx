@@ -26,6 +26,7 @@ export const Route = createFileRoute("/kontak")({
       },
       { property: "og:title", content: "Kontak & Pesan Delisert — Makassar" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/kontak") },
     ],
     links: [{ rel: "canonical", href: canonical("/kontak") }],
   }),

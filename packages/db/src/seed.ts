@@ -115,6 +115,8 @@ const PRODUCTS: Record<string, ProductSeed[]> = {
 type SeedDb = {
   select: (...args: any[]) => any;
   insert: (table: any) => any;
+  update: (table: any) => any;
+  delete: (table: any) => any;
 };
 
 export async function seed(db: SeedDb) {

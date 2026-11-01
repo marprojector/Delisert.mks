@@ -42,6 +42,7 @@ export const Route = createFileRoute("/menu/$slug")({
             `${product.name} dari Delisert Makassar. Pesan via WhatsApp.`,
         },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: canonical(`/menu/${product.slug}`) },
         ...(product.imageUrl ? [{ property: "og:image", content: product.imageUrl }] : []),
       ],
       links: [{ rel: "canonical", href: canonical(`/menu/${product.slug}`) }],

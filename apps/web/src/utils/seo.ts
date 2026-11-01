@@ -5,21 +5,26 @@ import {
   WHATSAPP_NUMBER,
   waLink,
 } from "@delisert.mks-1/api/data/business";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestUrl } from "@tanstack/react-start/server";
 
 /**
- * Helper metadata SEO terpusat. SITE_URL di-resolve saat runtime agar
- * canonical/OG/sitemap mengikuti environment (lokal vs produksi).
+ * Helper metadata SEO terpusat. Origin diambil dari request saat SSR dan dari
+ * `window.location` di browser, sehingga canonical/OG/sitemap selalu menunjuk
+ * ke domain yang benar-benar melayani halaman (lokal maupun produksi).
  * Tidak memfabricasi klaim — hanya fakta dari business.ts.
  */
-export function siteUrl(): string {
-  return (
-    (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_SITE_URL ??
-    "http://localhost:3001"
-  );
+export function joinOrigin(origin: string, path: string): string {
+  const base = origin.replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function canonical(path: string): string {
-  return `${siteUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+export const siteUrl = createIsomorphicFn()
+  .server(() => getRequestUrl({ xForwardedHost: true }).origin)
+  .client(() => window.location.origin);
+
+export function canonical(path: string, origin?: string): string {
+  return joinOrigin(origin ?? siteUrl(), path);
 }
 
 type JsonLd = Record<string, unknown>;

@@ -35,4 +35,16 @@ describe("product detail SSR", () => {
     expect(html).toContain("Menu Andalan");
     expect(html).toContain("Rp 35.000");
   });
+
+  test("each page emits exactly one canonical and no localhost URL", async () => {
+    for (const path of ["/", "/tentang", "/menu", "/jadwal", "/kontak"]) {
+      const html = await (await fetch(`${BASE}${path}`)).text();
+      const canonicals = html.match(/rel="canonical"/g) ?? [];
+      expect({ path, count: canonicals.length }).toEqual({ path, count: 1 });
+      expect({ path, hasLocalhost: html.includes('content="http://localhost:3001"') }).toEqual({
+        path,
+        hasLocalhost: false,
+      });
+    }
+  });
 });
