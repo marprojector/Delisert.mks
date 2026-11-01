@@ -265,7 +265,7 @@ function Featured({
 
         <Link
           to="/menu"
-          className="cn-shell inline-flex items-center gap-2 text-sm font-semibold text-primary sm:hidden"
+          className="cn-shell inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary sm:hidden"
         >
           Lihat semua menu <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
@@ -357,7 +357,7 @@ function Story({ home }: { home: SiteContent["home"] }) {
           </p>
           <Link
             to="/tentang"
-            className="inline-flex w-fit items-center gap-2 pt-1 text-[0.9375rem] font-semibold text-primary"
+            className="inline-flex min-h-11 w-fit items-center gap-2 text-[0.9375rem] font-semibold text-primary"
           >
             Kenali Delisert <ArrowRight aria-hidden="true" className="size-4" />
           </Link>

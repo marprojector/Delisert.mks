@@ -74,7 +74,7 @@ function CategoriesPage() {
 
   const editor = draft ? (
     <Card title={draft.id === null ? "Kategori baru" : "Ubah kategori"} className="border-primary/40">
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
         <TextField
           label="Nama"
           value={draft.name}
@@ -92,7 +92,7 @@ function CategoriesPage() {
           placeholder="es-krim"
         />
         <TextField
-          className="md:col-span-2"
+          className="@lg:col-span-2"
           label="Deskripsi singkat"
           value={draft.description}
           maxLength={400}

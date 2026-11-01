@@ -130,12 +130,12 @@ function AdminDashboard() {
         />
       </ul>
 
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <Card
           title="Pengunjung 7 hari terakhir"
           description="Data Cloudflare Web Analytics, tanpa cookie."
           action={
-            <Link to="/admin/analitik" className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+            <Link to="/admin/analitik" className="-my-2 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-primary">
               Analitik <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
           }
@@ -191,7 +191,7 @@ function AdminDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 xl:grid-cols-3">
         <Card title="Kesehatan katalog" description="Hal kecil yang membuat menu lebih meyakinkan.">
           <ul className="flex flex-col gap-2">
             <HealthRow
@@ -245,7 +245,7 @@ function AdminDashboard() {
         title="Produk"
         description="Urutan sesuai tampilan di menu."
         action={
-          <Link to="/admin/produk" className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+          <Link to="/admin/produk" className="-my-2 inline-flex min-h-10 items-center gap-1 text-sm font-semibold text-primary">
             Kelola <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         }

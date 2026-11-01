@@ -72,7 +72,7 @@ export function FlavorPhotoButton({
           onClick={() => {
             if (window.confirm(`Hapus foto rasa "${flavorName}"?`)) onChange(null);
           }}
-          className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm hover:text-destructive"
+          className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm hover:text-destructive"
         >
           <X aria-hidden="true" className="size-3" />
           <span className="sr-only">Hapus foto rasa {flavorName}</span>

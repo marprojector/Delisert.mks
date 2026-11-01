@@ -73,7 +73,7 @@ export default function Header() {
 
   return (
     <>
-    <header ref={headerRef} className="sticky top-0 z-50 border-b border-transparent bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
+    <header ref={headerRef} className="sticky top-0 z-50 border-b border-border/60 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/90">
       <div className="cn-shell flex h-[3.75rem] items-center justify-between gap-4 lg:h-20">
         <Link
           to="/"

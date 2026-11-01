@@ -76,23 +76,10 @@ export function RotatingPhotos({
       ))}
       {active?.flavorName ? (
         <span
-          key={active.url}
+          key={`label-${active.url}`}
           className="animate-in fade-in-0 absolute bottom-2.5 left-2.5 max-w-[calc(100%-4rem)] truncate rounded-full bg-background/90 px-2.5 py-1 text-[0.6875rem] font-semibold text-foreground shadow-sm duration-500 lg:text-xs"
         >
           {active.flavorName}
-        </span>
-      ) : null}
-      {photos.length > 1 ? (
-        <span aria-hidden="true" className="absolute top-3 right-3 flex gap-1">
-          {photos.map((photo, position) => (
-            <span
-              key={photo.url}
-              className={cn(
-                "h-1.5 rounded-full bg-background shadow-sm transition-all duration-300",
-                position === index ? "w-4" : "w-1.5 opacity-60",
-              )}
-            />
-          ))}
         </span>
       ) : null}
     </div>

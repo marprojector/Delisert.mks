@@ -127,7 +127,7 @@ function LoginPage() {
             </button>
           </form>
 
-          <Link to="/" className="text-[0.8125rem] text-muted-foreground hover:text-primary">
+          <Link to="/" className="inline-flex min-h-10 items-center text-[0.8125rem] text-muted-foreground hover:text-primary">
             ← Kembali ke website
           </Link>
         </div>

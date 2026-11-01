@@ -223,3 +223,21 @@ describe("photos from flavours", () => {
     expect((await anon.product.list()).find((product) => product.slug === "slice-cake")!.useFlavorPhotos).toBe(false);
   });
 });
+
+describe("activity log wording", () => {
+  test("names the product and flavour instead of ID numbers, and says what changed", async () => {
+    const { db } = await createTestDb();
+    const admin = await adminCaller(db);
+    const slice = (await appRouter.createCaller(testCtx(db)).product.bySlug({ slug: "slice-cake" }))!;
+    const redVelvet = slice.flavors.find((flavor) => flavor.name === "Red Velvet")!;
+
+    await admin.adminProduct.updateFlavor({ id: redVelvet.id, isAvailable: false });
+    await admin.adminProduct.update({ id: slice.id, priceCents: 17000, description: "Baru" });
+    await admin.adminProduct.removeFlavor({ id: redVelvet.id });
+
+    const [removed, updated, soldOut] = await admin.adminActivity.list({ limit: 3 });
+    expect(soldOut!.summary).toBe("Menandai rasa “Red Velvet” (Slice Cake) habis");
+    expect(updated!.summary).toBe("Mengubah produk “Slice Cake”: harga, deskripsi");
+    expect(removed!.summary).toBe("Menghapus rasa “Red Velvet” (Slice Cake)");
+  });
+});

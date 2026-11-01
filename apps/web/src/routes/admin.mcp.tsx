@@ -89,7 +89,7 @@ function McpPage() {
         description="Hubungkan Claude atau asisten AI lain yang mendukung MCP (Model Context Protocol) ke katalog Delisert. Setelah terhubung, kamu bisa mengelola menu dan website cukup dengan mengetik perintah."
       />
 
-      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
           {created ? (
             <NewTokenCard created={created} endpoint={endpoint} onDone={() => setCreated(null)} />

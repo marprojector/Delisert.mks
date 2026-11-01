@@ -97,7 +97,7 @@ function ProductNotFound() {
       >
         Lihat semua menu
       </Link>
-      <Link to="/" className="text-sm font-semibold text-primary">
+      <Link to="/" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
         Kembali ke beranda
       </Link>
     </div>

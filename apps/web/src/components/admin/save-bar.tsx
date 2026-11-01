@@ -22,7 +22,7 @@ export function SaveBar({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-[4.75rem] z-40 px-3 pb-3 transition-all duration-300 lg:bottom-6 lg:left-[16.25rem] lg:px-12 lg:pb-0",
+        "fixed inset-x-0 bottom-[4.75rem] z-40 px-3 pb-3 transition-all duration-300 lg:bottom-6 lg:left-[16.5rem] lg:px-10 xl:px-12 lg:pb-0",
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0",
       )}
       aria-hidden={!visible}

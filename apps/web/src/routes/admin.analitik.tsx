@@ -130,7 +130,7 @@ function AnalyticsPage() {
             title={`${METRIC_LABEL[metric]} per hari`}
             description={`${summary.from} s.d. ${summary.to} (UTC)`}
             action={
-              <div className="w-56">
+              <div className="w-full max-w-60">
                 <Segmented
                   name="ukuran"
                   label="Tampilkan"
@@ -176,7 +176,7 @@ function AnalyticsPage() {
             </details>
           </Card>
 
-          <div className={cn("grid gap-4 lg:grid-cols-2 lg:gap-6", query.isFetching && "opacity-60")}>
+          <div className={cn("grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6", query.isFetching && "opacity-60")}>
             <Card title="Halaman teratas" description="Berdasarkan tayangan.">
               <RankedBars rows={summary.topPaths} format={pageName} />
             </Card>

@@ -240,7 +240,7 @@ function ProductEditor() {
         {form.useFlavorPhotos ? (
           flavorPhotos.length > 0 ? (
             <div className="flex items-center gap-2">
-              <span className="flex -space-x-2">
+              <span className="flex shrink-0 -space-x-2">
                 {flavorPhotos.slice(0, 5).map((flavor) => (
                   <img
                     key={flavor.id}
@@ -356,7 +356,7 @@ function ProductEditor() {
       <div className="flex flex-col gap-1.5">
         <Link
           to="/admin/produk"
-          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
+          className="inline-flex min-h-10 w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
           Produk
@@ -385,10 +385,10 @@ function ProductEditor() {
           event.preventDefault();
           submit();
         }}
-        className="grid gap-4 lg:grid-cols-[minmax(0,660fr)_minmax(18rem,400fr)] lg:items-start lg:gap-6"
+        className="grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,660fr)_minmax(20rem,400fr)] xl:items-start"
       >
         {/* HP: foto lebih dulu. Desktop: kolom kanan. */}
-        <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1 lg:gap-5">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-5 xl:col-start-2 xl:row-start-1">
           {photoCard}
           <section className="flex flex-col gap-4 rounded-[1.25rem] bg-background p-4.5 lg:rounded-[1.375rem] lg:p-6">
             <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Tampilan di website</h2>
@@ -413,7 +413,7 @@ function ProductEditor() {
           </section>
         </div>
 
-        <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1 lg:gap-5">
+        <div className="flex min-w-0 flex-col gap-4 lg:gap-5 xl:col-start-1 xl:row-start-1">
           <section className="flex flex-col gap-4 rounded-[1.25rem] bg-background p-4.5 lg:gap-4.5 lg:rounded-[1.375rem] lg:p-7">
             <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Informasi produk</h2>
             <label className="flex flex-col gap-2">

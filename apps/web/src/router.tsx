@@ -98,27 +98,28 @@ export const getRouter = () => {
 
 function NotFoundPage() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center sm:px-6">
-      <p className="cn-eyebrow text-primary">404</p>
-      <h1 className="text-3xl leading-tight text-balance sm:text-4xl">Halaman tidak ditemukan.</h1>
-      <p className="text-sm/relaxed text-muted-foreground">
-        Alamat yang Anda tuju tidak tersedia atau sudah dipindahkan. Kembali ke beranda atau jelajahi
-        katalog menu Delisert.
+    <div className="cn-shell flex flex-col items-center gap-4 py-24 text-center lg:py-32">
+      <span
+        aria-hidden="true"
+        className="flex size-36 items-center justify-center rounded-full bg-secondary cn-font-display text-6xl font-semibold text-primary"
+      >
+        404
+      </span>
+      <h1 className="pt-2 text-[1.75rem] leading-tight font-semibold text-foreground lg:text-4xl">
+        Halaman tidak ditemukan
+      </h1>
+      <p className="max-w-sm text-[0.9375rem]/relaxed text-muted-foreground">
+        Alamat yang kamu tuju tidak tersedia atau sudah dipindahkan.
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <Link
-          to="/"
-          className="inline-flex h-10 items-center border border-primary bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Kembali ke Beranda
-        </Link>
-        <Link
-          to="/menu"
-          className="inline-flex h-10 items-center border border-border px-5 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
-        >
-          Lihat Menu
-        </Link>
-      </div>
+      <Link
+        to="/menu"
+        className="mt-2 inline-flex h-[3.25rem] w-full max-w-[21rem] items-center justify-center rounded-full bg-primary px-6 text-[0.9375rem] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        Lihat menu
+      </Link>
+      <Link to="/" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+        Kembali ke beranda
+      </Link>
     </div>
   );
 }

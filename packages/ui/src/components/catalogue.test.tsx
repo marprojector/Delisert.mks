@@ -101,3 +101,4 @@ describe("ProductCard with photos from flavours", () => {
     expect(html).toContain("Foto menyusul");
   });
 });
+

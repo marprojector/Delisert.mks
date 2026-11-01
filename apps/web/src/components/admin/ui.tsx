@@ -49,12 +49,12 @@ export function Card({
   return (
     <section
       className={cn(
-        "flex min-w-0 flex-col rounded-[1.25rem] border border-border/70 bg-background shadow-[0_1px_2px_rgb(41_31_24/0.04)] lg:rounded-[1.5rem]",
+        "@container flex min-w-0 flex-col rounded-[1.25rem] border border-border/70 bg-background shadow-[0_1px_2px_rgb(41_31_24/0.04)] lg:rounded-[1.5rem]",
         className,
       )}
     >
       {title || action ? (
-        <div className="flex items-start justify-between gap-3 px-4.5 pt-4.5 lg:px-6 lg:pt-5.5">
+        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-3 px-4.5 pt-4.5 lg:px-6 lg:pt-5.5">
           <div className="flex min-w-0 flex-col gap-0.5">
             {title ? <h2 className="font-sans text-base font-semibold text-foreground lg:text-[1.0625rem]">{title}</h2> : null}
             {description ? <p className="text-[0.8125rem]/relaxed text-muted-foreground">{description}</p> : null}

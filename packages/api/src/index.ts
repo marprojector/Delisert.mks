@@ -3,7 +3,7 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import type { Context } from "./context";
 import { activityLog } from "@delisert.mks-1/db/schema/index";
 
-import { describeActivity } from "./lib/activity";
+import { describeActivity, resolveActivityNames } from "./lib/activity";
 import { verifySessionToken } from "./lib/admin-session";
 
 export const t = initTRPC.context<Context>().create();
@@ -26,13 +26,17 @@ export const adminProcedure = t.procedure.use(async ({ ctx, next, type, path, ge
     });
   }
 
+  // Nama yang dirujuk dicari sebelum perubahan berjalan (bisa saja dihapus).
+  const names =
+    type === "mutation" ? await resolveActivityNames(ctx.db, path, await getRawInput().catch(() => null)) : {};
+
   const result = await next({ ctx });
 
   // Catat perubahan yang berhasil. Log bersifat pelengkap: gagal mencatat
   // tidak boleh menggagalkan perubahan yang sudah tersimpan.
   if (result.ok && type === "mutation") {
     try {
-      const entry = describeActivity(path, await getRawInput());
+      const entry = describeActivity(path, await getRawInput(), names);
       if (entry) {
         await ctx.db.insert(activityLog).values({ actor: ctx.actor ?? "admin", ...entry });
       }

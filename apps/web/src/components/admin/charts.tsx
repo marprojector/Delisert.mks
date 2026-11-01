@@ -19,6 +19,16 @@ const dayLabel = (date: string, long = false) =>
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
 
+/**
+ * Label sumbu X yang ringkas: tanggal saja ("27"), dengan nama bulan hanya di
+ * label pertama dan saat bulan berganti ("1 Nov") — supaya tidak bertumpuk di HP.
+ */
+export function axisLabel(date: string, previousLabelDate: string | undefined): string {
+  const day = Number(date.slice(8, 10));
+  if (previousLabelDate && previousLabelDate.slice(5, 7) === date.slice(5, 7)) return String(day);
+  return dayLabel(date);
+}
+
 /** Pembulatan ke atas yang "rapi" untuk sumbu Y (1, 2, 5 × 10ⁿ). */
 function niceMax(value: number): number {
   if (value <= 4) return 4;
@@ -129,7 +139,7 @@ export function DailyBarChart({
       <div aria-hidden="true" className="flex gap-[2px] pl-10 text-[0.6875rem] text-muted-foreground">
         {data.map((day, index) => (
           <span key={day.date} className="min-w-0 flex-1 overflow-visible text-center whitespace-nowrap">
-            {index % labelEvery === 0 ? dayLabel(day.date) : ""}
+            {index % labelEvery === 0 ? axisLabel(day.date, data[index - labelEvery]?.date) : ""}
           </span>
         ))}
       </div>

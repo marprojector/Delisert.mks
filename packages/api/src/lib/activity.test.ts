@@ -8,8 +8,12 @@ describe("activity", () => {
       "Menambah produk “Mochi Matcha”",
     );
     expect(describeActivity("adminProduct.setAvailability", { id: 3, availability: "soldout" })?.summary).toBe(
-      "Menandai produk #3 sebagai Habis",
+      "Menandai produk #3 Habis",
     );
+    expect(
+      describeActivity("adminProduct.setAvailability", { id: 3, availability: "soldout" }, { product: "Mille Crepes" })
+        ?.summary,
+    ).toBe("Menandai “Mille Crepes” Habis");
     expect(describeActivity("adminSite.update", { section: "home", value: {} })?.summary).toBe(
       "Mengubah konten Beranda",
     );

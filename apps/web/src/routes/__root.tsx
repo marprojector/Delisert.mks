@@ -65,7 +65,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       { property: "og:site_name", content: "Delisert" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }, ...FONT_LINKS],
+    links: [{ rel: "stylesheet", href: appCss }, { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" }, ...FONT_LINKS],
     scripts: [
       // Harus paling awal: menyembunyikan elemen beranimasi sebelum cat pertama.
       { children: motionGateScript() },

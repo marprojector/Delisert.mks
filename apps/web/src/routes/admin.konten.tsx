@@ -133,8 +133,8 @@ function ContentPage() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
-        <nav aria-label="Bagian konten" className="cn-no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0">
+      <div className="grid grid-cols-1 gap-5 lg:gap-6 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
+        <nav aria-label="Bagian konten" className="cn-no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0 xl:flex-col xl:overflow-visible">
           {SECTIONS.map((item) => {
             const isActive = item.key === section;
             const isDirty = dirtySections.some((dirtyItem) => dirtyItem.key === item.key);
@@ -149,7 +149,7 @@ function ContentPage() {
                   void navigate({ search: { bagian: item.key }, replace: true });
                 }}
                 className={cn(
-                  "flex shrink-0 items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-colors lg:py-3",
+                  "flex shrink-0 items-center gap-3 rounded-2xl border px-3.5 py-2.5 text-left transition-colors xl:py-3",
                   isActive
                     ? "border-primary bg-background shadow-sm"
                     : "border-transparent bg-background/60 hover:bg-background",
@@ -173,7 +173,7 @@ function ContentPage() {
                       </span>
                     ) : null}
                   </span>
-                  <span className="hidden truncate text-xs text-muted-foreground lg:block">{item.description}</span>
+                  <span className="hidden truncate text-xs text-muted-foreground xl:block">{item.description}</span>
                 </span>
               </button>
             );
@@ -276,7 +276,7 @@ function BrandForm({ value, onChange }: { value: SiteContent["brand"]; onChange:
       </Card>
 
       <Card title="WhatsApp" description="Semua tombol pesan di website memakai nomor ini.">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField
             label="Nomor (format internasional)"
             hint="Diawali 62, tanpa + dan spasi. Contoh: 6285190021421"
@@ -295,14 +295,14 @@ function BrandForm({ value, onChange }: { value: SiteContent["brand"]; onChange:
           href={`https://wa.me/${value.whatsappNumber}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-primary"
+          className="inline-flex min-h-10 w-fit items-center gap-1.5 text-sm font-semibold text-primary"
         >
           Uji nomor di WhatsApp <ExternalLink aria-hidden="true" className="size-3.5" />
         </a>
       </Card>
 
       <Card title="Sosial media">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField label="Instagram — nama akun" value={value.instagramHandle} onChange={(next) => set("instagramHandle", next)} />
           <TextField label="Instagram — tautan" type="url" value={value.instagramUrl} onChange={(next) => set("instagramUrl", next)} />
           <TextField label="TikTok — nama akun" value={value.tiktokHandle} onChange={(next) => set("tiktokHandle", next)} />
@@ -337,7 +337,7 @@ function HomeForm({ value, onChange }: { value: SiteContent["home"]; onChange: (
   return (
     <>
       <Card title="Bagian pembuka" description="Hal pertama yang dilihat pengunjung.">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField label="Judul baris 1" maxLength={60} value={value.heroTitleLine1} onChange={(next) => set("heroTitleLine1", next)} />
           <TextField label="Judul baris 2" maxLength={60} value={value.heroTitleLine2} onChange={(next) => set("heroTitleLine2", next)} />
         </div>
@@ -347,7 +347,7 @@ function HomeForm({ value, onChange }: { value: SiteContent["home"]; onChange: (
           <span className="text-xs text-muted-foreground">
             Maksimal 3 foto. Bila kosong, foto produk unggulan yang dipakai.
           </span>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 @lg:grid-cols-3">
             {heroImages.map((url, index) => (
               <ImageField
                 key={index}
@@ -362,7 +362,7 @@ function HomeForm({ value, onChange }: { value: SiteContent["home"]; onChange: (
       </Card>
 
       <Card title="Menu andalan" description="Daftar produk unggulan (atur produknya di Produk → Produk unggulan).">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField label="Label kecil" maxLength={40} value={value.featuredEyebrow} onChange={(next) => set("featuredEyebrow", next)} />
           <TextField label="Judul" maxLength={80} value={value.featuredTitle} onChange={(next) => set("featuredTitle", next)} />
         </div>
@@ -382,7 +382,7 @@ function HomeForm({ value, onChange }: { value: SiteContent["home"]; onChange: (
           onChange={(next) => set("showStory", next)}
         />
         {value.showStory ? (
-          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_14rem]">
+          <div className="grid grid-cols-1 gap-4 @xl:grid-cols-[minmax(0,1fr)_14rem]">
             <div className="flex flex-col gap-4">
               <TextField label="Label kecil" maxLength={40} value={value.storyEyebrow} onChange={(next) => set("storyEyebrow", next)} />
               <TextField label="Judul cerita" maxLength={120} value={value.storyTitle} onChange={(next) => set("storyTitle", next)} />
@@ -416,7 +416,7 @@ function ScheduleForm({
   return (
     <>
       <Card title="Jadwal mingguan" description="Mengatur pita minggu di halaman Jadwal dan ringkasan jadwal di footer.">
-        <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+        <ul className="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
           {DAYS.map((day, index) => (
             <li key={day} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
               <span className="w-16 text-sm font-semibold text-foreground">{day}</span>
@@ -456,13 +456,13 @@ function ScheduleForm({
       </Card>
 
       <Card title="TikTok Live">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
           <TextField label="Nama kanal" value={value.liveLabel} onChange={(next) => set("liveLabel", next)} />
           <TextField label="Hari" value={value.liveDays} onChange={(next) => set("liveDays", next)} />
           <TextField label="Jam" hint='Contoh: "10:30 – 14:30 WITA"' value={value.liveHours} onChange={(next) => set("liveHours", next)} />
         </div>
         <TextField label="Keterangan" multiline rows={2} maxLength={240} value={value.liveNote} onChange={(next) => set("liveNote", next)} />
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField label="Teks tombol" value={value.liveCtaLabel} onChange={(next) => set("liveCtaLabel", next)} />
           <TextField label="Tautan tombol" type="url" value={value.liveCtaUrl} onChange={(next) => set("liveCtaUrl", next)} />
         </div>
@@ -479,7 +479,7 @@ function ScheduleForm({
           create={() => ({ name: "", landmark: "", mapsUrl: "" })}
           onChange={(next) => set("cfdLocations", next)}
           render={(item, change) => (
-            <div className="grid gap-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 @2xl:grid-cols-3">
               <input aria-label="Nama titik" placeholder="CFD Boulevard" value={item.name} onChange={(event) => change({ ...item, name: event.target.value })} className={inputClass} />
               <input aria-label="Patokan" placeholder="Berhadapan Social Barn" value={item.landmark} onChange={(event) => change({ ...item, landmark: event.target.value })} className={inputClass} />
               <input aria-label="Tautan Google Maps" placeholder="https://maps.google.com/…" value={item.mapsUrl} onChange={(event) => change({ ...item, mapsUrl: event.target.value })} className={inputClass} />
@@ -506,7 +506,7 @@ function AboutForm({ value, onChange }: { value: SiteContent["about"]; onChange:
   return (
     <>
       <Card title="Judul & foto">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 @lg:grid-cols-2">
           <TextField label="Judul baris 1" maxLength={80} value={value.titleLine1} onChange={(next) => set("titleLine1", next)} />
           <TextField label="Judul baris 2" maxLength={80} value={value.titleLine2} onChange={(next) => set("titleLine2", next)} />
         </div>

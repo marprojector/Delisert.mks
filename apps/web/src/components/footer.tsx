@@ -25,10 +25,10 @@ export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean })
         <div className="grid grid-cols-2 gap-10 lg:contents">
           <nav aria-label="Navigasi footer" className="flex flex-col gap-3">
             <h2 className="cn-eyebrow font-sans text-accent">Halaman</h2>
-            <ul className="flex flex-col gap-2.5 text-sm">
+            <ul className="flex flex-col gap-1 text-sm lg:gap-1.5">
               {NAV_LINKS.filter((link) => link.to !== "/").map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className="transition-colors hover:text-accent">
+                  <Link to={link.to} className="inline-flex min-h-8 items-center transition-colors hover:text-accent">
                     {link.label}
                   </Link>
                 </li>

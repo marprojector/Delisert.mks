@@ -101,18 +101,18 @@ export function ProductGallery({
           key={active.url}
           className="animate-in fade-in-0 aspect-[16/15] w-full object-cover duration-300"
         />
-        {active.flavorName ? <FlavorLabel key={active.url} name={active.flavorName} className="bottom-5" /> : null}
+        {active.flavorName ? <FlavorLabel key={`label-${active.url}`} name={active.flavorName} className="bottom-5" /> : null}
       </div>
       {images.length > 1 ? (
-        <ul className="hidden gap-3 lg:flex" aria-label={`Pilih foto ${productName}`}>
+        <ul className="cn-no-scrollbar hidden snap-x gap-3 overflow-x-auto pb-1 lg:flex" aria-label={`Pilih foto ${productName}`}>
           {images.map((image, index) => (
-            <li key={image.url}>
+            <li key={image.url} className="shrink-0 snap-start">
               <button
                 type="button"
                 onClick={() => setActiveIndex(index)}
                 aria-current={index === activeIndex}
                 className={cn(
-                  "block size-24 overflow-hidden rounded-[1.125rem] border-2 transition-colors",
+                  "block size-20 overflow-hidden rounded-[1rem] border-2 transition-colors xl:size-24 xl:rounded-[1.125rem]",
                   index === activeIndex ? "border-primary" : "border-transparent hover:border-border",
                 )}
               >
