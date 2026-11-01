@@ -281,7 +281,7 @@ function TikTokLiveSection() {
             diumumkan langsung. Jadwal bersifat statis — status live ditampilkan di aplikasi TikTok.
           </p>
         </div>
-        <WhatsAppButton variant="outline" size="lg" href={TIKTOK_LIVE.ctaUrl}>
+        <WhatsAppButton tone="outline" size="lg" href={TIKTOK_LIVE.ctaUrl}>
           {TIKTOK_LIVE.ctaLabel}
         </WhatsAppButton>
       </div>

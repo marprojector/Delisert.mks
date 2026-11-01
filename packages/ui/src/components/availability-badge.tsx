@@ -1,25 +1,19 @@
 import { cn } from "@delisert.mks-1/ui/lib/utils";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 export type ProductAvailability = "available" | "preorder" | "soldout";
 
+/** Status selalu tertulis sebagai teks, bukan hanya warna. */
 const availabilityConfig = {
-  available: {
-    label: "Tersedia",
-    icon: CheckCircle2,
-    className: "border-success/40 bg-success/10 text-success",
-  },
-  preorder: {
-    label: "Pre-Order",
-    icon: Clock,
-    className: "border-warning/50 bg-warning/15 text-warning",
-  },
-  soldout: {
-    label: "Habis",
-    icon: XCircle,
-    className: "border-danger/40 bg-danger/10 text-danger",
-  },
+  available: { label: "Tersedia", dot: "bg-success", text: "text-success" },
+  preorder: { label: "Pre-Order", dot: "bg-warning", text: "text-[#9a6a12]" },
+  soldout: { label: "Habis", dot: "bg-muted-foreground/70", text: "text-muted-foreground" },
 } as const;
+
+export const AVAILABILITY_LABEL: Record<ProductAvailability, string> = {
+  available: availabilityConfig.available.label,
+  preorder: availabilityConfig.preorder.label,
+  soldout: availabilityConfig.soldout.label,
+};
 
 export function AvailabilityBadge({
   availability,
@@ -31,17 +25,15 @@ export function AvailabilityBadge({
   showLabel?: boolean;
 }) {
   const config = availabilityConfig[availability];
-  const Icon = config.icon;
-
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 border px-2 py-0.5 text-xs font-medium",
-        config.className,
+        "inline-flex items-center gap-1.5 rounded-full bg-background px-2.5 py-1 text-[0.6875rem] font-semibold leading-none",
+        config.text,
         className,
       )}
     >
-      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+      <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", config.dot)} />
       {showLabel ? config.label : <span className="sr-only">{config.label}</span>}
     </span>
   );

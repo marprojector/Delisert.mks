@@ -44,7 +44,7 @@ function ScheduleComponent() {
       />
 
       <div className="flex flex-col gap-6 pt-12">
-        <ScheduleCard icon={Music2} title={TIKTOK_LIVE.label} tone="accent">
+        <ScheduleCard icon={Music2} title={TIKTOK_LIVE.label} tone="rosewood">
           <dl className="flex flex-col gap-3 text-sm">
             <div className="flex flex-wrap items-baseline gap-x-3">
               <dt className="cn-eyebrow w-24 shrink-0 text-muted-foreground">Hari</dt>
@@ -100,7 +100,7 @@ function ScheduleComponent() {
           </p>
         </ScheduleCard>
 
-        <ScheduleCard icon={CalendarX2} title="Hari Libur" tone="muted">
+        <ScheduleCard icon={CalendarX2} title="Hari Libur" tone="cream">
           <p className="text-base font-medium">
             {CLOSED_DAY.day} — {CLOSED_DAY.description}
           </p>

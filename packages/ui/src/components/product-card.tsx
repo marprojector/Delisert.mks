@@ -1,10 +1,10 @@
 import { formatRupiah, summariseVariantPrice } from "@delisert.mks-1/ui/lib/price";
 import type { ProductAvailability } from "@delisert.mks-1/ui/components/availability-badge";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
-import { Card } from "@delisert.mks-1/ui/components/card";
+import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
-import { MessageCircle } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export { formatRupiah };
 
@@ -47,94 +47,91 @@ export function ProductPrice({
 
   return (
     <span className={className}>
-      {formatRupiah(summary.min)} – {formatRupiah(summary.max)}
+      {formatRupiah(summary.min)} – {formatRupiah(summary.max).replace("Rp ", "")}
     </span>
   );
 }
 
+/**
+ * Kartu produk katalog. Seluruh kartu membuka halaman detail; tombol "+"
+ * di pojok foto langsung membuka WhatsApp untuk produk itu (tanpa keranjang).
+ */
 export function ProductCard({
   product,
   waHref,
   className,
+  sizes = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw",
 }: {
   product: ProductCardData;
   waHref: string;
   className?: string;
+  sizes?: string;
 }) {
+  const soldOut = product.availability === "soldout";
+  const detailHref = `/menu/${product.slug}`;
+
   return (
-    <Card
+    <article
+      data-reveal
       data-slot="product-card"
-      className={cn(
-        "group/product-card gap-0 transition-shadow duration-300 hover:shadow-lg hover:shadow-primary/5",
-        className,
-      )}
+      className={cn("group/product-card relative flex min-w-0 flex-col gap-2.5", className)}
     >
-      <a href={`/menu/${product.slug}`} className="block overflow-hidden bg-muted">
+      <div className="relative aspect-square overflow-hidden rounded-[1.25rem] lg:rounded-3xl">
         {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            srcSet={photoSrcSet(product.imageUrl)}
-            // Kartu tampil 1 kolom di HP, 2 di tablet, 3–4 di desktop.
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            alt={product.imageAlt ?? `Foto ${product.name} Delisert Makassar`}
-            width={640}
-            height={480}
-            loading="lazy"
-            decoding="async"
-            className="aspect-4/3 w-full object-cover transition-transform duration-500 group-hover/product-card:scale-105"
-          />
-        ) : (
-          <div className="flex aspect-4/3 w-full items-center justify-center bg-secondary text-muted-foreground">
-            <span className="text-xs">Foto menyusul</span>
-          </div>
-        )}
-      </a>
+            <img
+              src={product.imageUrl}
+              srcSet={photoSrcSet(product.imageUrl)}
+              sizes={sizes}
+              alt={product.imageAlt ?? `Foto ${product.name} Delisert Makassar`}
+              width={640}
+              height={640}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover transition-transform duration-700 ease-out group-hover/product-card:scale-105"
+            />
+          ) : (
+            <PhotoPlaceholder
+              categorySlug={product.category.slug}
+              className="transition-transform duration-700 ease-out group-hover/product-card:scale-105"
+            />
+          )}
+        <AvailabilityBadge availability={product.availability} className="absolute top-2.5 left-2.5" />
+        <a
+          href={waHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Pesan ${product.name} via WhatsApp`}
+          className={cn(
+            "absolute right-2.5 bottom-2.5 z-10 flex size-9 items-center justify-center rounded-full shadow-md transition-transform duration-200 hover:scale-110 active:scale-95 lg:size-11",
+            soldOut
+              ? "bg-border text-muted-foreground"
+              : "bg-primary text-primary-foreground shadow-primary/25",
+          )}
+        >
+          <Plus aria-hidden="true" className="size-4.5 lg:size-5" />
+        </a>
+      </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="cn-eyebrow text-muted-foreground">{product.category.name}</span>
-          <AvailabilityBadge availability={product.availability} />
-        </div>
-
-        <h3 className="text-lg leading-snug">
-          <a href={`/menu/${product.slug}`} className="hover:text-primary">
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className="cn-eyebrow text-[0.625rem] text-primary lg:text-[0.6875rem]">
+          {product.category.name}
+        </span>
+        <h3 className="font-sans text-[0.9375rem] leading-snug font-semibold break-words text-foreground lg:text-lg">
+          <a href={detailHref} className="after:absolute after:inset-0 after:content-['']">
             {product.name}
           </a>
         </h3>
-
         {product.description ? (
-          <p className="line-clamp-2 text-sm/relaxed text-muted-foreground">{product.description}</p>
+          <p className="hidden text-sm/relaxed text-muted-foreground sm:line-clamp-2">
+            {product.description}
+          </p>
         ) : null}
-
-        {product.variants.length > 0 ? (
-          <ul className="flex flex-wrap gap-1.5">
-            {product.variants.map((variant) => (
-              <li
-                key={variant.id}
-                className="border border-border bg-secondary/60 px-2 py-0.5 text-xs text-secondary-foreground"
-              >
-                {variant.name}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        <div className="mt-auto flex items-end justify-between gap-3 pt-2">
-          <span className="text-base font-medium text-primary">
-            <ProductPrice priceCents={product.priceCents} variants={product.variants} />
-          </span>
-          <a
-            href={waHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary underline-offset-4 hover:underline"
-          >
-            <MessageCircle className="size-3.5" aria-hidden="true" />
-            Pesan via WhatsApp
-            <span className="sr-only"> untuk {product.name}</span>
-          </a>
-        </div>
+        <ProductPrice
+          priceCents={product.priceCents}
+          variants={product.variants}
+          className="text-sm font-semibold text-foreground lg:text-base"
+        />
       </div>
-    </Card>
+    </article>
   );
 }
