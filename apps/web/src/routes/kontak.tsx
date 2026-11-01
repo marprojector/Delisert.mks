@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 import { useReveal } from "@/lib/motion";
 import { ORDER_MESSAGE, useSiteContent, useWaLink } from "@/lib/site";
+import { deliveryLogo } from "@/utils/delivery-logo";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/kontak")({
@@ -97,15 +98,31 @@ function ContactComponent() {
 
         <section data-reveal className="flex flex-col gap-2.5 lg:gap-3">
           <h2 className="text-[1.375rem] font-semibold text-foreground lg:text-2xl">Pengiriman</h2>
-          <ul className="flex flex-wrap gap-2 lg:gap-2.5">
-            {contact.deliveryMethods.map((method) => (
-              <li
-                key={method}
-                className="rounded-[0.875rem] border border-border px-3.5 py-2.5 text-[0.8125rem] font-medium text-foreground lg:px-4 lg:text-sm"
-              >
-                {method}
-              </li>
-            ))}
+          <ul className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:gap-2.5">
+            {contact.deliveryMethods.map((method) => {
+              const logo = deliveryLogo(method);
+              return (
+                <li
+                  key={method}
+                  title={method}
+                  className="flex h-14 min-w-24 items-center justify-center rounded-[0.875rem] border border-border bg-white px-4 lg:h-16 lg:min-w-28 lg:px-5"
+                >
+                  {logo ? (
+                    <img
+                      src={logo.src}
+                      alt={method}
+                      width={logo.width}
+                      height={logo.height}
+                      loading="lazy"
+                      decoding="async"
+                      className={`w-auto ${logo.className}`}
+                    />
+                  ) : (
+                    <span className="text-[0.8125rem] font-medium text-foreground lg:text-sm">{method}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
           <p className="text-xs text-muted-foreground lg:text-[0.8125rem]">
             {contact.deliveryNote}

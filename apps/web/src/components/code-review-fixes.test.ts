@@ -38,3 +38,16 @@ describe("code review fixes", () => {
     expect(read("variant-editor.tsx")).toContain("rupiahToCents(");
   });
 });
+
+describe("admin mobile drawer", () => {
+  const shell = () => readFileSync(join(import.meta.dir, "admin/admin-shell.tsx"), "utf8");
+
+  test("every link in the drawer closes it, even when it points at the current page", () => {
+    expect(shell()).toContain("onClick={onNavigate}");
+  });
+
+  test("locks page scroll and slides in while open", () => {
+    expect(shell()).toContain('document.body.style.overflow = "hidden"');
+    expect(shell()).toContain("slide-in-from-right");
+  });
+});

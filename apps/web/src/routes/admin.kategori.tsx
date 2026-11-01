@@ -153,7 +153,7 @@ function CategoriesPage() {
                     /{row.slug} · {row.productCount} produk
                   </span>
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex w-full items-center justify-end gap-1 border-t border-border/50 pt-2 sm:w-auto sm:border-0 sm:pt-0">
                   <button
                     type="button"
                     disabled={busy || index === 0}
