@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 import {
   productCategories,
@@ -32,6 +32,7 @@ export const productRouter = router({
           imageAlt: products.imageAlt,
           availability: products.availability,
           isFeatured: products.isFeatured,
+          useFlavorPhotos: products.useFlavorPhotos,
           displayOrder: products.displayOrder,
           categorySlug: productCategories.slug,
           categoryName: productCategories.name,
@@ -83,6 +84,7 @@ export const productRouter = router({
         imageAlt: row.imageAlt,
         availability: availabilityEnum.parse(row.availability),
         isFeatured: row.isFeatured,
+        useFlavorPhotos: row.useFlavorPhotos,
         category: { slug: row.categorySlug, name: row.categoryName },
         variants: (variantsByProduct.get(row.id) ?? []).map((variant) => ({
           id: variant.id,
@@ -112,6 +114,7 @@ export const productRouter = router({
           imageUrl: products.imageUrl,
           imageAlt: products.imageAlt,
           availability: products.availability,
+          useFlavorPhotos: products.useFlavorPhotos,
           categoryId: products.categoryId,
           categorySlug: productCategories.slug,
           categoryName: productCategories.name,
@@ -137,15 +140,32 @@ export const productRouter = router({
 
       const relatedRows = await ctx.db
         .select({
+          id: products.id,
           slug: products.slug,
           name: products.name,
           imageUrl: products.imageUrl,
+          useFlavorPhotos: products.useFlavorPhotos,
         })
         .from(products)
         .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
         .where(eq(productCategories.isActive, true))
         .orderBy(asc(products.displayOrder), asc(products.id))
         .limit(5);
+
+      const relatedFlavorPhoto = new Map<number, string>();
+      const relatedIds = relatedRows.filter((related) => !related.imageUrl && related.useFlavorPhotos).map((related) => related.id);
+      if (relatedIds.length > 0) {
+        const photos = await ctx.db
+          .select({ productId: productFlavors.productId, imageUrl: productFlavors.imageUrl })
+          .from(productFlavors)
+          .where(and(inArray(productFlavors.productId, relatedIds), isNotNull(productFlavors.imageUrl)))
+          .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+        for (const photo of photos) {
+          if (photo.imageUrl && !relatedFlavorPhoto.has(photo.productId)) {
+            relatedFlavorPhoto.set(photo.productId, photo.imageUrl);
+          }
+        }
+      }
 
       return {
         id: row.id,
@@ -156,6 +176,7 @@ export const productRouter = router({
         imageUrl: row.imageUrl,
         imageAlt: row.imageAlt,
         availability: availabilityEnum.parse(row.availability),
+        useFlavorPhotos: row.useFlavorPhotos,
         category: { slug: row.categorySlug, name: row.categoryName },
         variants: variantRows.map((variant) => ({
           id: variant.id,
@@ -175,7 +196,10 @@ export const productRouter = router({
           .map((related) => ({
             slug: related.slug,
             name: related.name,
-            imageUrl: related.imageUrl,
+            // Tanpa foto produk: pakai foto rasa pertama bila foto otomatis dari rasa aktif.
+            imageUrl:
+              related.imageUrl ??
+              (related.useFlavorPhotos ? (relatedFlavorPhoto.get(related.id) ?? null) : null),
           })),
       };
     }),

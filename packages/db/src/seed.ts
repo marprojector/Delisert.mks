@@ -24,6 +24,8 @@ type ProductSeed = {
   variants?: Array<{ name: string; priceCents: number | null; displayOrder: number }>;
   /** Varian rasa (tidak mengubah harga). */
   flavors?: string[];
+  /** Foto produk otomatis dari foto rasa. */
+  useFlavorPhotos?: boolean;
 };
 
 export const MOCHI_FLAVORS = [
@@ -174,6 +176,7 @@ export async function seed(db: SeedDb) {
         priceCents: item.priceCents,
         isFeatured: item.isFeatured,
         displayOrder: item.displayOrder,
+        useFlavorPhotos: item.useFlavorPhotos ?? Boolean(item.flavors?.length),
       };
 
       // Rekonsiliasi, bukan lewati: kalau harga pernah menyimpang dari daftar

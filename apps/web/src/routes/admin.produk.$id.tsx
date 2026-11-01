@@ -202,6 +202,7 @@ function ProductEditor() {
   };
 
   const busy = save.isPending || create.isPending;
+  const flavorPhotos = (existing.data?.flavors ?? []).filter((flavor) => flavor.imageUrl);
   const priceCents = rupiahToCents(form.price);
 
   if (!isNew && existing.isError) {
@@ -221,6 +222,52 @@ function ProductEditor() {
   const photoCard = (
     <section className="flex flex-col gap-3.5 rounded-[1.25rem] bg-background p-4.5 lg:rounded-[1.375rem] lg:p-6">
       <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Foto produk</h2>
+      <div className="flex flex-col gap-3 rounded-2xl bg-muted p-3.5">
+        <div className="flex items-start justify-between gap-4">
+          <span className="flex flex-col gap-0.5">
+            <span className="text-sm font-semibold text-foreground">Foto otomatis dari rasa</span>
+            <span className="text-xs/relaxed text-muted-foreground">
+              Kartu menu bergantian menampilkan foto tiap rasa, dan galeri produk berisi semua foto rasa.
+              Foto produk di bawah jadi opsional.
+            </span>
+          </span>
+          <Toggle
+            checked={form.useFlavorPhotos}
+            label="Foto otomatis dari rasa"
+            onChange={(value) => set("useFlavorPhotos", value)}
+          />
+        </div>
+        {form.useFlavorPhotos ? (
+          flavorPhotos.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <span className="flex -space-x-2">
+                {flavorPhotos.slice(0, 5).map((flavor) => (
+                  <img
+                    key={flavor.id}
+                    src={flavor.imageUrl!}
+                    srcSet={photoSrcSet(flavor.imageUrl!)}
+                    sizes="32px"
+                    alt=""
+                    className="size-8 rounded-full border-2 border-muted object-cover"
+                  />
+                ))}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {flavorPhotos.length} foto rasa dipakai{isNew ? "" : " (atur di bagian Varian rasa)"}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs/relaxed text-[#8a5a0b]">
+              {isNew
+                ? "Simpan produk dulu, lalu pasang foto di bagian Varian rasa."
+                : "Belum ada rasa yang punya foto. Pasang foto di bagian Varian rasa."}
+            </p>
+          )
+        ) : null}
+      </div>
+      {form.useFlavorPhotos ? (
+        <span className="text-sm font-semibold text-foreground">Foto utama (opsional)</span>
+      ) : null}
       {form.imageUrl ? (
         <div className="relative overflow-hidden rounded-[1.125rem]">
           <img

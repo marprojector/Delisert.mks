@@ -76,3 +76,28 @@ describe("EmptyState", () => {
     expect(html).toContain("Tanya stok");
   });
 });
+
+describe("ProductCard with photos from flavours", () => {
+  const flavors = [
+    { id: 1, name: "Lotus Biscoff", isAvailable: true, imageUrl: "/api/photos/products/lotus-w960.webp" },
+    { id: 2, name: "Red Velvet", isAvailable: true, imageUrl: "/api/photos/products/red-w960.webp" },
+    { id: 3, name: "Coklat", isAvailable: true, imageUrl: null },
+  ];
+
+  test("auto mode shows the flavour photos instead of the placeholder, labelled with the flavour", () => {
+    const html = renderToStaticMarkup(
+      <ProductCard product={{ ...base, imageUrl: null, useFlavorPhotos: true, flavors }} waHref="https://wa.me/1" />,
+    );
+    expect(html).not.toContain("Foto menyusul");
+    expect(html).toContain("lotus-w960.webp");
+    expect(html).toContain("red-w960.webp");
+    expect(html).toContain(">Lotus Biscoff</span>");
+  });
+
+  test("auto mode off keeps the placeholder when the product has no photo", () => {
+    const html = renderToStaticMarkup(
+      <ProductCard product={{ ...base, imageUrl: null, useFlavorPhotos: false, flavors }} waHref="https://wa.me/1" />,
+    );
+    expect(html).toContain("Foto menyusul");
+  });
+});

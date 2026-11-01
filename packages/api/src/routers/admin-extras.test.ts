@@ -202,3 +202,24 @@ describe("flavour photos", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("photos from flavours", () => {
+  test("products with flavours start in auto mode and use the first flavour photo as thumbnail", async () => {
+    const { db } = await createTestDb();
+    const admin = await adminCaller(db);
+    const anon = appRouter.createCaller(testCtx(db));
+    const slice = (await anon.product.bySlug({ slug: "slice-cake" }))!;
+    expect(slice.useFlavorPhotos).toBe(true);
+    expect((await anon.product.bySlug({ slug: "authentic-mango-sticky-rice" }))!.useFlavorPhotos).toBe(false);
+
+    const lotus = slice.flavors.find((flavor) => flavor.name === "Lotus Biscoff")!;
+    await admin.adminProduct.updateFlavor({ id: lotus.id, imageUrl: "https://example.com/lotus.webp" });
+    let row = (await admin.adminProduct.list()).find((product) => product.slug === "slice-cake")!;
+    expect(row.thumbnailUrl).toBe("https://example.com/lotus.webp");
+
+    await admin.adminProduct.update({ id: slice.id, useFlavorPhotos: false });
+    row = (await admin.adminProduct.list()).find((product) => product.slug === "slice-cake")!;
+    expect(row.thumbnailUrl).toBeNull();
+    expect((await anon.product.list()).find((product) => product.slug === "slice-cake")!.useFlavorPhotos).toBe(false);
+  });
+});

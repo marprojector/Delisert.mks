@@ -58,3 +58,12 @@ describe("validateProductForm", () => {
     expect(validateProductForm({ ...valid, name: " " })?.field).toBe("name");
   });
 });
+
+describe("foto otomatis dari rasa", () => {
+  test("is loaded, compared and sent like the other fields", () => {
+    const loaded = toForm({ ...product, useFlavorPhotos: true });
+    expect(loaded.useFlavorPhotos).toBe(true);
+    expect(isDirty(loaded, { ...loaded, useFlavorPhotos: false })).toBe(true);
+    expect(toPayload({ ...loaded, categoryId: 1 }).useFlavorPhotos).toBe(true);
+  });
+});

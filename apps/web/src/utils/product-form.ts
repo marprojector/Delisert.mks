@@ -11,6 +11,8 @@ export type ProductForm = {
   price: string;
   availability: Availability;
   isFeatured: boolean;
+  /** Foto otomatis dari rasa (kartu & galeri memakai foto tiap rasa). */
+  useFlavorPhotos: boolean;
   imageUrl: string;
   imageAlt: string;
 };
@@ -23,6 +25,7 @@ export const EMPTY_FORM: ProductForm = {
   price: "",
   availability: "available",
   isFeatured: false,
+  useFlavorPhotos: false,
   imageUrl: "",
   imageAlt: "",
 };
@@ -35,6 +38,7 @@ export function toForm(product: {
   priceCents: number | null;
   availability: Availability;
   isFeatured: boolean;
+  useFlavorPhotos?: boolean;
   imageUrl: string | null;
   imageAlt: string | null;
 }): ProductForm {
@@ -46,6 +50,7 @@ export function toForm(product: {
     price: centsToRupiahInput(product.priceCents),
     availability: product.availability,
     isFeatured: product.isFeatured,
+    useFlavorPhotos: product.useFlavorPhotos ?? false,
     imageUrl: product.imageUrl ?? "",
     imageAlt: product.imageAlt ?? "",
   };
@@ -77,6 +82,7 @@ export function toPayload(form: ProductForm & { categoryId: number }) {
     priceCents: rupiahToCents(form.price),
     availability: form.availability,
     isFeatured: form.isFeatured,
+    useFlavorPhotos: form.useFlavorPhotos,
     imageUrl: form.imageUrl.trim() || null,
     imageAlt: form.imageAlt.trim() || null,
   };

@@ -1,4 +1,4 @@
-import { and, asc, count, eq, ne } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -39,6 +39,8 @@ const productFields = {
   imageUrl: imageUrlSchema.nullable().optional(),
   imageAlt: z.string().max(200).nullable().optional(),
   isFeatured: z.boolean(),
+  /** Kartu & galeri memakai foto tiap rasa; foto produk sendiri jadi opsional. */
+  useFlavorPhotos: z.boolean(),
   availability: availabilityEnum,
   displayOrder: z.number().int().min(0),
 };
@@ -46,6 +48,7 @@ const productFields = {
 const productInput = z.object({
   ...productFields,
   isFeatured: productFields.isFeatured.default(false),
+  useFlavorPhotos: productFields.useFlavorPhotos.default(false),
   availability: productFields.availability.default("available"),
   displayOrder: productFields.displayOrder.default(0),
 });
@@ -150,6 +153,7 @@ export const adminProductRouter = router({
         priceCents: products.priceCents,
         availability: products.availability,
         isFeatured: products.isFeatured,
+        useFlavorPhotos: products.useFlavorPhotos,
         imageUrl: products.imageUrl,
         description: products.description,
         categoryId: products.categoryId,
@@ -170,12 +174,26 @@ export const adminProductRouter = router({
       .from(productFlavors)
       .groupBy(productFlavors.productId);
     const flavorCount = new Map(flavorCounts.map((row) => [row.productId, row.total]));
+    // Foto rasa pertama, untuk thumbnail produk yang memakai foto otomatis dari rasa.
+    const flavorPhotoRows = await ctx.db
+      .select({ productId: productFlavors.productId, imageUrl: productFlavors.imageUrl })
+      .from(productFlavors)
+      .where(isNotNull(productFlavors.imageUrl))
+      .orderBy(asc(productFlavors.displayOrder), asc(productFlavors.id));
+    const firstFlavorPhoto = new Map<number, string>();
+    for (const flavor of flavorPhotoRows) {
+      if (flavor.imageUrl && !firstFlavorPhoto.has(flavor.productId)) {
+        firstFlavorPhoto.set(flavor.productId, flavor.imageUrl);
+      }
+    }
 
     return rows.map((row) => ({
       ...row,
       availability: availabilityEnum.parse(row.availability),
       variantCount: variantCount.get(row.id) ?? 0,
       flavorCount: flavorCount.get(row.id) ?? 0,
+      /** Foto yang tampil sebagai thumbnail: foto produk, atau foto rasa bila otomatis. */
+      thumbnailUrl: row.imageUrl ?? (row.useFlavorPhotos ? (firstFlavorPhoto.get(row.id) ?? null) : null),
     }));
   }),
 

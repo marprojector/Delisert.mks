@@ -93,10 +93,10 @@ function AdminProductList() {
 
   const thumb = (row: (typeof rows)[number], size: string) => (
     <span className={cn("shrink-0 overflow-hidden rounded-[0.875rem]", size)}>
-      {row.imageUrl ? (
+      {row.thumbnailUrl ? (
         <img
-          src={row.imageUrl}
-          srcSet={photoSrcSet(row.imageUrl)}
+          src={row.thumbnailUrl}
+          srcSet={photoSrcSet(row.thumbnailUrl)}
           sizes="64px"
           alt=""
           width={64}

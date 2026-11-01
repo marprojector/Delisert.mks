@@ -3,6 +3,8 @@ import type { ProductAvailability } from "@delisert.mks-1/ui/components/availabi
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { FlavorPreview } from "@delisert.mks-1/ui/components/flavor-picker";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
+import { RotatingPhotos } from "@delisert.mks-1/ui/components/rotating-photos";
+import { productPhotos } from "@delisert.mks-1/ui/lib/product-photos";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { Plus } from "lucide-react";
@@ -21,7 +23,9 @@ export type ProductCardData = {
   category: { slug: string; name: string };
   variants: Array<{ id: number; name: string; priceCents: number | null; isAvailable: boolean }>;
   /** Varian rasa; opsional supaya data lama tetap bisa dirender. */
-  flavors?: Array<{ id: number; name: string; isAvailable: boolean }>;
+  flavors?: Array<{ id: number; name: string; isAvailable: boolean; imageUrl?: string | null }>;
+  /** Foto otomatis dari rasa (bergantian di kartu). */
+  useFlavorPhotos?: boolean;
 };
 
 export function ProductPrice({
@@ -71,6 +75,7 @@ export function ProductCard({
   sizes?: string;
 }) {
   const soldOut = product.availability === "soldout";
+  const photos = productPhotos(product);
   const detailHref = `/menu/${product.slug}`;
 
   return (
@@ -80,12 +85,19 @@ export function ProductCard({
       className={cn("group/product-card relative flex min-w-0 flex-col gap-2.5", className)}
     >
       <div className="relative aspect-square overflow-hidden rounded-[1.25rem] lg:rounded-3xl">
-        {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              srcSet={photoSrcSet(product.imageUrl)}
+        {photos.length > 1 ? (
+            <RotatingPhotos
+              photos={photos}
               sizes={sizes}
-              alt={product.imageAlt ?? `Foto ${product.name} Delisert Makassar`}
+              seed={product.id}
+              imageClassName="transition-[opacity,transform] group-hover/product-card:scale-105"
+            />
+          ) : photos[0] ? (
+            <img
+              src={photos[0].url}
+              srcSet={photoSrcSet(photos[0].url)}
+              sizes={sizes}
+              alt={photos[0].alt}
               width={640}
               height={640}
               loading="lazy"

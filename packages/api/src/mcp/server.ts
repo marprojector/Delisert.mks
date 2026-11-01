@@ -47,6 +47,10 @@ const productChanges = z.object({
   categoryId: id.optional(),
   availability: availability.optional(),
   isFeatured: z.boolean().optional().describe("Tampil di bagian Menu Andalan beranda."),
+  useFlavorPhotos: z
+    .boolean()
+    .optional()
+    .describe("Foto otomatis dari rasa: kartu menu & galeri memakai foto tiap rasa secara bergantian."),
   imageAlt: z.string().max(200).nullable().optional(),
 });
 

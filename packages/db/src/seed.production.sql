@@ -118,4 +118,9 @@ WHERE slug = 'artisanal-mochi-daifuku'
   AND description LIKE '%8 varian rasa%'
   AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'flavors');
 
+UPDATE products
+SET use_flavor_photos = 1
+WHERE slug IN ('artisanal-mochi-daifuku', 'slice-cake', 'mille-crepes')
+  AND NOT EXISTS (SELECT 1 FROM _seed_state WHERE key = 'flavors');
+
 INSERT OR IGNORE INTO _seed_state (key) VALUES ('flavors');

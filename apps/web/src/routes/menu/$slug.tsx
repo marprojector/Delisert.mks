@@ -13,6 +13,7 @@ import {
 } from "@delisert.mks-1/ui/components/variant-picker";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
+import { productPhotos } from "@delisert.mks-1/ui/lib/product-photos";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
@@ -58,8 +59,8 @@ export const Route = createFileRoute("/menu/$slug")({
         },
         { property: "og:type", content: "product" },
         { property: "og:url", content: canonical(`/menu/${product.slug}`) },
-        ...(product.imageUrl
-          ? [{ property: "og:image", content: absoluteUrl(product.imageUrl) }]
+        ...(productPhotos(product)[0]
+          ? [{ property: "og:image", content: absoluteUrl(productPhotos(product)[0]!.url) }]
           : []),
       ],
       links: [{ rel: "canonical", href: canonical(`/menu/${product.slug}`) }],
@@ -126,17 +127,9 @@ function ProductDetailComponent() {
   const flavorName = availableFlavorName(current.flavors, choiceForProduct(flavorChoice, current.slug));
   const orderLabel = [variantName, flavorName].filter(Boolean).join(" · ");
 
-  // Rasa terpilih yang punya foto sendiri tampil sebagai foto utama.
-  const selectedFlavor = current.flavors.find((flavor) => flavor.name === flavorName);
-  const productImage = current.imageUrl
-    ? { url: current.imageUrl, alt: current.imageAlt ?? `Foto ${current.name} Delisert Makassar` }
-    : null;
-  const flavorImage = selectedFlavor?.imageUrl
-    ? { url: selectedFlavor.imageUrl, alt: `${current.name} rasa ${selectedFlavor.name}` }
-    : null;
-  const galleryImages = [flavorImage, productImage].filter(
-    (image): image is { url: string; alt: string } => image !== null,
-  );
+  // Rasa terpilih yang punya foto sendiri tampil sebagai foto utama; dengan
+  // foto otomatis dari rasa, galeri berisi foto semua rasa.
+  const galleryImages = productPhotos(current, flavorName);
   const priceCents = variant ? variant.priceCents : current.priceCents;
   const orderHref = waLink(
     productOrderMessage({

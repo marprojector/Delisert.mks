@@ -132,6 +132,19 @@ Pelanggan melihat rasa sebagai pilihan di halaman produk dan sebagai ringkasan
 di kartu menu. Rasa yang dipilih ikut tertulis di pesan WhatsApp, mis.
 "Artisanal Mochi Daifuku (Isi 4 pcs, rasa Matcha Oreo)".
 
+### Foto otomatis dari rasa
+
+Di kartu **Foto produk** ada sakelar **Foto otomatis dari rasa**. Bila aktif:
+
+- Kartu menu (dan beranda) bergantian menampilkan foto tiap rasa, lengkap
+  dengan nama rasanya — tidak perlu mengunggah foto produk/thumbnail terpisah.
+- Galeri di halaman produk berisi semua foto rasa; memilih rasa langsung
+  menampilkan fotonya.
+- Foto produk sendiri tetap boleh diisi; bila ada, foto itu tampil paling depan.
+
+Produk yang punya varian rasa (Mochi, Slice Cake, Mille Crepes) sudah
+otomatis menyalakan sakelar ini. Matikan bila ingin memakai satu foto produk saja.
+
 ## 5b. Mengelola varian ukuran & harga
 
 Varian hanya bisa dikelola pada produk yang **sudah tersimpan**. Buka produk,

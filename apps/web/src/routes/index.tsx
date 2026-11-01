@@ -8,6 +8,7 @@ import { SectionHeading } from "@delisert.mks-1/ui/components/section-heading";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { categoryTint } from "@delisert.mks-1/ui/lib/category-tint";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
+import { productPhotos } from "@delisert.mks-1/ui/lib/product-photos";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -157,6 +158,8 @@ function HeroMedia({
   className?: string;
   parallax: number;
 }) {
+  // Foto produk, atau foto rasa pertama bila produk memakai foto otomatis dari rasa.
+  const productPhoto = product ? productPhotos(product)[0] : undefined;
   return (
     <div
       data-hero-media
@@ -178,12 +181,12 @@ function HeroMedia({
             fetchPriority="high"
             className="size-full object-cover"
           />
-        ) : product?.imageUrl ? (
+        ) : productPhoto ? (
           <img
-            src={product.imageUrl}
-            srcSet={photoSrcSet(product.imageUrl)}
+            src={productPhoto.url}
+            srcSet={photoSrcSet(productPhoto.url)}
             sizes="(min-width: 1024px) 30vw, 60vw"
-            alt={product.imageAlt ?? `Foto ${product.name} Delisert Makassar`}
+            alt={productPhoto.alt}
             width={660}
             height={1080}
             fetchPriority="high"

@@ -61,7 +61,7 @@ function AdminDashboard() {
   const rows = products.data ?? [];
   const available = rows.filter((row) => row.availability !== "soldout").length;
   const soldOut = rows.filter((row) => row.availability === "soldout");
-  const withoutPhoto = rows.filter((row) => !row.imageUrl);
+  const withoutPhoto = rows.filter((row) => !row.thumbnailUrl);
   const withoutDescription = rows.filter((row) => !row.description?.trim());
   const attention = soldOut.length + withoutPhoto.length;
   const activeTokens = (tokens.data ?? []).filter((token) => !token.revokedAt).length;
@@ -260,8 +260,8 @@ function AdminDashboard() {
                 className="flex items-center gap-3 border-b border-border/60 py-3 last:border-0 hover:bg-muted/50"
               >
                 <span className="size-12 shrink-0 overflow-hidden rounded-xl">
-                  {row.imageUrl ? (
-                    <img src={row.imageUrl} srcSet={photoSrcSet(row.imageUrl)} sizes="48px" alt="" width={48} height={48} className="size-full object-cover" />
+                  {row.thumbnailUrl ? (
+                    <img src={row.thumbnailUrl} srcSet={photoSrcSet(row.thumbnailUrl)} sizes="48px" alt="" width={48} height={48} className="size-full object-cover" />
                   ) : (
                     <PhotoPlaceholder label="" />
                   )}

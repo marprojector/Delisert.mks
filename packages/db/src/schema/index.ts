@@ -24,6 +24,11 @@ export const products = sqliteTable("products", {
   imageUrl: text("image_url"),
   imageAlt: text("image_alt"),
   isFeatured: integer("is_featured", { mode: "boolean" }).notNull().default(false),
+  /**
+   * Foto otomatis dari rasa: kartu menu dan galeri memakai foto tiap rasa
+   * (bergantian), sehingga foto produk sendiri tidak wajib.
+   */
+  useFlavorPhotos: integer("use_flavor_photos", { mode: "boolean" }).notNull().default(false),
   availability: text("availability").notNull().default("available"),
   displayOrder: integer("display_order").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),

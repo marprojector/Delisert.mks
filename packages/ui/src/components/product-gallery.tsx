@@ -6,6 +6,8 @@ import { useState } from "react";
 export type GalleryImage = {
   url: string;
   alt: string;
+  /** Nama rasa bila foto ini foto rasa; ditampilkan sebagai label. */
+  flavorName?: string;
 };
 
 /**
@@ -53,7 +55,7 @@ export function ProductGallery({
           }}
         >
           {images.map((image, index) => (
-            <li key={image.url} className="w-full shrink-0 snap-center">
+            <li key={image.url} className="relative w-full shrink-0 snap-center">
               <img
                 src={image.url}
                 srcSet={photoSrcSet(image.url)}
@@ -66,6 +68,7 @@ export function ProductGallery({
                 decoding="async"
                 className="size-full object-cover"
               />
+              {image.flavorName ? <FlavorLabel name={image.flavorName} className="bottom-16" /> : null}
             </li>
           ))}
         </ul>
@@ -85,7 +88,7 @@ export function ProductGallery({
       </div>
 
       {/* Desktop: foto utama + thumbnail */}
-      <div className="hidden overflow-hidden rounded-[2rem] bg-muted lg:block">
+      <div className="relative hidden overflow-hidden rounded-[2rem] bg-muted lg:block">
         <img
           src={active.url}
           srcSet={photoSrcSet(active.url)}
@@ -98,6 +101,7 @@ export function ProductGallery({
           key={active.url}
           className="animate-in fade-in-0 aspect-[16/15] w-full object-cover duration-300"
         />
+        {active.flavorName ? <FlavorLabel key={active.url} name={active.flavorName} className="bottom-5" /> : null}
       </div>
       {images.length > 1 ? (
         <ul className="hidden gap-3 lg:flex" aria-label={`Pilih foto ${productName}`}>
@@ -129,5 +133,18 @@ export function ProductGallery({
         </ul>
       ) : null}
     </div>
+  );
+}
+
+function FlavorLabel({ name, className }: { name: string; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "animate-in fade-in-0 absolute left-4 rounded-full bg-background/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm duration-300 lg:left-5 lg:text-sm",
+        className,
+      )}
+    >
+      Rasa {name}
+    </span>
   );
 }
