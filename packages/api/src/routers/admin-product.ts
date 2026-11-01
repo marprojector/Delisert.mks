@@ -23,7 +23,7 @@ const imageUrlSchema = z
   .string()
   .refine(
     (value) => value.startsWith("/api/photos/products/") || /^https:\/\//.test(value),
-    "URL foto harus berupa path foto internal atau URL HTTPS.",
+    "URL foto harus berupa URL HTTPS.",
   );
 
 const productFields = {

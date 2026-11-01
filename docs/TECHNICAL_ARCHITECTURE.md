@@ -1055,14 +1055,20 @@ dilempar.
 
 ### 15.2 Penyimpanan foto
 
-Foto produk disimpan di bucket R2 `photos`, diikat ke Worker sebagai `PHOTOS`.
+Foto produk disimpan di **Supabase Storage**, bukan R2. Workers tidak punya
+disk yang bisa ditulis, jadi tetap memerlukan object storage eksternal.
 
+- Bucket `products` harus diset **public** agar foto bisa ditampilkan.
 - Kunci objek **selalu** `products/<uuid>.<ext>`; nama file pengguna tidak
   pernah masuk ke path, sehingga path traversal tidak mungkin.
 - Hanya JPG, PNG, dan WebP; maksimal 5 MB. SVG ditolak karena bisa memuat
   script.
-- Disajikan kembali lewat `/api/photos/<key>`, yang menolak kunci di luar
-  prefix `products/`.
+- Unggahan lewat `POST /api/upload` (butuh token admin). Server memakai
+  `SUPABASE_SERVICE_ROLE_KEY`; key ini tidak pernah sampai ke browser.
+- URL publik dikembalikan langsung dari Supabase
+  (`/storage/v1/object/public/products/<key>`), sehingga aplikasi tidak lagi
+  mem-proxy gambar.
+- Route `/api/photos/*` sudah dihapus.
 
 ### 15.3 Prosedur tRPC admin
 

@@ -17,19 +17,9 @@ describe("upload endpoint", () => {
   });
 });
 
-describe("photo endpoint", () => {
-  test("refuses keys outside the products prefix", async () => {
-    const response = await fetch(`${BASE}/api/photos/secrets.json`);
+describe("photo proxy", () => {
+  test("is gone — photos are served by Supabase, not this app", async () => {
+    const response = await fetch(`${BASE}/api/photos/products/anything.png`);
     expect(response.status).toBe(404);
-  });
-
-  test("refuses traversal in the key", async () => {
-    const response = await fetch(`${BASE}/api/photos/products/..%2F..%2Fsecrets`);
-    expect(response.status).toBe(404);
-  });
-
-  test("refuses malformed percent encoding", async () => {
-    const response = await fetch(`${BASE}/api/photos/%E0%A4%A`);
-    expect([400, 404]).toContain(response.status);
   });
 });

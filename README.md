@@ -90,6 +90,9 @@ Run standalone Node/Bun tools that use Varlock from the owning app directory so 
 ```
 ADMIN_PASSWORD=<password for the admin dashboard>
 ADMIN_SESSION_SECRET=<at least 32 random characters>
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service role key>
+SUPABASE_BUCKET=products
 ```
 
 Generate them once with:
@@ -103,7 +106,7 @@ Both are bound to the Worker as secrets and never reach the client bundle.
 
 ### Alchemy
 
-- Target: web on Cloudflare (D1 database + R2 bucket for product photos)
+- Target: web on Cloudflare (D1 database) + Supabase Storage for product photos
 - Configure provider accounts: `cd packages/infra && bunx alchemy profile edit`
 - Dev: `bun run dev` from the repo root, or `cd packages/infra && bun run dev`
 - Deploy: `bun run deploy`
