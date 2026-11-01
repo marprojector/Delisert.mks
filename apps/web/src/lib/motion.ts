@@ -215,6 +215,9 @@ export function useFeaturedPin(scope: Scope) {
             start: "top top+=88",
             end: () => `+=${distance()}`,
             pin: true,
+            // Wajib eksplisit: induk flex membuat ScrollTrigger mematikan jarak
+            // ini, lalu section berikutnya naik menimpa section yang di-pin.
+            pinSpacing: true,
             scrub: 0.6,
             invalidateOnRefresh: true,
           },

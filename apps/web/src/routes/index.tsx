@@ -194,43 +194,46 @@ function ScheduleStrip() {
 
 function Featured({ products }: { products: Product[] }) {
   return (
-    <section data-pin-section className="flex flex-col gap-5 overflow-x-clip pt-14 lg:gap-7 lg:pt-24">
-      <div className="cn-shell flex items-end justify-between gap-4">
-        <SectionHeading eyebrow="Menu Andalan" title="Yang paling sering dipesan" />
+    // Pembungkus blok (bukan flex) supaya ScrollTrigger bisa memberi jarak pin.
+    <div data-pin-parent>
+      <section data-pin-section className="flex flex-col gap-5 overflow-x-clip pt-14 lg:gap-7 lg:pt-24">
+        <div className="cn-shell flex items-end justify-between gap-4">
+          <SectionHeading eyebrow="Menu Andalan" title="Yang paling sering dipesan" />
+          <Link
+            to="/menu"
+            className="hidden h-[2.875rem] shrink-0 items-center gap-2 rounded-full border border-border px-5.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary sm:inline-flex"
+          >
+            Lihat semua menu <ArrowRight aria-hidden="true" className="size-4" />
+          </Link>
+        </div>
+
+        {products.length === 0 ? (
+          <p className="cn-shell text-sm text-muted-foreground">Katalog produk menyusul.</p>
+        ) : (
+          // HP: digeser dengan jari. Desktop: section menempel dan baris bergeser
+          // mengikuti scroll (useFeaturedPin); tanpa animasi, baris tetap bisa digeser.
+          <div
+            data-pin-viewport
+            className="cn-no-scrollbar snap-x snap-mandatory scroll-px-5 overflow-x-auto pb-2 lg:cn-shell lg:scroll-px-8"
+          >
+            <ul data-pin-track className="flex w-max gap-3 px-5 lg:gap-6 lg:px-0">
+              {products.map((product) => (
+                <li key={product.id} className="w-[12.5rem] shrink-0 snap-start lg:w-[21rem]">
+                  <ProductCard product={product} waHref={orderHref(product)} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <Link
           to="/menu"
-          className="hidden h-[2.875rem] shrink-0 items-center gap-2 rounded-full border border-border px-5.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary sm:inline-flex"
+          className="cn-shell inline-flex items-center gap-2 text-sm font-semibold text-primary sm:hidden"
         >
           Lihat semua menu <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
-      </div>
-
-      {products.length === 0 ? (
-        <p className="cn-shell text-sm text-muted-foreground">Katalog produk menyusul.</p>
-      ) : (
-        // HP: digeser dengan jari. Desktop: section menempel dan baris bergeser
-        // mengikuti scroll (useFeaturedPin); tanpa animasi, baris tetap bisa digeser.
-        <div
-          data-pin-viewport
-          className="cn-no-scrollbar snap-x snap-mandatory scroll-px-5 overflow-x-auto pb-2 lg:cn-shell lg:scroll-px-8"
-        >
-          <ul data-pin-track className="flex w-max gap-3 px-5 lg:gap-6 lg:px-0">
-            {products.map((product) => (
-              <li key={product.id} className="w-[12.5rem] shrink-0 snap-start lg:w-[21rem]">
-                <ProductCard product={product} waHref={orderHref(product)} />
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <Link
-        to="/menu"
-        className="cn-shell inline-flex items-center gap-2 text-sm font-semibold text-primary sm:hidden"
-      >
-        Lihat semua menu <ArrowRight aria-hidden="true" className="size-4" />
-      </Link>
-    </section>
+      </section>
+    </div>
   );
 }
 

@@ -35,6 +35,12 @@ describe("scroll storytelling", () => {
     expect(motion).toMatch(/mm\.add\(\s*DESKTOP_MOTION_QUERY[\s\S]*pin: true/);
   });
 
+  test("the pinned section reserves its scroll distance so later sections never slide over it", () => {
+    // ScrollTrigger mematikan pinSpacing bila induk elemen yang di-pin adalah flex.
+    expect(read("motion.ts")).toMatch(/pin: true,[\s\S]{0,200}pinSpacing: true/);
+    expect(read("../routes/index.tsx")).toMatch(/<div data-pin-parent>\s*<section data-pin-section/);
+  });
+
   test("the homepage marks the pinned section and the about page marks counters", () => {
     expect(read("../routes/index.tsx")).toContain("data-pin-track");
     expect(read("../routes/tentang.tsx")).toContain("data-count-to");
