@@ -47,4 +47,21 @@ describe("product detail SSR", () => {
       });
     }
   });
+
+  test("product with variants renders a radio group", async () => {
+    const html = await (await fetch(`${BASE}/menu/artisanal-mochi-daifuku`)).text();
+    expect(html).toContain('type="radio"');
+    expect(html).toContain("Isi 4 pcs");
+    expect(html).toContain("Pilih varian");
+  });
+
+  test("the detail page renders the product, not the catalogue", async () => {
+    // Regresi: /menu adalah parent route dari /menu/$slug. Tanpa <Outlet /> di
+    // menu.tsx, halaman produk menampilkan katalog dan mewarisi canonical-nya.
+    const html = await (await fetch(`${BASE}/menu/artisanal-mochi-daifuku`)).text();
+    expect(html).toContain("Cara memesan");
+    expect(html).not.toContain("Katalog produk Delisert.");
+    const canonicals = html.match(/rel="canonical"/g) ?? [];
+    expect(canonicals.length).toBe(1);
+  });
 });
