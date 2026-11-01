@@ -52,11 +52,17 @@ export const web = Cloudflare.Website.Vite("web", {
 
 export type WebEnv = Cloudflare.InferEnv<typeof web>;
 
+/**
+ * State deployment disimpan lokal di `.alchemy/state`, bukan di Cloudflare
+ * State Store. State Store Cloudflare memerlukan izin Secrets Store, yang
+ * tidak dimiliki token deploy ini. Konsekuensinya: state hanya ada di mesin
+ * yang menjalankan deploy — jangan deploy dari dua mesin berbeda sekaligus.
+ */
 export default Alchemy.Stack(
   "delisert.mks-1",
   {
     providers: Cloudflare.providers(),
-    state: Cloudflare.state(),
+    state: Alchemy.localState(),
   },
   Effect.gen(function* () {
     const webWorker = yield* web;
