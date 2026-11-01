@@ -34,6 +34,7 @@ function AboutComponent() {
             eyebrow="Tentang Delisert"
             title="Dapur kecil di Makassar yang memulai dari satu mangkuk mochi."
             description="Delisert berdiri pada 2021 dan tumbuh dari aktivitas Car Free Day di Jalan Boulevard, Makassar."
+            as="h1"
           />
         </div>
       </section>

@@ -40,6 +40,7 @@ function ContactComponent() {
         eyebrow="Kontak & Pesan"
         title="Pesan, konfirmasi, lalu kami siapkan."
         description="Semua pemesanan Delisert berjalan melalui WhatsApp. Tidak ada pembayaran daring di website ini."
+        as="h1"
       />
 
       <div className="flex flex-col gap-6 pt-12">

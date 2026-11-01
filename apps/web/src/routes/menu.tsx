@@ -74,6 +74,7 @@ function MenuComponent() {
         eyebrow="Menu"
         title="Katalog produk Delisert."
         description="Harga dapat berubah mengikuti musim buah. Ketersediaan setiap batch dipastikan ulang melalui WhatsApp sebelum pesanan diproses."
+        as="h1"
       />
 
       <div className="flex flex-wrap items-center gap-2 pt-10">

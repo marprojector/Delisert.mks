@@ -40,6 +40,7 @@ function ScheduleComponent() {
         eyebrow="Jadwal & Lokasi"
         title="Kapan dan di mana Delisert hadir."
         description="Empat informasi yang berbeda, dipisahkan dengan jelas agar tidak tertukar."
+        as="h1"
       />
 
       <div className="flex flex-col gap-6 pt-12">
