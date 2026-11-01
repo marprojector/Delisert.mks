@@ -5,7 +5,7 @@ import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { Plus, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Search } from "lucide-react";
 import { useState } from "react";
 
 import { type Availability, type StatusFilter, filterProducts } from "@/utils/admin-filter";
@@ -47,6 +47,7 @@ function AdminProductList() {
   const setAvailability = useMutation(
     trpc.adminProduct.setAvailability.mutationOptions({ onSuccess: refresh }),
   );
+  const move = useMutation(trpc.adminProduct.move.mutationOptions({ onSuccess: refresh }));
 
   // /admin/produk/$id dirender lewat <Outlet/> di sini. Saat editor terbuka,
   // tampilkan editornya saja — jangan di bawah seluruh daftar.
@@ -109,7 +110,12 @@ function AdminProductList() {
   );
 
   const meta = (row: (typeof rows)[number]) =>
-    [row.categoryName, row.variantCount > 0 ? `${row.variantCount} varian` : null, row.isFeatured ? "★ Unggulan" : null]
+    [
+      row.categoryName,
+      row.variantCount > 0 ? `${row.variantCount} ukuran` : null,
+      row.flavorCount > 0 ? `${row.flavorCount} rasa` : null,
+      row.isFeatured ? "★ Unggulan" : null,
+    ]
       .filter(Boolean)
       .join(" · ");
 
@@ -161,7 +167,7 @@ function AdminProductList() {
         </div>
       </div>
 
-      {remove.isError || setAvailability.isError ? (
+      {remove.isError || setAvailability.isError || move.isError ? (
         <p role="alert" className="text-sm text-destructive">
           Gagal menyimpan perubahan. Coba lagi.
         </p>
@@ -200,7 +206,8 @@ function AdminProductList() {
                   <span className="truncate text-[0.9375rem] font-semibold text-foreground">{row.name}</span>
                   <span className="truncate text-[0.8125rem] text-muted-foreground">
                     {price(row.priceCents)}
-                    {row.variantCount > 0 ? ` · ${row.variantCount} varian` : ""}
+                    {row.variantCount > 0 ? ` · ${row.variantCount} ukuran` : ""}
+                    {row.flavorCount > 0 ? ` · ${row.flavorCount} rasa` : ""}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs">
                     <span aria-hidden="true" className={cn("size-2 rounded-full", DOT[row.availability])} />
@@ -228,7 +235,7 @@ function AdminProductList() {
                   <th scope="col" className="py-3.5 font-semibold">Produk</th>
                   <th scope="col" className="w-32 py-3.5 font-semibold xl:w-40">Harga</th>
                   <th scope="col" className="w-40 py-3.5 font-semibold xl:w-48">Ketersediaan</th>
-                  <th scope="col" className="w-28 py-3.5 font-semibold xl:w-36">Aksi</th>
+                  <th scope="col" className="w-48 py-3.5 font-semibold xl:w-56">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -242,7 +249,30 @@ function AdminProductList() {
                     <td className="py-3.5 text-[0.9375rem] font-semibold text-foreground">{price(row.priceCents)}</td>
                     <td className="py-3.5">{availabilitySelect(row)}</td>
                     <td className="py-3.5">
-                      <span className="flex gap-4 text-sm">
+                      <span className="flex items-center gap-4 text-sm">
+                        {/* Urutan hanya bermakna tanpa pencarian/filter: daftar penuh = urutan menu. */}
+                        {query === "" && status === "all" ? (
+                          <span className="flex">
+                            <button
+                              type="button"
+                              disabled={move.isPending || row.id === rows[0]?.id}
+                              onClick={() => move.mutate({ id: row.id, direction: "up" })}
+                              className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary disabled:opacity-30"
+                            >
+                              <ArrowUp aria-hidden="true" className="size-4" />
+                              <span className="sr-only">Naikkan {row.name}</span>
+                            </button>
+                            <button
+                              type="button"
+                              disabled={move.isPending || row.id === rows.at(-1)?.id}
+                              onClick={() => move.mutate({ id: row.id, direction: "down" })}
+                              className="flex size-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary disabled:opacity-30"
+                            >
+                              <ArrowDown aria-hidden="true" className="size-4" />
+                              <span className="sr-only">Turunkan {row.name}</span>
+                            </button>
+                          </span>
+                        ) : null}
                         <Link
                           to="/admin/produk/$id"
                           params={{ id: String(row.id) }}

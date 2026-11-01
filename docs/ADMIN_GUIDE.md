@@ -20,9 +20,13 @@ normal dan bukan tanda ada masalah.
 
 ## 1b. Navigasi admin
 
-- **Di komputer:** menu ada di sisi kiri — **Ringkasan**, **Produk** (dengan
-  jumlah produk), **Lihat website**, dan **Keluar** di bagian bawah.
-- **Di HP:** menu ada di bawah layar — Ringkasan, Produk, Website, Keluar.
+- **Di komputer:** menu ada di sisi kiri, dikelompokkan:
+  - **Utama** — Ringkasan, Analitik
+  - **Katalog** — Produk (dengan jumlah produk), Kategori
+  - **Website** — Konten website, MCP & asisten AI
+  - **Lihat website** dan **Keluar** ada di bagian bawah.
+- **Di HP:** tab di bawah layar — Ringkasan, Produk, Konten, Analitik, dan
+  **Lainnya** (membuka menu lengkap).
 
 Kalau salah kata sandi, pesan error menyebut sisa percobaan. Setelah 5 kali
 salah, login dikunci 15 menit.
@@ -33,14 +37,23 @@ salah, login dikunci 15 menit.
 
 Setelah masuk, halaman pertama menampilkan:
 
-- **Total produk** — jumlah produk di katalog.
-- **Produk unggulan** — jumlah produk yang tampil di beranda.
-- **Stok habis** — jumlah produk yang ditandai habis.
-- **Belum ada foto** — produk yang belum punya foto. Sebaiknya dilengkapi
-  sebelum diumumkan ke pelanggan. Kotak ini berwarna emas selama masih ada
-  produk tanpa foto.
+- **Pengunjung · 7 hari** dan **Tayangan halaman**, dengan persentase naik/turun
+  dibanding minggu sebelumnya (dari Cloudflare Web Analytics).
+- **Produk dijual** — produk yang tidak habis dari total produk.
+- **Perlu perhatian** — jumlah produk habis + produk tanpa foto. Berwarna emas
+  selama masih ada yang perlu dibereskan.
+- **Grafik pengunjung** 7 hari terakhir dan **Aktivitas terbaru** — setiap
+  perubahan tercatat, termasuk siapa yang mengubah (Admin atau asisten AI lewat MCP).
+- **Kesehatan katalog**, **Halaman paling dilihat**, dan **Pintasan** ke
+  tugas yang sering dilakukan.
 
-Di bawahnya ada daftar **Produk terbaru**. Klik salah satu untuk mengubahnya.
+## 2b. Analitik
+
+Menu **Analitik** menampilkan pengunjung dan tayangan per hari (7, 30, atau 90
+hari), halaman teratas, situs asal pengunjung, negara, dan jenis perangkat.
+Arahkan kursor atau sentuh batang grafik untuk melihat angkanya; tombol
+**Lihat sebagai tabel** menampilkan semua angka. Data tidak memakai cookie,
+jadi website tidak perlu banner persetujuan.
 
 ---
 
@@ -99,10 +112,26 @@ bukan hanya warna. Pelanggan tetap bisa melihat produknya.
 
 ---
 
-## 5b. Mengelola varian (ukuran / rasa)
+## 5a. Mengelola varian rasa
+
+Rasa (mis. Matcha Oreo, Lotus Biscoff) diatur terpisah dari ukuran karena
+tidak mengubah harga. Buka produk yang sudah tersimpan, lalu bagian
+**Varian rasa**:
+
+- Ketik nama rasa lalu **Tambah rasa**. Langsung tersimpan.
+- Panah ↑/↓ mengubah urutan tampil.
+- Matikan sakelar bila rasa sedang habis: rasa tetap tampil dengan tulisan
+  "Habis" dan tidak bisa dipilih.
+- Tanda × menghapus rasa.
+
+Pelanggan melihat rasa sebagai pilihan di halaman produk dan sebagai ringkasan
+di kartu menu. Rasa yang dipilih ikut tertulis di pesan WhatsApp, mis.
+"Artisanal Mochi Daifuku (Isi 4 pcs, rasa Matcha Oreo)".
+
+## 5b. Mengelola varian ukuran & harga
 
 Varian hanya bisa dikelola pada produk yang **sudah tersimpan**. Buka produk,
-lalu gulir ke bagian **Varian**.
+lalu gulir ke bagian **Varian ukuran & harga**.
 
 - **Tambah varian** — isi nama (mis. `Isi 4 pcs`) dan harga rupiah utuh, lalu
   klik **+ Tambah varian**. Perubahan langsung tersimpan, tidak perlu klik
@@ -110,7 +139,6 @@ lalu gulir ke bagian **Varian**.
 - **Sakelar tersedia** — matikan sakelar di samping varian bila varian itu
   habis. Varian tetap tampil di halaman produk dengan tulisan "Habis" dan
   tidak bisa dipilih pelanggan.
-- Urutan varian belum bisa diubah dari admin.
 - **Hapus** — menghapus varian dari produk. Riwayat pesanan lama tidak
   terpengaruh karena pesanan berjalan lewat WhatsApp.
 
@@ -157,17 +185,44 @@ menampilkan versi lama selama beberapa menit — ini normal.
 
 ---
 
-## 9. Yang **tidak** bisa diubah dari admin
+## 9. Konten website
 
-Bagian berikut sengaja dikunci di kode karena jarang berubah. Perubahannya
-memerlukan bantuan pengembang:
+Menu **Konten website** mengatur teks dan foto di luar katalog. Pilih bagian
+di kiri (di HP: di atas), ubah isinya, lalu klik **Simpan perubahan** di bar
+bawah. Perubahan langsung tampil di website.
 
-- Jadwal TikTok Live dan jam CFD
-- Alamat operasional
-- Metode pengiriman
-- Nomor WhatsApp dan tautan media sosial
-- Kategori produk (menambah atau mengganti nama)
-- Teks halaman Tentang, Jadwal, dan Kontak
+- **Brand & kontak** — nomor WhatsApp (dipakai semua tombol pesan), akun
+  Instagram/TikTok, kalimat footer, dan **pita pengumuman** di atas semua
+  halaman (nyalakan, isi teks, opsional tautan).
+- **Beranda** — judul besar, kalimat pendukung, sampai 3 foto pembuka, judul
+  Menu Andalan, serta tampil/sembunyikan ubin kategori dan kotak cerita.
+- **Jadwal & lokasi** — jenis tiap hari (Live / CFD / Libur), jam TikTok Live,
+  jam dan titik CFD, alamat operasional.
+- **Tentang** — judul, foto, cerita, angka, dan langkah "Cara kerja kami".
+- **Kontak** — langkah cara pesan, instruksi pengambilan, layanan antar.
+
+**Kembalikan ke bawaan** mengembalikan satu bagian ke isi awal website.
+
+## 9b. Kategori
+
+Menu **Kategori**: tambah, ganti nama, ubah urutan (↑/↓), dan sembunyikan
+kategori (sakelar). Kategori yang disembunyikan menyembunyikan semua produknya
+dari website. Kategori yang masih dipakai produk tidak bisa dihapus.
+
+## 9c. MCP & asisten AI
+
+Menu **MCP & asisten AI** menghubungkan Claude (atau asisten lain yang
+mendukung MCP) ke katalog, supaya bisa mengelola website lewat perintah
+seperti "Tandai Mille Crepes rasa Red Velvet sedang habis".
+
+1. Isi nama koneksi, pilih hak akses (**Hanya baca** atau **Baca & ubah**),
+   klik **Buat token**.
+2. **Salin token sekarang** — token hanya ditampilkan sekali.
+3. Pilih aplikasi (Claude Code, Claude Desktop, atau claude.ai) dan ikuti
+   petunjuk yang muncul.
+
+Semua perubahan lewat MCP tercatat di Aktivitas dengan nama koneksinya. Klik
+**Cabut** untuk memutus koneksi kapan saja.
 
 ---
 

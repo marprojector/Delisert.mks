@@ -52,7 +52,10 @@ describe("product detail SSR", () => {
     const html = await (await fetch(`${BASE}/menu/artisanal-mochi-daifuku`)).text();
     expect(html).toContain('type="radio"');
     expect(html).toContain("Isi 4 pcs");
-    expect(html).toContain("Pilih varian");
+    expect(html).toContain("Pilih ukuran");
+    // Rasa tampil terpisah dari ukuran.
+    expect(html).toContain("Pilih rasa");
+    expect(html).toContain("Matcha Oreo");
   });
 
   test("the detail page renders the product, not the catalogue", async () => {

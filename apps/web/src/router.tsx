@@ -4,7 +4,7 @@ import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getRequestUrl } from "@tanstack/react-start/server";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, httpBatchLink, httpLink, splitLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -44,19 +44,24 @@ function createQueryClient() {
   });
 }
 
+// Token admin hanya ada di sessionStorage browser; saat SSR nilainya
+// kosong, jadi tidak ada kebocoran kredensial ke render server.
+const adminAuthHeaders = () => {
+  const token = readAdminToken();
+  return token ? { authorization: `Bearer ${token}` } : ({} as Record<string, string>);
+};
+
 export const getRouter = () => {
   // Dibuat per pemanggilan getRouter (per request di server) supaya
   // getRequestUrl() di dalam getTrpcUrl() punya konteks request yang benar.
   const trpcClient = createTRPCClient<AppRouter>({
     links: [
-      httpBatchLink({
-        url: getTrpcUrl(),
-        // Token admin hanya ada di sessionStorage browser; saat SSR nilainya
-        // kosong, jadi tidak ada kebocoran kredensial ke render server.
-        headers: () => {
-          const token = readAdminToken();
-          return token ? { authorization: `Bearer ${token}` } : {};
-        },
+      // Analitik memanggil API Cloudflare (lebih lambat): kirim terpisah
+      // supaya query lain dalam batch yang sama tidak ikut menunggu.
+      splitLink({
+        condition: (operation) => operation.path.startsWith("adminAnalytics."),
+        true: httpLink({ url: getTrpcUrl(), headers: adminAuthHeaders }),
+        false: httpBatchLink({ url: getTrpcUrl(), headers: adminAuthHeaders }),
       }),
     ],
   });

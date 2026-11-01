@@ -138,6 +138,7 @@ export const adminProductRouter = router({
         availability: products.availability,
         isFeatured: products.isFeatured,
         imageUrl: products.imageUrl,
+        description: products.description,
         categoryId: products.categoryId,
         categoryName: productCategories.name,
         displayOrder: products.displayOrder,
@@ -151,11 +152,17 @@ export const adminProductRouter = router({
       .from(productVariants)
       .groupBy(productVariants.productId);
     const variantCount = new Map(counts.map((row) => [row.productId, row.total]));
+    const flavorCounts = await ctx.db
+      .select({ productId: productFlavors.productId, total: count() })
+      .from(productFlavors)
+      .groupBy(productFlavors.productId);
+    const flavorCount = new Map(flavorCounts.map((row) => [row.productId, row.total]));
 
     return rows.map((row) => ({
       ...row,
       availability: availabilityEnum.parse(row.availability),
       variantCount: variantCount.get(row.id) ?? 0,
+      flavorCount: flavorCount.get(row.id) ?? 0,
     }));
   }),
 
