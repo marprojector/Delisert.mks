@@ -1,18 +1,15 @@
 import {
   DELIVERY_METHODS,
-  OPERATIONAL_ADDRESS,
-  OPERATIONAL_ADDRESS_MAPS_URL,
   PICKUP_INSTRUCTION,
   SOCIAL_MEDIA,
   WHATSAPP_DISPLAY,
   waLink,
 } from "@delisert.mks-1/api/data/business";
-import { SectionHeading } from "@delisert.mks-1/ui/components/section-heading";
 import { SocialLinks } from "@delisert.mks-1/ui/components/social-links";
-import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bike, Home, MessageCircle, PackageCheck } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useRef } from "react";
 
+import { useReveal } from "@/lib/motion";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/kontak")({
@@ -33,126 +30,92 @@ export const Route = createFileRoute("/kontak")({
   component: ContactComponent,
 });
 
+const STEPS = [
+  "Pilih produk dan ukuran di Menu",
+  "Tekan \"Pesan via WhatsApp\" — pesan sudah terisi",
+  "Konfirmasi stok, harga, dan pengiriman",
+] as const;
+
 function ContactComponent() {
+  const pageRef = useRef<HTMLDivElement>(null);
+  useReveal(pageRef);
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-      <SectionHeading
-        eyebrow="Kontak & Pesan"
-        title="Pesan, konfirmasi, lalu kami siapkan."
-        description="Semua pemesanan Delisert berjalan melalui WhatsApp. Tidak ada pembayaran daring di website ini."
-        as="h1"
-      />
+    <div
+      ref={pageRef}
+      className="cn-shell grid gap-8 pt-4 pb-16 lg:grid-cols-[560fr_576fr] lg:gap-16 lg:pt-16 lg:pb-24"
+    >
+      <div className="flex flex-col gap-2 lg:col-start-1 lg:gap-3">
+        <h1 className="text-4xl leading-tight font-semibold text-foreground lg:text-[4rem]">Kontak & Pesan</h1>
+        <p className="text-sm/relaxed text-muted-foreground lg:text-lg">
+          Semua pesanan lewat WhatsApp. Tidak perlu daftar akun.
+        </p>
+      </div>
 
-      <div className="flex flex-col gap-6 pt-12">
-        <section className="flex flex-col gap-5 border border-primary/25 bg-primary/5 p-8">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center border border-border bg-background text-primary">
-              <MessageCircle className="size-5" aria-hidden="true" />
-            </span>
-            <h2 className="text-2xl leading-snug">WhatsApp</h2>
-          </div>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Nomor WhatsApp bisnis Delisert:{" "}
-            <strong className="font-medium text-foreground">{WHATSAPP_DISPLAY}</strong>. Klik tombol
-            di bawah untuk membuka percakapan langsung.
+      <aside className="flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:gap-5">
+        <section
+          data-reveal
+          className="flex flex-col gap-3.5 rounded-3xl bg-foreground p-5.5 text-background lg:gap-4.5 lg:rounded-[2rem] lg:p-10"
+        >
+          <span className="flex items-center gap-2.5 cn-eyebrow text-accent">
+            <span aria-hidden="true" className="size-2.5 rounded-full bg-[#25d366]" />
+            WhatsApp
+          </span>
+          <p className="cn-font-display text-[1.75rem] font-semibold lg:text-[2.75rem]">{WHATSAPP_DISPLAY}</p>
+          <p className="text-sm/relaxed text-background/75 lg:text-base/relaxed">
+            Sertakan nama produk dan ukuran supaya kami bisa membalas lebih cepat.
           </p>
-          <WhatsAppButton
-            size="lg"
+          <a
             href={waLink("Halo Delisert, saya ingin memesan.")}
-            className="w-fit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-[3.125rem] items-center justify-center rounded-full bg-primary text-[0.9375rem] font-semibold text-primary-foreground transition-transform active:scale-[0.97] lg:h-[3.625rem] lg:text-base"
           >
-            Chat via WhatsApp
-          </WhatsAppButton>
-          <p className="text-xs/relaxed text-muted-foreground">
-            Mohon tidak membagikan nomor WhatsApp Anda secara publik di kolom komentar atau media
-            sosial. Cukup kirim pesan langsung melalui tautan ini.
+            Chat sekarang
+          </a>
+        </section>
+        <SocialLinks items={SOCIAL_MEDIA} />
+      </aside>
+
+      <div className="flex flex-col gap-8 lg:col-start-1 lg:gap-7">
+        <section data-reveal className="flex flex-col gap-3 lg:gap-4">
+          <h2 className="text-[1.375rem] font-semibold text-foreground lg:text-2xl">Cara pesan</h2>
+          <ol className="flex flex-col gap-3">
+            {STEPS.map((step, index) => (
+              <li key={step} className="flex items-center gap-3 lg:gap-3.5">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-[0.8125rem] font-bold text-primary lg:size-10 lg:text-[0.9375rem]">
+                  {index + 1}
+                </span>
+                <span className="text-sm text-foreground lg:text-base">{step}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section data-reveal className="flex flex-col gap-2 rounded-[1.25rem] bg-secondary p-4.5 lg:rounded-3xl lg:p-6">
+          <h2 className="font-sans text-[0.9375rem] font-semibold text-foreground lg:text-base">
+            Saat mengambil pesanan
+          </h2>
+          <p className="text-[0.8125rem]/relaxed text-muted-foreground lg:text-[0.9375rem]/relaxed">
+            {PICKUP_INSTRUCTION}
           </p>
         </section>
 
-        <section className="flex flex-col gap-5 border border-border p-8">
-          <h2 className="text-2xl leading-snug">Media sosial</h2>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Update batch harian, menu musiman, dan pengumuman jadwal diumumkan lebih dulu di media
-            sosial.
-          </p>
-          <SocialLinks items={SOCIAL_MEDIA} />
-        </section>
-
-        <section className="flex flex-col gap-5 border border-border p-8">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center border border-border bg-background text-primary">
-              <Bike className="size-5" aria-hidden="true" />
-            </span>
-            <h2 className="text-2xl leading-snug">Informasi pengiriman</h2>
-          </div>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Delisert mengirim pesanan melalui layanan pengiriman berikut. Ketersediaan layanan
-            bergantung pada lokasi tujuan dan dikonfirmasi saat pemesanan.
-          </p>
-          <ul className="grid gap-3 sm:grid-cols-2">
+        <section data-reveal className="flex flex-col gap-2.5 lg:gap-3">
+          <h2 className="text-[1.375rem] font-semibold text-foreground lg:text-2xl">Pengiriman</h2>
+          <ul className="flex flex-wrap gap-2 lg:gap-2.5">
             {DELIVERY_METHODS.map((method) => (
               <li
                 key={method.id}
-                className="flex flex-col gap-1 border border-border bg-secondary/30 p-4"
+                className="rounded-[0.875rem] border border-border px-3.5 py-2.5 text-[0.8125rem] font-medium text-foreground lg:px-4 lg:text-sm"
               >
-                <span className="text-sm font-medium">{method.name}</span>
-                <span className="text-xs/relaxed text-muted-foreground">{method.note}</span>
+                {method.name}
               </li>
             ))}
           </ul>
-          <p className="text-xs/relaxed text-muted-foreground">
-            Tarif, cakupan area, dan estimasi waktu pengiriman tidak dipublikasikan di website ini
-            karena bervariasi per pesanan. Detailnya dikonfirmasi langsung melalui WhatsApp.
+          <p className="text-xs text-muted-foreground lg:text-[0.8125rem]">
+            Ketersediaan dan ongkir dikonfirmasi saat memesan.
           </p>
-        </section>
-
-        <section className="flex flex-col gap-5 border border-border p-8">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center border border-border bg-background text-primary">
-              <PackageCheck className="size-5" aria-hidden="true" />
-            </span>
-            <h2 className="text-2xl leading-snug">Instruksi pengambilan</h2>
-          </div>
-          <p className="text-sm/relaxed text-muted-foreground">{PICKUP_INSTRUCTION}</p>
-        </section>
-
-        <section className="flex flex-col gap-5 border border-border p-8">
-          <div className="flex items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center border border-border bg-background text-primary">
-              <Home className="size-5" aria-hidden="true" />
-            </span>
-            <h2 className="text-2xl leading-snug">Alamat operasional</h2>
-          </div>
-          <address className="text-base/relaxed text-foreground not-italic">
-            {OPERATIONAL_ADDRESS.name}
-            <br />
-            {OPERATIONAL_ADDRESS.complex},
-            <br />
-            {OPERATIONAL_ADDRESS.street},
-            <br />
-            {OPERATIONAL_ADDRESS.rtRw}, {OPERATIONAL_ADDRESS.village},{" "}
-            {OPERATIONAL_ADDRESS.district},
-            <br />
-            {OPERATIONAL_ADDRESS.city}, {OPERATIONAL_ADDRESS.province},{" "}
-            {OPERATIONAL_ADDRESS.country}.
-          </address>
-          <p className="text-sm/relaxed text-muted-foreground">
-            {OPERATIONAL_ADDRESS.note} Atur waktu pengambilan terlebih dahulu melalui WhatsApp.
-          </p>
-          <a
-            href={OPERATIONAL_ADDRESS_MAPS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-fit text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Buka di Google Maps →
-          </a>
-          <Link
-            to="/jadwal"
-            className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Lihat jadwal & lokasi lengkap →
-          </Link>
         </section>
       </div>
     </div>

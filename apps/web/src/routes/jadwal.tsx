@@ -1,18 +1,16 @@
 import {
   CFD,
   CFD_MAPS_URLS,
-  CLOSED_DAY,
   OPERATIONAL_ADDRESS,
   OPERATIONAL_ADDRESS_MAPS_URL,
-  SOCIAL_MEDIA,
   TIKTOK_LIVE,
 } from "@delisert.mks-1/api/data/business";
-import { ScheduleCard } from "@delisert.mks-1/ui/components/schedule-card";
-import { SectionHeading } from "@delisert.mks-1/ui/components/section-heading";
-import { SocialLinks } from "@delisert.mks-1/ui/components/social-links";
+import { WeekStrip } from "@delisert.mks-1/ui/components/week-strip";
 import { createFileRoute } from "@tanstack/react-router";
-import { CalendarX2, Home, MapPin, Music2 } from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
+import { useRef } from "react";
 
+import { useReveal } from "@/lib/motion";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/jadwal")({
@@ -33,121 +31,122 @@ export const Route = createFileRoute("/jadwal")({
   component: ScheduleComponent,
 });
 
-function ScheduleComponent() {
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-      <SectionHeading
-        eyebrow="Jadwal & Lokasi"
-        title="Kapan dan di mana Delisert hadir."
-        description="Empat informasi yang berbeda, dipisahkan dengan jelas agar tidak tertukar."
-        as="h1"
-      />
+const fullAddress = [
+  OPERATIONAL_ADDRESS.complex,
+  OPERATIONAL_ADDRESS.street,
+  OPERATIONAL_ADDRESS.rtRw,
+  OPERATIONAL_ADDRESS.village,
+  OPERATIONAL_ADDRESS.district,
+  OPERATIONAL_ADDRESS.city,
+  OPERATIONAL_ADDRESS.province,
+].join(", ");
 
-      <div className="flex flex-col gap-6 pt-12">
-        <ScheduleCard icon={Music2} title={TIKTOK_LIVE.label} tone="rosewood">
-          <dl className="flex flex-col gap-3 text-sm">
-            <div className="flex flex-wrap items-baseline gap-x-3">
-              <dt className="cn-eyebrow w-24 shrink-0 text-muted-foreground">Hari</dt>
-              <dd className="text-base font-medium">{TIKTOK_LIVE.days}</dd>
-            </div>
-            <div className="flex flex-wrap items-baseline gap-x-3">
-              <dt className="cn-eyebrow w-24 shrink-0 text-muted-foreground">Jam</dt>
-              <dd className="text-base font-medium">{TIKTOK_LIVE.hours}</dd>
-            </div>
-          </dl>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Jadwal ini bersifat statis. Status live ditampilkan di aplikasi TikTok, bukan di website
-            ini.
+function ScheduleComponent() {
+  const pageRef = useRef<HTMLDivElement>(null);
+  useReveal(pageRef);
+
+  return (
+    <div ref={pageRef} className="cn-shell flex flex-col gap-6 pt-4 pb-16 lg:gap-10 lg:pt-16 lg:pb-24">
+      <div className="flex flex-col gap-2 lg:gap-3">
+        <h1 className="text-4xl leading-tight font-semibold text-foreground lg:text-[4rem]">
+          Jadwal & Lokasi
+        </h1>
+        <p className="text-sm/relaxed text-muted-foreground lg:text-lg">
+          Kapan dan di mana kamu bisa menemukan Delisert minggu ini.
+        </p>
+      </div>
+
+      <section aria-labelledby="minggu-ini" className="flex flex-col gap-2.5">
+        <h2 id="minggu-ini" className="font-sans text-[0.8125rem] font-semibold text-foreground lg:sr-only">
+          Minggu ini
+        </h2>
+        <WeekStrip />
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-[500fr_676fr] lg:gap-6">
+        <section
+          data-reveal
+          className="flex flex-col gap-3 rounded-3xl bg-primary p-5 text-primary-foreground lg:gap-4 lg:rounded-[2rem] lg:p-9"
+        >
+          <span className="cn-eyebrow text-accent">{TIKTOK_LIVE.label}</span>
+          <h2 className="text-[1.625rem] font-semibold lg:text-[2.5rem]">{TIKTOK_LIVE.days}</h2>
+          <p className="text-base font-semibold lg:text-[1.375rem]">{TIKTOK_LIVE.hours}</p>
+          <p className="hidden max-w-sm text-[0.9375rem]/relaxed text-primary-foreground/80 lg:block">
+            Kanal jualan utama kami. Promo batch dan PO diumumkan saat live.
           </p>
           <a
             href={TIKTOK_LIVE.ctaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 w-fit items-center border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="mt-1 inline-flex h-11 w-fit items-center rounded-full bg-primary-foreground px-4.5 text-sm font-semibold text-primary lg:h-[3.125rem] lg:px-5.5 lg:text-[0.9375rem]"
           >
-            {TIKTOK_LIVE.ctaLabel}
+            Follow @delisert.mkss
           </a>
-        </ScheduleCard>
+        </section>
 
-        <ScheduleCard icon={MapPin} title="Aktivitas CFD Minggu">
+        <section
+          data-reveal
+          className="flex flex-col gap-3 rounded-3xl bg-secondary p-5 lg:gap-4 lg:rounded-[2rem] lg:p-9"
+        >
+          <h2 className="cn-eyebrow font-sans text-primary">CFD Minggu · {CFD.hours}</h2>
           <p className="text-sm/relaxed text-muted-foreground">{CFD.description}</p>
-          <div className="flex flex-col gap-2">
-            <span className="cn-eyebrow text-muted-foreground">
-              Jam aktivitas: {CFD.hours}
-            </span>
-          </div>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-4 lg:divide-y-0">
             {CFD.locations.map((location) => (
               <li
                 key={location.id}
-                className="flex flex-col gap-1 border border-border bg-background p-4"
+                className="flex items-center justify-between gap-3 py-3 lg:flex-col lg:items-stretch lg:rounded-[1.375rem] lg:bg-background lg:p-5"
               >
-                <span className="text-sm font-medium">{location.name}</span>
-                <span className="text-sm/relaxed text-muted-foreground">{location.landmark}</span>
+                <span className="hidden h-28 items-center justify-center rounded-2xl bg-[#e9e3d8] text-muted-foreground lg:flex">
+                  <MapPin aria-hidden="true" className="size-6" />
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-base font-semibold text-foreground lg:text-lg">{location.name}</span>
+                  <span className="text-[0.8125rem] text-muted-foreground lg:text-sm">{location.landmark}</span>
+                </span>
                 <a
-                  href={CFD_MAPS_URLS[location.id as keyof typeof CFD_MAPS_URLS]}
+                  href={CFD_MAPS_URLS[location.id]}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-fit pt-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary px-3.5 py-2 text-xs font-semibold text-primary lg:w-fit lg:border-0 lg:p-0 lg:text-sm"
                 >
-                  Buka di Google Maps →
+                  <span className="lg:hidden">Peta</span>
+                  <span className="hidden lg:inline">Buka di Google Maps</span>
+                  <ArrowUpRight aria-hidden="true" className="size-3.5" />
+                  <span className="sr-only"> untuk {location.name}</span>
                 </a>
               </li>
             ))}
           </ul>
-          <p className="border-l-2 border-primary bg-primary/5 px-4 py-3 text-sm/relaxed text-foreground">
-            {CFD.scheduleNote}
-          </p>
-        </ScheduleCard>
-
-        <ScheduleCard icon={CalendarX2} title="Hari Libur" tone="cream">
-          <p className="text-base font-medium">
-            {CLOSED_DAY.day} — {CLOSED_DAY.description}
-          </p>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Pada hari Senin dapur tidak memproses pesanan dan tidak ada titik penjualan CFD.
-          </p>
-        </ScheduleCard>
-
-        <ScheduleCard icon={Home} title="Alamat Operasional">
-          <address className="text-base/relaxed text-foreground not-italic">
-            {OPERATIONAL_ADDRESS.name}
-            <br />
-            {OPERATIONAL_ADDRESS.complex},
-            <br />
-            {OPERATIONAL_ADDRESS.street},
-            <br />
-            {OPERATIONAL_ADDRESS.rtRw}, {OPERATIONAL_ADDRESS.village},{" "}
-            {OPERATIONAL_ADDRESS.district},
-            <br />
-            {OPERATIONAL_ADDRESS.city}, {OPERATIONAL_ADDRESS.province},{" "}
-            {OPERATIONAL_ADDRESS.country}.
-          </address>
-          <p className="border-l-2 border-primary bg-primary/5 px-4 py-3 text-sm/relaxed text-foreground">
-            {OPERATIONAL_ADDRESS.note}
-          </p>
-          <a
-            href={OPERATIONAL_ADDRESS_MAPS_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-fit text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Buka di Google Maps →
-          </a>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Jam buka untuk alamat ini tidak dipublikasikan karena bukan toko ritel. Untuk pengambilan
-            pesanan, atur waktu terlebih dahulu melalui WhatsApp.
-          </p>
-        </ScheduleCard>
+          <p className="text-xs/relaxed text-muted-foreground lg:text-[0.8125rem]">{CFD.scheduleNote}</p>
+        </section>
       </div>
 
-      <section className="border-t border-border pt-12">
-        <h2 className="text-2xl leading-snug">Pengumuman jadwal</h2>
-        <p className="pt-3 text-sm/relaxed text-muted-foreground">
-          Perubahan jadwal, batch baru, dan informasi titik penjualan diumumkan lebih dulu melalui
-          media sosial Delisert.
-        </p>
-        <SocialLinks items={SOCIAL_MEDIA} className="pt-5" />
+      <section
+        data-reveal
+        aria-labelledby="alamat"
+        className="flex flex-col gap-4 lg:grid lg:grid-cols-[520px_1fr] lg:gap-12 lg:rounded-[2rem] lg:border lg:border-border lg:p-10"
+      >
+        <a
+          href={OPERATIONAL_ADDRESS_MAPS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-40 items-center justify-center gap-2 rounded-[1.25rem] bg-[#e9e3d8] text-sm font-medium text-muted-foreground lg:order-none lg:h-72 lg:rounded-3xl"
+        >
+          <MapPin aria-hidden="true" className="size-5" />
+          Buka peta alamat
+        </a>
+        <div className="flex flex-col gap-2.5 lg:gap-3.5 lg:pt-2">
+          <span className="cn-eyebrow text-primary">Alamat operasional</span>
+          <h2 id="alamat" className="text-[1.375rem] font-semibold text-foreground lg:text-3xl">
+            {OPERATIONAL_ADDRESS.name}
+          </h2>
+          <address className="text-sm/relaxed text-foreground not-italic lg:text-base/relaxed">
+            {fullAddress}
+          </address>
+          <p className="text-xs/relaxed text-muted-foreground lg:text-sm">
+            {OPERATIONAL_ADDRESS.note} Senin tutup.
+          </p>
+        </div>
       </section>
     </div>
   );
