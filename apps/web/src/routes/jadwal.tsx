@@ -60,7 +60,11 @@ function ScheduleComponent() {
         <h2 id="minggu-ini" className="font-sans text-[0.8125rem] font-semibold text-foreground lg:sr-only">
           Minggu ini
         </h2>
-        <WeekStrip />
+        <WeekStrip
+          liveHours={TIKTOK_LIVE.hours.replace(" WITA", "")}
+          cfdHours={CFD.hours.replace(" WITA", "")}
+        />
+        <p className="text-xs text-muted-foreground lg:text-[0.8125rem]">Semua jam dalam WITA.</p>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-[500fr_676fr] lg:gap-6">

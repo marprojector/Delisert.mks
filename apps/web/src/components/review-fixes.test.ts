@@ -34,4 +34,14 @@ describe("review fixes", () => {
     expect(read("footer.tsx")).toContain("phoneBottomGap");
     expect(read("../routes/__root.tsx")).toContain("<Footer phoneBottomGap");
   });
+
+  test("the admin guard only acts while still inside /admin, so leaving admin is never bounced back", () => {
+    const admin = read("../routes/admin.tsx");
+    expect(admin).toContain('pathname.startsWith("/admin")');
+  });
+
+  test("admin content stays hidden until the session is confirmed, so no dashboard flashes before the login redirect", () => {
+    const admin = read("../routes/admin.tsx");
+    expect(admin).toMatch(/verified \? "" : "invisible"|verified \? undefined : "invisible"/);
+  });
 });

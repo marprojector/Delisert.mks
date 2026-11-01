@@ -38,7 +38,17 @@ export function makassarWeekdayIndex(date: Date): number {
  * Pita satu minggu: Senin libur, Selasa–Sabtu TikTok Live, Minggu CFD.
  * Hari ini ditandai setelah hydration supaya markup SSR tetap stabil.
  */
-export function WeekStrip({ className }: { className?: string }) {
+export function WeekStrip({
+  className,
+  liveHours,
+  cfdHours,
+}: {
+  className?: string;
+  /** Jam TikTok Live, mis. "10:30 – 14:30". Ditampilkan di Selasa–Sabtu. */
+  liveHours?: string;
+  /** Jam CFD Minggu, mis. "06.00 – 10.00". */
+  cfdHours?: string;
+}) {
   const [today, setToday] = useState<number | null>(null);
   useEffect(() => setToday(makassarWeekdayIndex(new Date())), []);
 
@@ -53,7 +63,7 @@ export function WeekStrip({ className }: { className?: string }) {
             data-reveal
             aria-current={isToday ? "date" : undefined}
             className={cn(
-              "flex h-16 flex-col items-center justify-center gap-1 rounded-[0.875rem] lg:h-28 lg:items-start lg:gap-1.5 lg:rounded-[1.375rem] lg:px-5",
+              "flex min-h-[4.75rem] flex-col items-center justify-center gap-0.5 rounded-[0.875rem] px-0.5 py-2 text-center lg:min-h-32 lg:items-start lg:gap-1 lg:rounded-[1.375rem] lg:px-5 lg:text-left",
               STYLE[day.kind],
               isToday && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
             )}
@@ -66,6 +76,11 @@ export function WeekStrip({ className }: { className?: string }) {
               <span className="lg:hidden">{LABEL[day.kind].short}</span>
               <span className="hidden lg:inline">{LABEL[day.kind].long}</span>
             </span>
+            {day.kind !== "off" && (day.kind === "live" ? liveHours : cfdHours) ? (
+              <span className="text-[0.625rem] leading-tight tabular-nums opacity-85 lg:text-[0.8125rem]">
+                {day.kind === "live" ? liveHours : cfdHours}
+              </span>
+            ) : null}
             {isToday ? <span className="sr-only">(hari ini)</span> : null}
           </li>
         );

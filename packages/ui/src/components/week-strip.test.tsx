@@ -24,3 +24,11 @@ describe("makassarWeekdayIndex", () => {
     expect(makassarWeekdayIndex(new Date("2026-11-01T10:00:00Z"))).toBe(6);
   });
 });
+
+describe("WeekStrip hours", () => {
+  test("each selling day shows its hours", () => {
+    const html = renderToStaticMarkup(<WeekStrip liveHours="10:30 – 14:30" cfdHours="06.00 – 10.00" />);
+    expect(html.match(/10:30 – 14:30/g)?.length).toBe(5);
+    expect(html).toContain("06.00 – 10.00");
+  });
+});
