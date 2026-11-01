@@ -45,6 +45,8 @@ Kalau tetap ragu: **jangan menebak.** Tanyakan ke pengguna, atau catat pertanyaa
 | Harga | **Sudah dikonfirmasi pemilik** untuk 8 item dan **ditampilkan sebagai angka**. Daftar resmi: `docs/DESIGN_AUDIT.md` §2. Bila harga kosong (`null`), tampilkan "Harga menyusul" |
 | Jam CFD Minggu | **Sudah dikonfirmasi:** 06.00–10.00 WITA (Q-09). Ada di `packages/api/src/data/business.ts`. Kedua titik CFD tetap ditulis sebagai sementara dan tidak dijamin aktif setiap Minggu |
 | Bahasa & tema | `<html lang="id">`, tema terang, warna merek rosewood |
+| Desain UI | **Dirombak total 1 November 2026** mengikuti `docs/design/delisert-redesign.fig` (27 layar, HP + desktop, termasuk admin). Palet warna tidak berubah; sudut membulat (`--radius: 1rem`), tombol kapsul, mobile-first |
+| Animasi | GSAP 3 + ScrollTrigger, semuanya di `apps/web/src/lib/motion.ts`. Konten selalu terlihat tanpa JavaScript, dan animasi mati otomatis bila pengunjung memilih gerak dikurangi |
 | Foto responsif | Foto yang diunggah lewat admin otomatis dibuat 480/960/1600 px WebP dan tampil dengan `srcset`. Logika nama file: `packages/ui/src/lib/photo.ts` |
 | Analitik | Cloudflare Web Analytics sudah disiapkan di kode, **belum aktif** sampai token diisi di `apps/web/src/utils/analytics.ts` |
 | Deploy produksi | **Belum dilakukan** — menunggu persetujuan pemilik |
@@ -128,6 +130,10 @@ Teks lama **tidak dihapus** agar sejarah keputusan tetap terbaca. Saat membaca b
 | Warna dan tipografi | `packages/ui/src/styles/globals.css` |
 | Ukuran foto dan `srcset` | `packages/ui/src/lib/photo.ts`, `apps/web/src/utils/image-resize.ts`, `apps/web/src/routes/api/upload.ts` |
 | Token Cloudflare Web Analytics | `apps/web/src/utils/analytics.ts` |
+| Animasi (GSAP) | `apps/web/src/lib/motion.ts` — tandai elemen dengan `data-reveal`, `data-hero-line`, `data-hero-media`, `data-parallax` |
+| Header, menu HP, footer, tombol WA melayang | `apps/web/src/components/header.tsx`, `footer.tsx`, `floating-whatsapp.tsx` |
+| Kerangka admin (sidebar / tab bawah) | `apps/web/src/components/admin/` |
+| Desain acuan | `docs/design/delisert-redesign.fig` (buka di OpenPencil) |
 | SEO, canonical, JSON-LD | `apps/web/src/utils/seo.ts` |
 | Binding Cloudflare dan rahasia | `packages/infra/alchemy.run.ts` |
 
@@ -1298,6 +1304,8 @@ Status per 2026-11-01. Hanya butir yang benar-benar diverifikasi yang dicentang.
 - [x] Optimasi gambar (NFR-003, NFR-004, §11.4) — foto unggahan otomatis dikecilkan ke WebP 480/960/1600 px di browser admin, dan semua foto produk memakai `srcset` + `sizes` (diuji unit test). Foto lama tanpa versi kecil tetap tampil apa adanya
 - [ ] Analitik (§12.2) — kode Cloudflare Web Analytics siap di `apps/web/src/utils/analytics.ts`, **belum aktif**: token baru bisa dibuat setelah domain produksi ada (Q-18). Pelacakan klik WhatsApp/sosial belum dibuat karena Cloudflare Web Analytics tidak mendukung event khusus
 
+- [x] Desain ulang total UI (1 November 2026) — semua halaman publik, admin, 404, dan tampilan kosong mengikuti `docs/design/delisert-redesign.fig`; GSAP untuk animasi; 27 tes integrasi lolos terhadap dev server lokal, build produksi berhasil. Pemeriksaan visual dilakukan lewat tangkapan layar headless (desktop 1440 px dan HP ±500 px), **belum** di perangkat HP asli
+
 **Tambahan di luar ruang lingkup awal:** dashboard admin (FR-101, FR-102) sudah dibangun — login satu pengguna, ringkasan, CRUD produk, unggah foto ke R2, dan toggle ketersediaan. Lihat `docs/ADMIN_GUIDE.md`.
 
 ---
@@ -1336,6 +1344,7 @@ Repositori: https://github.com/google-labs-code/stitch-sdk
 | 1.0 | 30 Oktober 2026 | Draft awal lengkap | Product / Engineering |
 | 1.1 | 30 Oktober 2026 | Menambahkan ketetapan wajib desain UI via Google Stitch (MCP `@google/stitch`), project `delisert premium website ui design`; konfigurasi `.mcp.json` + `.env`; Fase 0 pada roadmap; asumsi A13–A14 | Product / Engineering |
 | 1.2 | 1 November 2026 | Implementasi MVP + dashboard admin (FR-101/102). Perbaikan: harga rupiah ×100 (*catatan v1.3: maksudnya nilai disimpan sebagai rupiah utuh, Rp 8.000 = `8000`; lihat §0.5*), SSR detail produk, katalog ter-render di server, canonical dari origin request, sitemap/robots dinamis, satu h1 per halaman, warna merek rosewood. Status DoD §16.2 diperbarui apa adanya | Product / Engineering |
+| 1.4 | 1 November 2026 | Desain ulang total UI (publik + admin) dengan GSAP; status di §0.2, §0.6, §16.2 | Product / Engineering |
 | 1.3 | 1 November 2026 | Menambahkan §0 (panduan membaca untuk agent AI: prioritas saat bertentangan, kondisi aktual, aturan wajib, glosarium, peta file) dan catatan "Status aktual (v1.3)" pada bagian yang usang. Isi, keputusan, dan urutan bagian 1–17 tidak diubah | Product / Engineering |
 
 ---

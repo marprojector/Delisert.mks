@@ -18,6 +18,17 @@ normal dan bukan tanda ada masalah.
 
 ---
 
+## 1b. Navigasi admin
+
+- **Di komputer:** menu ada di sisi kiri — **Ringkasan**, **Produk** (dengan
+  jumlah produk), **Lihat website**, dan **Keluar** di bagian bawah.
+- **Di HP:** menu ada di bawah layar — Ringkasan, Produk, Website, Keluar.
+
+Kalau salah kata sandi, pesan error menyebut sisa percobaan. Setelah 5 kali
+salah, login dikunci 15 menit.
+
+---
+
 ## 2. Halaman Ringkasan
 
 Setelah masuk, halaman pertama menampilkan:
@@ -26,7 +37,10 @@ Setelah masuk, halaman pertama menampilkan:
 - **Produk unggulan** — jumlah produk yang tampil di beranda.
 - **Stok habis** — jumlah produk yang ditandai habis.
 - **Belum ada foto** — produk yang belum punya foto. Sebaiknya dilengkapi
-  sebelum diumumkan ke pelanggan.
+  sebelum diumumkan ke pelanggan. Kotak ini berwarna emas selama masih ada
+  produk tanpa foto.
+
+Di bawahnya ada daftar **Produk terbaru**. Klik salah satu untuk mengubahnya.
 
 ---
 
@@ -45,9 +59,13 @@ Setelah masuk, halaman pertama menampilkan:
 | **Deskripsi** | Penjelasan singkat produk. |
 | **Foto produk** | Unggah JPG, PNG, atau WebP. Foto otomatis dikecilkan dan dikompres sebelum diunggah, jadi foto langsung dari kamera HP tidak masalah. |
 | **Alt text foto** | Kalimat singkat yang dibacakan untuk pembaca layar, mis. `Mochi stroberi Delisert Makassar`. |
-| **Produk unggulan** | Centang agar muncul di beranda. |
+| **Produk unggulan** | Nyalakan sakelar agar muncul di beranda. |
 
-3. Klik **Simpan**. Produk langsung tampil di halaman Menu.
+Di HP, kolom **Kategori, deskripsi, slug** dilipat. Ketuk **Buka** untuk
+mengisinya.
+
+3. Bar gelap **Simpan perubahan** muncul di bawah layar. Klik untuk menyimpan.
+   Produk langsung tampil di halaman Menu.
 
 > **Harga:** kosongkan kolom harga **hanya** jika harga memang belum
 > ditentukan. Produk seperti itu akan tampil "Harga menyusul" — jangan
@@ -57,9 +75,12 @@ Setelah masuk, halaman pertama menampilkan:
 
 ## 4. Mengubah produk
 
-1. Buka tab **Produk**.
-2. Klik **Ubah** di baris produk.
-3. Ubah isian yang perlu, lalu klik **Simpan**.
+1. Buka tab **Produk**. Gunakan kotak **Cari nama produk** atau filter
+   **Tersedia / Pre-Order / Habis** untuk menemukan produk lebih cepat.
+2. Klik **Ubah** (di HP: ketuk kartunya).
+3. Begitu ada yang diubah, bar **"Ada perubahan yang belum disimpan"** muncul
+   di bawah layar. Klik **Simpan perubahan**, atau **Batal** untuk
+   mengembalikan isian semula.
 
 Perubahan langsung terlihat di website.
 
@@ -67,7 +88,11 @@ Perubahan langsung terlihat di website.
 
 ## 5. Menandai produk habis
 
-Cara tercepat: buka produk → ubah **Ketersediaan** menjadi **Habis** → **Simpan**.
+Cara tercepat (di komputer): di tab **Produk**, ubah pilihan di kolom
+**Ketersediaan** langsung dari tabel. Perubahan tersimpan saat itu juga.
+
+Cara lain: buka produk → pilih **Habis** di bagian **Ketersediaan** → **Simpan
+perubahan**.
 
 Produk tetap ada di katalog tetapi diberi tanda "Habis" dengan teks dan ikon,
 bukan hanya warna. Pelanggan tetap bisa melihat produknya.
@@ -80,10 +105,12 @@ Varian hanya bisa dikelola pada produk yang **sudah tersimpan**. Buka produk,
 lalu gulir ke bagian **Varian**.
 
 - **Tambah varian** — isi nama (mis. `Isi 4 pcs`) dan harga rupiah utuh, lalu
-  klik **Tambah varian**. Perubahan langsung tersimpan, tidak perlu klik
+  klik **+ Tambah varian**. Perubahan langsung tersimpan, tidak perlu klik
   Simpan.
-- **Tandai habis / tersedia** — varian yang habis tetap tampil di halaman
-  produk dengan label "(habis)" dan tidak bisa dipilih pelanggan.
+- **Sakelar tersedia** — matikan sakelar di samping varian bila varian itu
+  habis. Varian tetap tampil di halaman produk dengan tulisan "Habis" dan
+  tidak bisa dipilih pelanggan.
+- Urutan varian belum bisa diubah dari admin.
 - **Hapus** — menghapus varian dari produk. Riwayat pesanan lama tidak
   terpengaruh karena pesanan berjalan lewat WhatsApp.
 
@@ -94,9 +121,11 @@ produk menampilkan satu harga saja, bukan rentang.
 ## 6. Mengganti foto produk
 
 1. Buka produk → bagian **Foto produk**.
-2. Klik **Pilih file**, pilih foto dari komputer atau ponsel.
+2. Klik kotak **Tarik foto ke sini atau pilih file** (atau tarik foto dari
+   komputer ke kotak itu). Kalau produk sudah punya foto, bisa juga klik
+   **Ganti foto** di pojok foto.
 3. Tunggu sampai tulisan **Mengunggah…** hilang dan pratinjau foto muncul.
-4. Klik **Simpan**.
+4. Klik **Simpan perubahan** di bar bawah.
 
 Website otomatis membuat beberapa ukuran foto (480, 960, dan 1600 px, format
 WebP) supaya halaman cepat dibuka di HP. Foto lama otomatis dihapus dari
