@@ -1344,8 +1344,8 @@ Repositori: https://github.com/google-labs-code/stitch-sdk
 | 1.0 | 30 Oktober 2026 | Draft awal lengkap | Product / Engineering |
 | 1.1 | 30 Oktober 2026 | Menambahkan ketetapan wajib desain UI via Google Stitch (MCP `@google/stitch`), project `delisert premium website ui design`; konfigurasi `.mcp.json` + `.env`; Fase 0 pada roadmap; asumsi A13–A14 | Product / Engineering |
 | 1.2 | 1 November 2026 | Implementasi MVP + dashboard admin (FR-101/102). Perbaikan: harga rupiah ×100 (*catatan v1.3: maksudnya nilai disimpan sebagai rupiah utuh, Rp 8.000 = `8000`; lihat §0.5*), SSR detail produk, katalog ter-render di server, canonical dari origin request, sitemap/robots dinamis, satu h1 per halaman, warna merek rosewood. Status DoD §16.2 diperbarui apa adanya | Product / Engineering |
-| 1.4 | 1 November 2026 | Desain ulang total UI (publik + admin) dengan GSAP; status di §0.2, §0.6, §16.2 | Product / Engineering |
 | 1.3 | 1 November 2026 | Menambahkan §0 (panduan membaca untuk agent AI: prioritas saat bertentangan, kondisi aktual, aturan wajib, glosarium, peta file) dan catatan "Status aktual (v1.3)" pada bagian yang usang. Isi, keputusan, dan urutan bagian 1–17 tidak diubah | Product / Engineering |
+| 1.4 | 1 November 2026 | Desain ulang total UI (publik + admin) dengan GSAP; status di §0.2, §0.6, §16.2 | Product / Engineering |
 
 ---
 
