@@ -108,14 +108,25 @@ export const adminProductRouter = router({
         isFeatured: products.isFeatured,
         imageUrl: products.imageUrl,
         categoryId: products.categoryId,
+        categoryName: productCategories.name,
         displayOrder: products.displayOrder,
       })
       .from(products)
+      .innerJoin(productCategories, eq(products.categoryId, productCategories.id))
       .orderBy(asc(products.displayOrder), asc(products.id));
+
+    const variantRows = await ctx.db
+      .select({ productId: productVariants.productId })
+      .from(productVariants);
+    const variantCount = new Map<number, number>();
+    for (const variant of variantRows) {
+      variantCount.set(variant.productId, (variantCount.get(variant.productId) ?? 0) + 1);
+    }
 
     return rows.map((row) => ({
       ...row,
       availability: availabilityEnum.parse(row.availability),
+      variantCount: variantCount.get(row.id) ?? 0,
     }));
   }),
 

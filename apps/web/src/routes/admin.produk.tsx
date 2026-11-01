@@ -1,7 +1,14 @@
+import { AVAILABILITY_LABEL } from "@delisert.mks-1/ui/components/availability-badge";
+import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
+import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
+import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Plus, Search } from "lucide-react";
+import { useState } from "react";
 
+import { type Availability, type StatusFilter, filterProducts } from "@/utils/admin-filter";
 import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/admin/produk")({
@@ -14,24 +21,32 @@ export const Route = createFileRoute("/admin/produk")({
   component: AdminProductList,
 });
 
-const AVAILABILITY_LABEL: Record<string, string> = {
-  available: "Tersedia",
-  preorder: "Pre-Order",
-  soldout: "Habis",
+const STATUS_FILTERS: ReadonlyArray<{ value: StatusFilter; label: string }> = [
+  { value: "all", label: "Semua" },
+  { value: "available", label: AVAILABILITY_LABEL.available },
+  { value: "preorder", label: AVAILABILITY_LABEL.preorder },
+  { value: "soldout", label: AVAILABILITY_LABEL.soldout },
+];
+
+const DOT: Record<Availability, string> = {
+  available: "bg-success",
+  preorder: "bg-warning",
+  soldout: "bg-muted-foreground/70",
 };
 
 function AdminProductList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const products = useQuery(trpc.adminProduct.list.queryOptions());
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<StatusFilter>("all");
 
-  const remove = useMutation(
-    trpc.adminProduct.remove.mutationOptions({
-      onSuccess: () => queryClient.invalidateQueries(trpc.adminProduct.list.queryFilter()),
-    }),
+  const refresh = () => queryClient.invalidateQueries(trpc.adminProduct.list.queryFilter());
+
+  const remove = useMutation(trpc.adminProduct.remove.mutationOptions({ onSuccess: refresh }));
+  const setAvailability = useMutation(
+    trpc.adminProduct.setAvailability.mutationOptions({ onSuccess: refresh }),
   );
-
-  const rows = products.data ?? [];
 
   // /admin/produk/$id dirender lewat <Outlet/> di sini. Saat editor terbuka,
   // tampilkan editornya saja — jangan di bawah seluruh daftar.
@@ -40,75 +55,206 @@ function AdminProductList() {
   });
   if (isEditing) return <Outlet />;
 
+  const rows = filterProducts(products.data ?? [], query, status);
+
+  const confirmRemove = (id: number, name: string) => {
+    if (window.confirm(`Hapus "${name}"? Produk akan hilang dari katalog publik.`)) {
+      remove.mutate({ id });
+    }
+  };
+
+  const availabilitySelect = (row: (typeof rows)[number]) => (
+    <label className="relative inline-flex items-center">
+      <span className="sr-only">Ketersediaan {row.name}</span>
+      <span
+        aria-hidden="true"
+        className={cn("pointer-events-none absolute left-3 size-2 rounded-full", DOT[row.availability])}
+      />
+      <select
+        value={row.availability}
+        disabled={setAvailability.isPending}
+        onChange={(event) =>
+          setAvailability.mutate({ id: row.id, availability: event.target.value as Availability })
+        }
+        className="h-9 appearance-none rounded-full border border-border bg-background pr-8 pl-7 text-[0.8125rem] text-foreground"
+      >
+        {STATUS_FILTERS.filter((option) => option.value !== "all").map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+      <span aria-hidden="true" className="pointer-events-none absolute right-3 text-xs text-muted-foreground">
+        ⌄
+      </span>
+    </label>
+  );
+
+  const thumb = (row: (typeof rows)[number], size: string) => (
+    <span className={cn("shrink-0 overflow-hidden rounded-[0.875rem]", size)}>
+      {row.imageUrl ? (
+        <img
+          src={row.imageUrl}
+          srcSet={photoSrcSet(row.imageUrl)}
+          sizes="64px"
+          alt=""
+          width={64}
+          height={64}
+          className="size-full object-cover"
+        />
+      ) : (
+        <PhotoPlaceholder label="" />
+      )}
+    </span>
+  );
+
+  const meta = (row: (typeof rows)[number]) =>
+    [row.categoryName, row.variantCount > 0 ? `${row.variantCount} varian` : null, row.isFeatured ? "★ Unggulan" : null]
+      .filter(Boolean)
+      .join(" · ");
+
+  const price = (cents: number | null) => (cents === null ? "Harga menyusul" : formatRupiah(cents));
+
   return (
-    <>
-      <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl leading-snug">Semua produk</h2>
+    <div className="flex flex-col gap-4 lg:gap-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-[1.75rem] font-semibold text-foreground lg:text-[2.5rem]">Produk</h1>
         <Link
           to="/admin/produk/$id"
           params={{ id: "baru" }}
-          className="inline-flex h-9 items-center border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-[0.8125rem] font-semibold text-primary-foreground lg:h-12 lg:px-5.5 lg:text-[0.9375rem]"
         >
+          <Plus aria-hidden="true" className="size-4" />
           Tambah produk
         </Link>
       </div>
 
-      {remove.isError ? (
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <label className="relative flex h-11 items-center rounded-full border border-border bg-background px-4 focus-within:border-ring lg:w-[26rem]">
+          <Search aria-hidden="true" className="size-4 text-muted-foreground" />
+          <span className="sr-only">Cari nama produk</span>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Cari nama produk…"
+            className="h-full min-w-0 flex-1 bg-transparent pl-2.5 text-sm outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+        <div role="group" aria-label="Filter ketersediaan" className="cn-no-scrollbar flex gap-2 overflow-x-auto">
+          {STATUS_FILTERS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={status === option.value}
+              onClick={() => setStatus(option.value)}
+              className={cn(
+                "shrink-0 rounded-full px-3.5 py-2 text-[0.8125rem] transition-colors lg:px-4 lg:py-2.5 lg:text-sm",
+                status === option.value
+                  ? "bg-foreground font-semibold text-background"
+                  : "border border-border text-foreground hover:border-primary",
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {remove.isError || setAvailability.isError ? (
         <p role="alert" className="text-sm text-destructive">
-          Gagal menghapus produk. Coba lagi.
+          Gagal menyimpan perubahan. Coba lagi.
         </p>
       ) : null}
 
       {products.isLoading ? (
         <p className="text-sm text-muted-foreground">Memuat produk…</p>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Belum ada produk. Tambahkan yang pertama.</p>
+        <p className="rounded-[1.125rem] bg-background p-6 text-sm text-muted-foreground">
+          {(products.data ?? []).length === 0
+            ? "Belum ada produk. Tambahkan yang pertama."
+            : "Tidak ada produk yang cocok dengan pencarian."}
+        </p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
-          {rows.map((row) => (
-            <li key={row.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium">{row.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {row.slug} · {AVAILABILITY_LABEL[row.availability] ?? row.availability}
-                  {row.isFeatured ? " · Unggulan" : ""}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-primary">
-                  {row.priceCents === null ? "Harga menyusul" : formatRupiah(row.priceCents)}
-                </span>
-                <Link
-                  to="/admin/produk/$id"
-                  params={{ id: String(row.id) }}
-                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  Ubah
+        <>
+          {/* HP: kartu */}
+          <ul className="flex flex-col gap-2.5 lg:hidden">
+            {rows.map((row) => (
+              <li key={row.id} className="flex items-center gap-3 rounded-[1.125rem] bg-background p-3">
+                {thumb(row, "size-16")}
+                <Link to="/admin/produk/$id" params={{ id: String(row.id) }} className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate text-[0.9375rem] font-semibold text-foreground">{row.name}</span>
+                  <span className="truncate text-[0.8125rem] text-muted-foreground">
+                    {price(row.priceCents)}
+                    {row.variantCount > 0 ? ` · ${row.variantCount} varian` : ""}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-xs">
+                    <span aria-hidden="true" className={cn("size-2 rounded-full", DOT[row.availability])} />
+                    {AVAILABILITY_LABEL[row.availability]}
+                  </span>
                 </Link>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        `Hapus "${row.name}"? Produk akan hilang dari katalog publik.`,
-                      )
-                    ) {
-                      remove.mutate({ id: row.id });
-                    }
-                  }}
+                  onClick={() => confirmRemove(row.id, row.name)}
                   disabled={remove.isPending}
-                  className="text-sm text-destructive underline-offset-4 hover:underline disabled:opacity-60"
+                  className="shrink-0 rounded-full px-2.5 py-1.5 text-xs text-destructive"
                 >
                   Hapus
                 </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+
+          {/* Desktop: tabel */}
+          <div className="hidden rounded-[1.375rem] bg-background px-6 py-2 lg:block">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-border text-xs font-semibold text-muted-foreground uppercase">
+                  <th scope="col" className="w-20 py-3.5 font-semibold">Foto</th>
+                  <th scope="col" className="py-3.5 font-semibold">Produk</th>
+                  <th scope="col" className="w-40 py-3.5 font-semibold">Harga</th>
+                  <th scope="col" className="w-48 py-3.5 font-semibold">Ketersediaan</th>
+                  <th scope="col" className="w-36 py-3.5 font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td className="py-3.5">{thumb(row, "size-16 block")}</td>
+                    <td className="py-3.5">
+                      <span className="block text-[0.9375rem] font-semibold text-foreground">{row.name}</span>
+                      <span className="block text-[0.8125rem] text-muted-foreground">{meta(row)}</span>
+                    </td>
+                    <td className="py-3.5 text-[0.9375rem] font-semibold text-foreground">{price(row.priceCents)}</td>
+                    <td className="py-3.5">{availabilitySelect(row)}</td>
+                    <td className="py-3.5">
+                      <span className="flex gap-4 text-sm">
+                        <Link
+                          to="/admin/produk/$id"
+                          params={{ id: String(row.id) }}
+                          className="font-semibold text-primary"
+                        >
+                          Ubah
+                          <span className="sr-only"> {row.name}</span>
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => confirmRemove(row.id, row.name)}
+                          disabled={remove.isPending}
+                          className="text-destructive disabled:opacity-60"
+                        >
+                          Hapus
+                          <span className="sr-only"> {row.name}</span>
+                        </button>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
-      </div>
-    </>
+    </div>
   );
 }

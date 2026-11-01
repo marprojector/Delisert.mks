@@ -36,6 +36,17 @@ async function authedCaller(db: never) {
 }
 
 describe("admin product", () => {
+  test("lists each product with its category name and variant count", async () => {
+    const { db } = await setup();
+    const caller = await authedCaller(db as never);
+    const rows = await caller.adminProduct.list();
+    const mochi = rows.find((row) => row.slug === "artisanal-mochi-daifuku")!;
+    expect(mochi.categoryName).toBe("Mochi");
+    expect(mochi.variantCount).toBe(3);
+    const mango = rows.find((row) => row.slug === "authentic-mango-sticky-rice")!;
+    expect(mango.variantCount).toBe(0);
+  });
+
   test("rejects an unauthenticated caller", async () => {
     const { db } = await setup();
     const caller = appRouter.createCaller(baseCtx(db as never));
