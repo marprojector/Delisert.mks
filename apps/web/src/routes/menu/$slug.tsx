@@ -1,14 +1,26 @@
-import { productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
+import {
+  CFD,
+  DELIVERY_METHODS,
+  PICKUP_INSTRUCTION,
+  TIKTOK_LIVE,
+  productOrderMessage,
+  waLink,
+} from "@delisert.mks-1/api/data/business";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
+import { Disclosure } from "@delisert.mks-1/ui/components/disclosure";
+import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
+import { StickyOrderBar } from "@delisert.mks-1/ui/components/sticky-order-bar";
+import { VariantPicker, availableVariantName } from "@delisert.mks-1/ui/components/variant-picker";
+import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
-import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Share2 } from "lucide-react";
+import { useRef, useState } from "react";
 
+import { useReveal } from "@/lib/motion";
 import { useTRPC } from "@/utils/trpc";
 import { absoluteUrl, canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
@@ -64,27 +76,28 @@ export const Route = createFileRoute("/menu/$slug")({
 
 function ProductNotFound() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center sm:px-6">
-      <p className="cn-eyebrow text-primary">404</p>
-      <h1 className="text-3xl leading-tight text-balance sm:text-4xl">Produk tidak ditemukan.</h1>
-      <p className="text-sm/relaxed text-muted-foreground">
-        Produk yang Anda cari tidak tersedia atau sudah diganti. Jelajahi katalog menu Delisert
-        untuk melihat produk lain.
+    <div className="cn-shell flex flex-col items-center gap-4 py-24 text-center lg:py-32">
+      <span
+        aria-hidden="true"
+        className="flex size-36 items-center justify-center rounded-full bg-secondary cn-font-display text-6xl font-semibold text-primary"
+      >
+        404
+      </span>
+      <h1 className="pt-2 text-[1.75rem] leading-tight font-semibold text-foreground lg:text-4xl">
+        Produk tidak ditemukan
+      </h1>
+      <p className="max-w-sm text-[0.9375rem]/relaxed text-muted-foreground">
+        Mungkin sudah diganti atau tidak dijual lagi.
       </p>
-      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-        <Link
-          to="/menu"
-          className="inline-flex h-10 items-center border border-primary bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Lihat semua menu
-        </Link>
-        <Link
-          to="/"
-          className="inline-flex h-10 items-center border border-border px-5 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
-        >
-          Kembali ke Beranda
-        </Link>
-      </div>
+      <Link
+        to="/menu"
+        className="mt-2 inline-flex h-[3.25rem] w-full max-w-[21rem] items-center justify-center rounded-full bg-primary px-6 text-[0.9375rem] font-semibold text-primary-foreground"
+      >
+        Lihat semua menu
+      </Link>
+      <Link to="/" className="text-sm font-semibold text-primary">
+        Kembali ke beranda
+      </Link>
     </div>
   );
 }
@@ -92,195 +105,163 @@ function ProductNotFound() {
 function ProductDetailComponent() {
   const { slug } = Route.useParams();
   const trpc = useTRPC();
-  const { data: product, isLoading } = useQuery(trpc.product.bySlug.queryOptions({ slug }));
-  // Hook harus dipanggil sebelum early return. Pilihan efektif jatuh ke varian
-  // pertama yang tersedia selama pengguna belum memilih sendiri.
+  const { data: product } = useQuery(trpc.product.bySlug.queryOptions({ slug }));
+  const initial = Route.useLoaderData();
   const [chosenVariant, setChosenVariant] = useState<string | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useReveal(pageRef, [slug]);
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-        <p className="text-sm text-muted-foreground">Memuat produk…</p>
-      </div>
-    );
-  }
+  const current = product ?? initial;
+  if (!current) return <ProductNotFound />;
 
-  if (!product) {
-    return <ProductNotFound />;
-  }
-
-  const galleryImages = product.imageUrl
-    ? [{ url: product.imageUrl, alt: product.imageAlt ?? `Foto ${product.name} Delisert Makassar` }]
+  const galleryImages = current.imageUrl
+    ? [{ url: current.imageUrl, alt: current.imageAlt ?? `Foto ${current.name} Delisert Makassar` }]
     : [];
 
-  // Default ke varian tersedia pertama supaya CTA langsung membawa pilihan
-  // yang masuk akal, tanpa menunggu pengguna mengklik.
-  const selectedVariant =
-    chosenVariant ?? product.variants.find((variant) => variant.isAvailable)?.name ?? null;
+  // Varian yang dipesan selalu yang benar-benar tersedia (atau tanpa varian bila semua habis).
+  const variantName = availableVariantName(current.variants, chosenVariant);
+  const variant = current.variants.find((item) => item.name === variantName);
+  const priceCents = variant ? variant.priceCents : current.priceCents;
+  const priceText = priceCents === null ? "Harga menyusul" : formatRupiah(priceCents);
+  const orderHref = waLink(
+    productOrderMessage({ productName: current.name, variantName: variantName ?? undefined }),
+  );
+
+  const share = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: current.name, url }).catch(() => {});
+    } else {
+      await navigator.clipboard?.writeText(url).catch(() => {});
+    }
+  };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <nav aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-          <li>
-            <Link to="/" className="hover:text-primary">
-              Beranda
-            </Link>
-          </li>
-          <ChevronRight className="size-3.5" aria-hidden="true" />
+    <div ref={pageRef} className="pb-28 lg:pb-24">
+      <nav aria-label="Breadcrumb" className="cn-shell hidden pt-6 lg:block">
+        <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <li>
             <Link to="/menu" className="hover:text-primary">
               Menu
             </Link>
           </li>
-          <ChevronRight className="size-3.5" aria-hidden="true" />
+          <li aria-hidden="true">/</li>
           <li>
-            <Link
-              to="/menu"
-              search={{ category: product.category.slug }}
-              className="hover:text-primary"
-            >
-              {product.category.name}
+            <Link to="/menu" search={{ category: current.category.slug }} className="hover:text-primary">
+              {current.category.name}
             </Link>
           </li>
-          <ChevronRight className="size-3.5" aria-hidden="true" />
+          <li aria-hidden="true">/</li>
           <li aria-current="page" className="text-foreground">
-            {product.name}
+            {current.name}
           </li>
         </ol>
       </nav>
 
-      <div className="grid gap-10 pt-8 lg:grid-cols-2 lg:gap-16">
-        <ProductGallery images={galleryImages} productName={product.name} />
-
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="cn-eyebrow text-primary">{product.category.name}</span>
-              <AvailabilityBadge availability={product.availability} />
-            </div>
-            <h1 className="text-3xl leading-tight text-balance sm:text-4xl">{product.name}</h1>
+      <div className="lg:cn-shell lg:grid lg:grid-cols-[minmax(0,640fr)_minmax(0,496fr)] lg:gap-16 lg:pt-7">
+        <div className="relative">
+          <ProductGallery
+            images={galleryImages}
+            productName={current.name}
+            categorySlug={current.category.slug}
+          />
+          <div className="absolute inset-x-4 top-4 flex justify-between lg:hidden">
+            <Link
+              to="/menu"
+              className="flex size-[2.625rem] items-center justify-center rounded-full bg-background shadow-sm"
+            >
+              <ArrowLeft aria-hidden="true" className="size-5" />
+              <span className="sr-only">Kembali ke menu</span>
+            </Link>
+            <button
+              type="button"
+              onClick={share}
+              className="flex size-[2.625rem] items-center justify-center rounded-full bg-background shadow-sm"
+            >
+              <Share2 aria-hidden="true" className="size-4.5" />
+              <span className="sr-only">Bagikan produk</span>
+            </button>
           </div>
+        </div>
 
-          {product.description ? (
-            <p className="text-base/relaxed text-muted-foreground">{product.description}</p>
+        <div className="relative -mt-7 flex flex-col gap-5 rounded-t-[1.75rem] bg-background px-5 pt-6 lg:mt-0 lg:gap-6 lg:rounded-none lg:px-0 lg:pt-2">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="cn-eyebrow text-primary">{current.category.name}</span>
+            <AvailabilityBadge availability={current.availability} className="bg-secondary" />
+          </div>
+          <h1 className="-mt-1 text-[1.875rem] leading-[1.15] font-semibold text-foreground lg:text-5xl lg:leading-[1.1]">
+            {current.name}
+          </h1>
+          <p className="hidden text-[1.75rem] font-semibold text-primary lg:block">{priceText}</p>
+          {current.description ? (
+            <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:text-base/relaxed">
+              {current.description}
+            </p>
           ) : null}
 
-          {product.variants.length > 0 ? (
-            <fieldset className="flex flex-col gap-3">
-              <legend className="cn-eyebrow text-muted-foreground">Pilih varian</legend>
-              <div className="flex flex-col divide-y divide-border border-y border-border">
-                {product.variants.map((variant) => {
-                  const inputId = `variant-${variant.id}`;
-                  return (
-                    <label
-                      key={variant.id}
-                      htmlFor={inputId}
-                      className={
-                        variant.isAvailable
-                          ? "flex cursor-pointer items-center justify-between gap-4 py-3 text-sm transition-colors hover:text-primary"
-                          : "flex cursor-not-allowed items-center justify-between gap-4 py-3 text-sm text-muted-foreground"
-                      }
-                    >
-                      <span className="flex items-center gap-2">
-                        <input
-                          id={inputId}
-                          type="radio"
-                          name="variant"
-                          value={variant.name}
-                          disabled={!variant.isAvailable}
-                          checked={selectedVariant === variant.name}
-                          onChange={() => setChosenVariant(variant.name)}
-                          className="size-4 accent-primary"
-                        />
-                        <span>{variant.name}</span>
-                        {!variant.isAvailable ? (
-                          <span className="text-xs text-muted-foreground">(habis)</span>
-                        ) : null}
-                      </span>
-                      <span className="font-medium text-primary">
-                        {variant.priceCents !== null ? (
-                          formatRupiah(variant.priceCents)
-                        ) : (
-                          <span className="text-muted-foreground">Harga menyusul</span>
-                        )}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-          ) : (
-            <div className="flex flex-col gap-1">
-              <h2 className="cn-eyebrow text-muted-foreground">Harga</h2>
-              <p className="text-2xl font-medium text-primary">
-                {product.priceCents !== null ? (
-                  formatRupiah(product.priceCents)
-                ) : (
-                  <span className="text-muted-foreground">Harga menyusul</span>
-                )}
-              </p>
-            </div>
-          )}
+          {current.variants.length > 0 ? (
+            <VariantPicker
+              name={`varian-${current.slug}`}
+              variants={current.variants}
+              value={variantName}
+              onChange={setChosenVariant}
+            />
+          ) : null}
 
-          <div className="flex flex-col gap-3 border border-border bg-secondary/30 p-5">
-            <h2 className="text-sm font-medium">Cara memesan</h2>
-            <p className="text-sm/relaxed text-muted-foreground">
-              Klik tombol di bawah untuk membuka WhatsApp dengan pesan yang sudah terisi nama produk
-              ini{selectedVariant ? " dan varian pilihan Anda" : ""}. Tim Delisert akan mengonfirmasi
-              ketersediaan, total harga, dan opsi pengiriman.
-            </p>
-            <WhatsAppButton
-              size="lg"
-              href={waLink(
-                productOrderMessage({
-                  productName: product.name,
-                  variantName: selectedVariant ?? undefined,
-                }),
-              )}
-              fullWidth
-            >
-              Pesan via WhatsApp
+          <div className="hidden flex-col gap-3 lg:flex">
+            <WhatsAppButton href={orderHref} size="lg" fullWidth className="h-[3.75rem] text-[1.0625rem]">
+              {variantName ? `Pesan ${variantName} via WhatsApp` : "Pesan via WhatsApp"}
             </WhatsAppButton>
+            <p className="text-[0.8125rem] text-muted-foreground">
+              Pesan WhatsApp sudah terisi nama produk dan ukuran. Stok dikonfirmasi oleh tim.
+            </p>
           </div>
 
-          <p className="text-xs/relaxed text-muted-foreground">
-            Tidak ada pembayaran daring di website ini. Semua pesanan dikonfirmasi melalui WhatsApp.
-          </p>
+          <div className="border-t border-border">
+            <Disclosure title="Cara ambil & kirim">
+              <p>{PICKUP_INSTRUCTION}</p>
+              <p className="pt-2">
+                Pengiriman: {DELIVERY_METHODS.map((method) => method.name).join(", ")}. Ketersediaan
+                dan ongkir dikonfirmasi saat memesan.
+              </p>
+            </Disclosure>
+            <Disclosure title="Jadwal jualan">
+              <p>
+                {TIKTOK_LIVE.label}: {TIKTOK_LIVE.days}, {TIKTOK_LIVE.hours}.
+              </p>
+              <p className="pt-2">CFD Minggu: {CFD.hours}, di CFD Boulevard dan CFD UNHAS.</p>
+            </Disclosure>
+          </div>
         </div>
       </div>
 
-      {product.related.length > 0 ? (
-        <section className="border-t border-border pt-14">
-          <h2 className="text-2xl leading-snug">Produk terkait</h2>
-          <ul className="grid gap-6 pt-8 sm:grid-cols-2 lg:grid-cols-4">
-            {product.related.map((related) => (
-              <li key={related.slug}>
-                <Link
-                  to="/menu/$slug"
-                  params={{ slug: related.slug }}
-                  className="group flex h-full flex-col gap-3 border border-border p-5 transition-colors hover:border-primary"
-                >
-                  <span className="aspect-4/3 w-full overflow-hidden bg-muted">
+      {current.related.length > 0 ? (
+        <section className="cn-shell flex flex-col gap-4 pt-10 lg:gap-6 lg:pt-24">
+          <h2 data-reveal className="text-[1.375rem] font-semibold text-foreground lg:text-4xl">
+            Coba juga
+          </h2>
+          <ul className="cn-no-scrollbar -mx-5 flex snap-x gap-3 overflow-x-auto px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-6 lg:px-0">
+            {current.related.map((related) => (
+              <li key={related.slug} data-reveal className="w-[9.5rem] shrink-0 snap-start lg:w-auto">
+                <Link to="/menu/$slug" params={{ slug: related.slug }} className="group flex flex-col gap-2.5">
+                  <span className="block aspect-[5/4] overflow-hidden rounded-2xl lg:aspect-[282/220] lg:rounded-3xl">
                     {related.imageUrl ? (
                       <img
                         src={related.imageUrl}
                         srcSet={photoSrcSet(related.imageUrl)}
-                        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                        sizes="(min-width: 1024px) 25vw, 40vw"
                         alt={`Foto ${related.name} Delisert Makassar`}
                         width={320}
-                        height={240}
+                        height={256}
                         loading="lazy"
                         decoding="async"
-                        className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                     ) : (
-                      <span className="flex size-full items-center justify-center text-xs text-muted-foreground">
-                        Foto menyusul
-                      </span>
+                      <PhotoPlaceholder />
                     )}
                   </span>
-                  <span className="text-sm font-medium group-hover:text-primary">
+                  <span className="text-sm font-semibold text-foreground lg:text-[1.0625rem]">
                     {related.name}
                   </span>
                 </Link>
@@ -289,6 +270,12 @@ function ProductDetailComponent() {
           </ul>
         </section>
       ) : null}
+
+      <StickyOrderBar
+        label={variantName ? `${current.name} · ${variantName}` : current.name}
+        priceText={priceText}
+        href={orderHref}
+      />
     </div>
   );
 }
