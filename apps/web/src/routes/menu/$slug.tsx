@@ -9,7 +9,7 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 import { useTRPC } from "@/utils/trpc";
-import { canonical, productJsonLd } from "@/utils/seo";
+import { canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
 export const Route = createFileRoute("/menu/$slug")({
   loader: async ({ context, params }) => {
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/menu/$slug")({
       scripts: [
         {
           type: "application/ld+json",
-          children: JSON.stringify(productJsonLd(product)),
+          children: JSON.stringify(productJsonLd(product, siteUrl())),
         },
       ],
     };

@@ -83,13 +83,38 @@ Run standalone Node/Bun tools that use Varlock from the owning app directory so 
 
 ## Deployment
 
+### Required secrets
+
+`packages/infra/.env` (git-ignored) must define:
+
+```
+ADMIN_PASSWORD=<password for the admin dashboard>
+ADMIN_SESSION_SECRET=<at least 32 random characters>
+```
+
+Generate them once with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(18).toString('base64url'))"   # password
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"   # session secret
+```
+
+Both are bound to the Worker as secrets and never reach the client bundle.
+
 ### Alchemy
 
-- Target: web on Cloudflare
+- Target: web on Cloudflare (D1 database + R2 bucket for product photos)
 - Configure provider accounts: `cd packages/infra && bunx alchemy profile edit`
-- Dev: bun run dev
-- Deploy: bun run deploy
-- Destroy: bun run destroy
+- Dev: `bun run dev` from the repo root, or `cd packages/infra && bun run dev`
+- Deploy: `bun run deploy`
+- Destroy: `bun run destroy`
+
+> **Dev server note:** the `dev` script runs Alchemy under Node with
+> `npm_execpath` cleared. Running `node node_modules/alchemy/bin/cli.js dev`
+> inside `bun run` still fails, because Bun exports `npm_execpath=bun` and
+> Alchemy then hands the process back to Bun, which resolves the package's
+> TypeScript sources and asks for a `register-dev-mode.js` that the published
+> package does not ship.
 
 `alchemy profile edit` stores the selected Axiom, Cloudflare, Neon, PlanetScale, and/or Prisma provider profiles under `~/.alchemy`; no provider-specific setup command is required by this scaffold.
 
@@ -98,6 +123,14 @@ Deploys are staged and default to a personal `dev_<username>` stage. For product
 ```bash
 cd packages/infra && bunx alchemy deploy --stage production
 ```
+
+**Production deploys require the business owner's approval** (PRD §16.2). This
+repository documents the command; it does not run it automatically.
+
+### Admin dashboard
+
+After deploying, sign in at `/admin` with `ADMIN_PASSWORD`. See
+[`docs/ADMIN_GUIDE.md`](docs/ADMIN_GUIDE.md) for the owner-facing workflow.
 
 ## Project Structure
 

@@ -980,12 +980,12 @@ mengedit screen yang baru dibuat, pakai CLI. Detail lengkap di `docs/DESIGN_AUDI
 - [ ] Catat ID screen sebagai artefak proyek — ID DESKTOP sudah tercatat di `docs/DESIGN_AUDIT.md` §1; ID MOBILE di §7. Varian MOBILE belum terindeks di `stitch find screens`, jadi ID file di §7 adalah sumber kebenaran.
 
 ### Fase 1 — Fondasi Data
-- [ ] Definisikan skema Drizzle di `packages/db/src/schema/index.ts`
-- [ ] Definisikan relasi di `packages/db/src/relations.ts`
-- [ ] Generate migrasi: `bun run db:generate`
+- [x] Definisikan skema Drizzle di `packages/db/src/schema/index.ts`
+- [x] Definisikan relasi di `packages/db/src/relations.ts`
+- [x] Generate migrasi: `bun run db:generate`
 - [ ] Buat konstanta data di `apps/web/src/data/`
-- [ ] Buat skrip seed produk — data wajib ada di §6.4.1 (termasuk Slice Cake Rp 16.000 dan 3 varian)
-- [ ] Perluas `packages/api/src/routers/` dengan router product dan schedule
+- [x] Buat skrip seed produk — data wajib ada di §6.4.1 (termasuk Slice Cake Rp 16.000 dan 3 varian)
+- [x] Perluas `packages/api/src/routers/` dengan router product dan schedule
 
 ### Fase 2 — Design System
 - [ ] Tentukan palet warna merek (setelah aset diterima)
@@ -995,30 +995,30 @@ mengedit screen yang baru dibuat, pakai CLI. Detail lengkap di `docs/DESIGN_AUDI
 - [ ] Buat `navbar.tsx`, `footer.tsx`, `mobile-nav.tsx`
 
 ### Fase 3 — Halaman
-- [ ] Tulis ulang `index.tsx` (Homepage)
-- [ ] Buat `tentang.tsx`
-- [ ] Buat `menu.tsx`
-- [ ] Buat `menu.$slug.tsx`
-- [ ] Buat `jadwal.tsx`
-- [ ] Buat `kontak.tsx`
+- [x] Tulis ulang `index.tsx` (Homepage)
+- [x] Buat `tentang.tsx`
+- [x] Buat `menu.tsx`
+- [x] Buat `menu.$slug.tsx`
+- [x] Buat `jadwal.tsx`
+- [x] Buat `kontak.tsx`
 
 ### Fase 4 — Fungsionalitas
-- [ ] Implementasi `whatsapp-button.tsx` dengan pesan terisi
-- [ ] Implementasi filter kategori
-- [ ] Implementasi galeri produk
-- [ ] Implementasi navigasi responsif
+- [x] Implementasi `whatsapp-button.tsx` dengan pesan terisi
+- [x] Implementasi filter kategori
+- [x] Implementasi galeri produk
+- [x] Implementasi navigasi responsif
 
 ### Fase 5 — SEO & Performa
-- [ ] Metadata per halaman
-- [ ] Open Graph tags
-- [ ] Structured data (LocalBusiness, Product)
-- [ ] Perluas `robots.txt`
-- [ ] Implementasi `sitemap.xml`
+- [x] Metadata per halaman
+- [x] Open Graph tags
+- [x] Structured data (LocalBusiness, Product)
+- [x] Perluas `robots.txt`
+- [x] Implementasi `sitemap.xml`
 - [ ] Optimasi gambar (format, srcset, lazy, dimensi)
 
 ### Fase 6 — Verifikasi & Deploy
-- [ ] `bun run check-types` berhasil
-- [ ] `bun run build` berhasil
+- [x] `bun run check-types` berhasil
+- [x] `bun run build` berhasil
 - [ ] Lighthouse audit (Performance > 90, SEO > 95, A11y > 95)
 - [ ] Pengujian WhatsApp link di mobile & desktop
 - [ ] Pengujian responsif
@@ -1028,3 +1028,73 @@ mengedit screen yang baru dibuat, pakai CLI. Detail lengkap di `docs/DESIGN_AUDI
 ---
 
 *Dokumen ini berdasarkan inspeksi langsung scaffold pada 30 Oktober 2026. Semua path, versi, dan konfigurasi diverifikasi dari file aktual.*
+
+---
+
+## 15. Dashboard Admin (ditambahkan 2026-11-01)
+
+FR-101 dan FR-102 diimplementasikan sebagai perluasan stack yang ada — tanpa
+library autentikasi baru dan tanpa tabel sesi.
+
+### 15.1 Model autentikasi
+
+| Aspek | Keputusan |
+|---|---|
+| Pengguna | Satu, yaitu pemilik bisnis |
+| Kata sandi | `ADMIN_PASSWORD` (secret Worker), dibandingkan sekali saat login |
+| Sesi | Token stateless: `base64url({iat,exp})` + HMAC-SHA256 dengan `ADMIN_SESSION_SECRET` |
+| Masa berlaku | 12 jam |
+| Penyimpanan klien | `sessionStorage` (hilang saat tab ditutup) |
+| Transport | Header `Authorization: Bearer <token>` |
+| Batas keamanan | `adminProcedure` di `packages/api/src/index.ts` — redirect klien hanya UX |
+
+Memakai header (bukan cookie) menghapus permukaan CSRF: form lintas situs tidak
+bisa menyetel header `Authorization`. Perbandingan tanda tangan dilakukan
+constant-time, dan input rusak/kadaluarsa ditolak sebagai `false`, bukan
+dilempar.
+
+### 15.2 Penyimpanan foto
+
+Foto produk disimpan di bucket R2 `photos`, diikat ke Worker sebagai `PHOTOS`.
+
+- Kunci objek **selalu** `products/<uuid>.<ext>`; nama file pengguna tidak
+  pernah masuk ke path, sehingga path traversal tidak mungkin.
+- Hanya JPG, PNG, dan WebP; maksimal 5 MB. SVG ditolak karena bisa memuat
+  script.
+- Disajikan kembali lewat `/api/photos/<key>`, yang menolak kunci di luar
+  prefix `products/`.
+
+### 15.3 Prosedur tRPC admin
+
+| Prosedur | Fungsi |
+|---|---|
+| `adminAuth.login` | Menukar kata sandi dengan token sesi |
+| `adminAuth.logout` | No-op stateless; klien membuang token |
+| `adminAuth.session` | `{ authenticated: boolean }` |
+| `adminProduct.list` / `.byId` | Baca produk untuk admin |
+| `adminProduct.categories` | Pilihan kategori |
+| `adminProduct.create` / `.update` / `.remove` | CRUD produk |
+| `adminProduct.setAvailability` | Ubah status ketersediaan |
+| `adminProduct.addVariant` / `.updateVariant` / `.removeVariant` | CRUD varian |
+
+Semua kecuali `adminAuth.login`/`.logout`/`.session` memakai `adminProcedure`.
+
+### 15.4 Halaman admin
+
+| Route | Isi |
+|---|---|
+| `/admin/login` | Form kata sandi |
+| `/admin` | Ringkasan: jumlah produk, unggulan, habis, belum berfoto |
+| `/admin/produk` | Daftar produk + hapus |
+| `/admin/produk/$id` | Editor produk (`baru` = buat baru) |
+
+Seluruh halaman admin memakai `robots: noindex, nofollow` dan dilarang di
+`robots.txt`.
+
+### 15.5 Catatan operasional dev server
+
+`bun run dev` di `packages/infra` menjalankan Alchemy lewat Node dengan
+`npm_execpath` dibersihkan. Alasannya: `cli.js` Alchemy menyerahkan proses
+kembali ke Bun bila `npm_execpath` menunjuk `bun`, dan Bun lalu me-resolve
+kondisi `src/` paket serta meminta `register-dev-mode.js` yang tidak ikut
+terkirim di paket terbit.

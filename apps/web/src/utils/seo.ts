@@ -51,22 +51,31 @@ export function localBusinessJsonLd(): JsonLd {
   };
 }
 
-export function productJsonLd(product: {
-  name: string;
-  description: string | null;
-  priceCents: number | null;
-  imageUrl: string | null;
-}): JsonLd {
+export function productJsonLd(
+  product: {
+    name: string;
+    description: string | null;
+    priceCents: number | null;
+    imageUrl: string | null;
+    slug?: string;
+  },
+  origin?: string,
+): JsonLd {
   // priceCents menyimpan rupiah ×100, jadi nilainya langsung dipakai
   // sebagai nominal rupiah di schema.org (Rp 8.000 → 8000).
   const price = product.priceCents !== null ? priceToNumber(product.priceCents) : undefined;
+  const base = origin ?? siteUrl();
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
+    ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
     ...(product.description ? { description: product.description } : {}),
     ...(product.imageUrl ? { image: [product.imageUrl] } : {}),
     brand: { "@type": "Brand", name: "Delisert" },
+    // Tanpa harga, `offers` sengaja dihilangkan — jangan pernah mengarang
+    // harga 0 untuk produk yang harganya belum ditentukan.
     ...(price !== undefined
       ? {
           offers: {
@@ -74,6 +83,7 @@ export function productJsonLd(product: {
             priceCurrency: "IDR",
             price,
             availability: "https://schema.org/InStock",
+            ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
           },
         }
       : {}),
