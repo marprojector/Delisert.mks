@@ -84,6 +84,10 @@ describe("seed.production.sql", () => {
     variants: (client.query("select count(*) as n from product_variants").get() as { n: number }).n,
   });
 
+  test("avoids UNION chains, which Cloudflare D1 rejects as too many compound SELECT terms", () => {
+    expect(PRODUCTION_SEED).not.toMatch(/\bUNION\b/i);
+  });
+
   test("repeated imports do not duplicate variants", () => {
     const { client } = makeDb();
     client.exec(PRODUCTION_SEED);

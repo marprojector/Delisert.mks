@@ -28,7 +28,7 @@ export function VariantPicker({
   variants,
   value,
   onChange,
-  legend = "Pilih ukuran",
+  legend = "Pilih varian",
   className,
 }: {
   name: string;

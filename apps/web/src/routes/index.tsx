@@ -161,7 +161,8 @@ function HeroMedia({
             className="size-full object-cover"
           />
         ) : (
-          <PhotoPlaceholder categorySlug={product?.category.slug ?? slug} />
+          // Lapisan parallax diperbesar 110%; label diberi jarak supaya tidak terpotong.
+          <PhotoPlaceholder categorySlug={product?.category.slug ?? slug} className="p-[9%]" />
         )}
       </div>
     </div>
@@ -203,7 +204,7 @@ function Featured({ products }: { products: Product[] }) {
       {products.length === 0 ? (
         <p className="cn-shell text-sm text-muted-foreground">Katalog produk menyusul.</p>
       ) : (
-        <ul className="cn-no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 lg:cn-shell lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-8">
+        <ul className="cn-no-scrollbar flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 lg:cn-shell lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-8">
           {products.map((product) => (
             <li key={product.id} className="w-[12.5rem] shrink-0 snap-start lg:w-auto">
               <ProductCard product={product} waHref={orderHref(product)} />

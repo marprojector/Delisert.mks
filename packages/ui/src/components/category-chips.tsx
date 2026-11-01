@@ -27,7 +27,7 @@ export function CategoryChips({
       <div
         role="group"
         aria-label="Filter kategori"
-        className="cn-no-scrollbar flex snap-x gap-2 overflow-x-auto px-5 py-3 lg:flex-wrap lg:px-0 lg:py-0"
+        className="cn-no-scrollbar flex snap-x scroll-px-5 gap-2 overflow-x-auto px-5 py-3 lg:flex-wrap lg:scroll-px-0 lg:px-0 lg:py-0"
       >
         {chips.map((chip) => {
           const pressed = chip.slug === active;

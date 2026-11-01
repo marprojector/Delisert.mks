@@ -240,7 +240,7 @@ function ProductDetailComponent() {
           <h2 data-reveal className="text-[1.375rem] font-semibold text-foreground lg:text-4xl">
             Coba juga
           </h2>
-          <ul className="cn-no-scrollbar -mx-5 flex snap-x gap-3 overflow-x-auto px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-6 lg:px-0">
+          <ul className="cn-no-scrollbar -mx-5 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-6 lg:px-0">
             {current.related.map((related) => (
               <li key={related.slug} data-reveal className="w-[9.5rem] shrink-0 snap-start lg:w-auto">
                 <Link to="/menu/$slug" params={{ slug: related.slug }} className="group flex flex-col gap-2.5">
