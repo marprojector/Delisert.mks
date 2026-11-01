@@ -8,7 +8,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useMemo, useRef } from "react";
 import { z } from "zod";
 
-import { useReveal } from "@/lib/motion";
+import { useFlipFilter, useReveal } from "@/lib/motion";
 
 import { useTRPC } from "@/utils/trpc";
 import { canonical } from "@/utils/seo";
@@ -70,13 +70,16 @@ function MenuComponent() {
 
   const activeName = allCategories.find((category) => category.slug === activeCategory)?.name;
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  useReveal(pageRef);
+  // Ganti kategori: kartu berpindah posisi dengan Flip, bukan dibangun ulang.
+  const captureLayout = useFlipFilter(pageRef, activeCategory);
+
   const setCategory = (slug?: string) => {
+    if (slug === activeCategory) return;
+    captureLayout();
     void navigate({ search: (prev) => ({ ...prev, category: slug }), replace: true, resetScroll: false });
   };
-
-  const pageRef = useRef<HTMLDivElement>(null);
-  // Animasi masuk diulang setiap kali filter berganti.
-  useReveal(pageRef, [activeCategory]);
 
   return (
     <div ref={pageRef} data-motion-scope className="cn-shell flex flex-col gap-4 pt-4 pb-16 lg:gap-7 lg:pt-12 lg:pb-24">
@@ -121,21 +124,29 @@ function MenuComponent() {
             </button>
           }
         />
-      ) : (
-        <ul
-          key={activeCategory ?? "semua"}
-          className="grid grid-cols-2 gap-x-3.5 gap-y-6 pt-2 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10"
-        >
-          {filtered.map((product) => (
-            <li key={product.id} className="min-w-0">
+      ) : null}
+
+      {/* Semua produk selalu dirender; yang tidak cocok disembunyikan supaya Flip
+          bisa menganimasikan kartu yang masuk, keluar, dan berpindah. */}
+      <ul
+        className={
+          filtered.length === 0
+            ? "hidden"
+            : "grid grid-cols-2 gap-x-3.5 gap-y-6 pt-2 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10"
+        }
+      >
+        {allProducts.map((product) => {
+          const visible = !activeCategory || product.category.slug === activeCategory;
+          return (
+            <li key={product.id} data-flip-item className={visible ? "min-w-0" : "hidden"} aria-hidden={!visible}>
               <ProductCard
                 product={product}
                 waHref={waLink(productOrderMessage({ productName: product.name }))}
               />
             </li>
-          ))}
-        </ul>
-      )}
+          );
+        })}
+      </ul>
     </div>
   );
 }

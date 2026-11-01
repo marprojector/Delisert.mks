@@ -25,7 +25,8 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Share2 } from "lucide-react";
 import { useRef, useState } from "react";
 
-import { useReveal } from "@/lib/motion";
+import { AnimatedPrice } from "@/components/animated-price";
+import { useReveal, useSlideUp } from "@/lib/motion";
 import { useTRPC } from "@/utils/trpc";
 import { absoluteUrl, canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
@@ -115,6 +116,7 @@ function ProductDetailComponent() {
   const [choice, setChoice] = useState<VariantChoice>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   useReveal(pageRef, [slug]);
+  useSlideUp(pageRef);
 
   const current = product ?? initial;
   if (!current) return <ProductNotFound />;
@@ -127,7 +129,6 @@ function ProductDetailComponent() {
   const variantName = availableVariantName(current.variants, choiceForProduct(choice, current.slug));
   const variant = current.variants.find((item) => item.name === variantName);
   const priceCents = variant ? variant.priceCents : current.priceCents;
-  const priceText = priceCents === null ? "Harga menyusul" : formatRupiah(priceCents);
   const orderHref = waLink(
     productOrderMessage({ productName: current.name, variantName: variantName ?? undefined }),
   );
@@ -197,7 +198,9 @@ function ProductDetailComponent() {
           <h1 className="-mt-1 text-[1.875rem] leading-[1.15] font-semibold text-foreground lg:text-5xl lg:leading-[1.1]">
             {current.name}
           </h1>
-          <p className="hidden text-[1.75rem] font-semibold text-primary lg:block">{priceText}</p>
+          <p className="hidden text-[1.75rem] font-semibold text-primary lg:block">
+            <AnimatedPrice cents={priceCents} />
+          </p>
           {current.description ? (
             <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:text-base/relaxed">
               {current.description}
@@ -278,7 +281,7 @@ function ProductDetailComponent() {
 
       <StickyOrderBar
         label={variantName ? `${current.name} · ${variantName}` : current.name}
-        priceText={priceText}
+        priceText={<AnimatedPrice cents={priceCents} />}
         href={orderHref}
       />
     </div>

@@ -1,7 +1,9 @@
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { Flip } from "gsap/Flip";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import type { RefObject } from "react";
+import { SplitText } from "gsap/SplitText";
+import { type RefObject, useCallback, useLayoutEffect, useRef } from "react";
 
 import { MOTION_DONE_CLASS } from "./motion-gate";
 
@@ -21,6 +23,8 @@ import { MOTION_DONE_CLASS } from "./motion-gate";
 
 export const MOTION_QUERY = "(prefers-reduced-motion: no-preference)";
 export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+/** Efek yang hanya masuk akal dengan layar lebar dan mouse (mis. section yang menempel). */
+export const DESKTOP_MOTION_QUERY = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
 
 const EASE = "power3.out";
 
@@ -29,7 +33,7 @@ const REVEAL_FROM = { y: 28, autoAlpha: 0 };
 const REVEAL_TO = { y: 0, autoAlpha: 1, duration: 0.8, ease: EASE };
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, useGSAP);
+  gsap.registerPlugin(ScrollTrigger, SplitText, Flip, useGSAP);
   // Tanda untuk gerbang: kode animasi sudah dimuat, jangan paksa tampil.
   (window as Window & { __delisertMotion?: boolean }).__delisertMotion = true;
   // Bila pengunjung beralih ke "gerak dikurangi", tampilkan semua konten.
@@ -85,12 +89,16 @@ export function useHeroIntro(scope: Scope) {
     () => {
       const mm = gsap.matchMedia();
       mm.add(MOTION_QUERY, () => {
+        // Judul dipecah per huruf. SplitText menambahkan aria-label sehingga
+        // pembaca layar tetap membaca kalimat utuh; dibatalkan otomatis bersama mm.
+        const split = SplitText.create("[data-hero-line]", { type: "words,chars", aria: "auto" });
         gsap
           .timeline({ defaults: { ease: EASE } })
+          .set("[data-hero-line]", { autoAlpha: 1 })
           .fromTo(
-            "[data-hero-line]",
-            { yPercent: 110, autoAlpha: 0 },
-            { yPercent: 0, autoAlpha: 1, duration: 0.9, stagger: 0.12 },
+            split.chars,
+            { yPercent: 115, rotate: 6, autoAlpha: 0 },
+            { yPercent: 0, rotate: 0, autoAlpha: 1, duration: 0.8, stagger: 0.022 },
           )
           .fromTo(
             "[data-hero-fade]",
@@ -177,4 +185,137 @@ export function useMenuOverlay(open: boolean, scope: Scope) {
     },
     { scope, dependencies: [open] },
   );
+}
+
+/**
+ * Desktop: section [data-pin-section] menempel di layar, lalu baris
+ * [data-pin-track] di dalamnya bergeser horizontal mengikuti scroll.
+ * HP tidak di-pin: barisnya cukup digeser dengan jari.
+ */
+export function useFeaturedPin(scope: Scope) {
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(DESKTOP_MOTION_QUERY, () => {
+        const section = scope.current?.querySelector<HTMLElement>("[data-pin-section]");
+        const viewport = section?.querySelector<HTMLElement>("[data-pin-viewport]");
+        const track = section?.querySelector<HTMLElement>("[data-pin-track]");
+        if (!section || !viewport || !track) return;
+
+        const distance = () => Math.max(0, track.scrollWidth - viewport.clientWidth);
+        if (distance() === 0) return;
+
+        // Saat di-pin, gulir horizontal bawaan dimatikan; GSAP yang menggeser.
+        viewport.dataset.pinned = "true";
+        gsap.to(track, {
+          x: () => -distance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top+=88",
+            end: () => `+=${distance()}`,
+            pin: true,
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+        });
+        return () => {
+          delete viewport.dataset.pinned;
+        };
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
+}
+
+/** Angka awal hitungan naik: tahun naik dari dua dekade sebelumnya, angka kecil dari nol. */
+export function countUpStart(value: number): number {
+  return value >= 1000 ? value - 20 : 0;
+}
+
+/** Elemen [data-count-to="n"] menghitung naik saat masuk layar. */
+export function useCountUp(scope: Scope) {
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(MOTION_QUERY, () => {
+        const elements = gsap.utils.toArray<HTMLElement>("[data-count-to]", scope.current);
+        for (const element of elements) {
+          const target = Number(element.dataset.countTo);
+          if (!Number.isFinite(target)) continue;
+          const counter = { value: countUpStart(target) };
+          element.textContent = String(counter.value);
+          gsap.to(counter, {
+            value: target,
+            duration: 1.6,
+            ease: "power2.out",
+            snap: { value: 1 },
+            onUpdate: () => {
+              element.textContent = String(counter.value);
+            },
+            scrollTrigger: { trigger: element, start: "top 90%", once: true },
+          });
+        }
+        // Bila animasi dibatalkan (mis. gerak dikurangi), tampilkan angka akhir.
+        return () => {
+          for (const element of elements) element.textContent = element.dataset.countTo ?? "";
+        };
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
+}
+
+/** Elemen [data-slide-up] (mis. bar pesan di HP) naik dari bawah layar. */
+export function useSlideUp(scope: Scope) {
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+      mm.add(MOTION_QUERY, () => {
+        gsap.fromTo(
+          gsap.utils.toArray<HTMLElement>("[data-slide-up]", scope.current),
+          { yPercent: 110, autoAlpha: 0 },
+          { yPercent: 0, autoAlpha: 1, duration: 0.7, ease: EASE, delay: 0.5 },
+        );
+      });
+      return () => mm.revert();
+    },
+    { scope },
+  );
+}
+
+/**
+ * Filter kategori dengan Flip: kartu yang tetap tampil berpindah posisi dengan
+ * mulus, yang masuk membesar, yang keluar mengecil. Panggil `capture()` tepat
+ * sebelum filter berubah; animasi jalan setelah React menggambar ulang.
+ */
+export function useFlipFilter(scope: Scope, filterKey: string | undefined) {
+  const state = useRef<Flip.FlipState | null>(null);
+
+  const capture = useCallback(() => {
+    if (!window.matchMedia(MOTION_QUERY).matches) return;
+    state.current = Flip.getState(gsap.utils.toArray<HTMLElement>("[data-flip-item]", scope.current));
+  }, [scope]);
+
+  useLayoutEffect(() => {
+    const previous = state.current;
+    if (!previous) return;
+    state.current = null;
+    const animation = Flip.from(previous, {
+      duration: 0.6,
+      ease: "power3.inOut",
+      absolute: true,
+      scale: true,
+      onEnter: (elements) =>
+        gsap.fromTo(elements, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: 0.5, delay: 0.15 }),
+      onLeave: (elements) => gsap.to(elements, { autoAlpha: 0, scale: 0.85, duration: 0.35 }),
+    });
+    return () => {
+      animation.kill();
+    };
+  }, [filterKey]);
+
+  return capture;
 }

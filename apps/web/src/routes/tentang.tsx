@@ -5,7 +5,7 @@ import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
 
-import { useHeroIntro, useReveal } from "@/lib/motion";
+import { useCountUp, useHeroIntro, useReveal } from "@/lib/motion";
 import { canonical } from "@/utils/seo";
 
 export const Route = createFileRoute("/tentang")({
@@ -51,6 +51,7 @@ function AboutComponent() {
   const pageRef = useRef<HTMLDivElement>(null);
   useHeroIntro(pageRef);
   useReveal(pageRef);
+  useCountUp(pageRef);
 
   return (
     <div ref={pageRef} data-motion-scope className="flex flex-col pb-16 lg:pb-24">
@@ -61,12 +62,12 @@ function AboutComponent() {
         <h1 className="max-w-[62rem] text-[2.125rem] leading-[1.15] font-semibold text-foreground lg:text-[4rem] lg:leading-[1.1]">
           <span className="block overflow-hidden">
             <span data-hero-line className="block">
-              Dapur kecil di Makassar yang memulai
+              Dapur kecil di Makassar yang
             </span>
           </span>
           <span className="block overflow-hidden">
             <span data-hero-line className="block">
-              dari satu mangkuk mochi.
+              memulai dari satu mangkuk mochi.
             </span>
           </span>
         </h1>
@@ -103,7 +104,10 @@ function AboutComponent() {
               data-reveal
               className="flex flex-col gap-1 rounded-[1.125rem] bg-secondary p-3.5 lg:flex-row lg:items-center lg:gap-5 lg:rounded-3xl lg:p-6"
             >
-              <span className="cn-font-display text-[1.625rem] font-semibold text-primary lg:w-28 lg:text-[2.75rem]">
+              <span
+                data-count-to={stat.value}
+                className="cn-font-display text-[1.625rem] font-semibold text-primary tabular-nums lg:w-28 lg:text-[2.75rem]"
+              >
                 {stat.value}
               </span>
               <span className="text-xs text-muted-foreground lg:text-base">{stat.label}</span>

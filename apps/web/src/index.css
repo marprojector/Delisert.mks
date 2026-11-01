@@ -9,6 +9,12 @@
 html.motion-ready:not(.motion-done) [data-motion-scope] [data-reveal],
 html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-line],
 html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-fade],
-html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-media] {
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-media],
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-slide-up] {
   opacity: 0;
+}
+
+/* Section yang di-pin GSAP (desktop): gulir horizontal bawaan dimatikan. */
+[data-pin-viewport][data-pinned] {
+  overflow: visible;
 }

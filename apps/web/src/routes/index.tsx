@@ -13,7 +13,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Play, Sun } from "lucide-react";
 import { useRef } from "react";
 
-import { parallaxOverscanPx, useHeroIntro, useParallax, useReveal } from "@/lib/motion";
+import {
+  parallaxOverscanPx,
+  useFeaturedPin,
+  useHeroIntro,
+  useParallax,
+  useReveal,
+} from "@/lib/motion";
 import { canonical } from "@/utils/seo";
 import { useTRPC } from "@/utils/trpc";
 
@@ -54,13 +60,14 @@ function HomeComponent() {
   // Data loader dipakai untuk render pertama (SSR) dan sebelum hydration selesai.
   const initial = Route.useLoaderData();
 
-  const featuredProducts = (featured.data ?? initial.featured).slice(0, 4);
+  const featuredProducts = featured.data ?? initial.featured;
   const categoryList = categories.data ?? initial.categories;
 
   const pageRef = useRef<HTMLDivElement>(null);
   useHeroIntro(pageRef);
   useParallax(pageRef);
   useReveal(pageRef);
+  useFeaturedPin(pageRef);
 
   return (
     <div ref={pageRef} data-motion-scope className="flex flex-col">
@@ -194,7 +201,7 @@ function ScheduleStrip() {
 
 function Featured({ products }: { products: Product[] }) {
   return (
-    <section className="flex flex-col gap-5 pt-14 lg:gap-7 lg:pt-24">
+    <section data-pin-section className="flex flex-col gap-5 overflow-x-clip pt-14 lg:gap-7 lg:pt-24">
       <div className="cn-shell flex items-end justify-between gap-4">
         <SectionHeading eyebrow="Menu Andalan" title="Yang paling sering dipesan" />
         <Link
@@ -208,13 +215,20 @@ function Featured({ products }: { products: Product[] }) {
       {products.length === 0 ? (
         <p className="cn-shell text-sm text-muted-foreground">Katalog produk menyusul.</p>
       ) : (
-        <ul className="cn-no-scrollbar flex snap-x snap-mandatory scroll-px-5 gap-3 overflow-x-auto px-5 pb-2 lg:cn-shell lg:grid lg:grid-cols-4 lg:gap-6 lg:overflow-visible lg:px-8">
-          {products.map((product) => (
-            <li key={product.id} className="w-[12.5rem] shrink-0 snap-start lg:w-auto">
-              <ProductCard product={product} waHref={orderHref(product)} />
-            </li>
-          ))}
-        </ul>
+        // HP: digeser dengan jari. Desktop: section menempel dan baris bergeser
+        // mengikuti scroll (useFeaturedPin); tanpa animasi, baris tetap bisa digeser.
+        <div
+          data-pin-viewport
+          className="cn-no-scrollbar snap-x snap-mandatory scroll-px-5 overflow-x-auto pb-2 lg:cn-shell lg:scroll-px-8"
+        >
+          <ul data-pin-track className="flex w-max gap-3 px-5 lg:gap-6 lg:px-0">
+            {products.map((product) => (
+              <li key={product.id} className="w-[12.5rem] shrink-0 snap-start lg:w-[21rem]">
+                <ProductCard product={product} waHref={orderHref(product)} />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <Link

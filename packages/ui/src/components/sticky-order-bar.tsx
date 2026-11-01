@@ -5,11 +5,12 @@ export function StickyOrderBar({
   href,
 }: {
   label: string;
-  priceText: string;
+  /** Teks harga, atau elemen harga beranimasi. */
+  priceText: React.ReactNode;
   href: string;
 }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
+    <div data-slide-up className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
       <div className="flex items-center justify-between gap-3 px-5 py-3.5">
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-xs text-muted-foreground">{label}</span>
