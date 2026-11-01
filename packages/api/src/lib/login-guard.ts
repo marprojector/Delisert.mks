@@ -53,6 +53,18 @@ export class LoginLimiter {
     return entry.failures >= this.maxFailures ? this.windowMs - elapsed : 0;
   }
 
+  /** Sisa percobaan gagal sebelum klien dikunci (0 = sudah terkunci). */
+  remaining(key: string, now: number): number {
+    const entry = this.entries.get(key);
+    if (!entry || now - entry.windowStart >= this.windowMs) return this.maxFailures;
+    return Math.max(0, this.maxFailures - entry.failures);
+  }
+
+  /** Lama penguncian dalam menit, untuk pesan ke pengguna. */
+  get lockoutMinutes(): number {
+    return Math.ceil(this.windowMs / 60_000);
+  }
+
   recordFailure(key: string, now: number): void {
     const entry = this.entries.get(key);
     if (!entry || now - entry.windowStart >= this.windowMs) {

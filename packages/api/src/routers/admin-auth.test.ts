@@ -54,6 +54,13 @@ describe("admin login guard", () => {
     expect(typeof (await other.adminAuth.login({ password: PASSWORD })).token).toBe("string");
   });
 
+  test("tells the client how many attempts are left before the lockout", async () => {
+    const loginLimiter = new LoginLimiter(5, 60_000);
+    const caller = appRouter.createCaller({ ...ctx(), clientIp: "9.9.9.9", loginLimiter });
+    await expect(caller.adminAuth.login({ password: "wrong" })).rejects.toThrow("Sisa 4 percobaan");
+    await expect(caller.adminAuth.login({ password: "wrong" })).rejects.toThrow("Sisa 3 percobaan");
+  });
+
   test("refuses to log in when the admin secrets are not configured", async () => {
     const caller = appRouter.createCaller({ ...ctx(), adminPassword: "", adminSecret: "" });
     await expect(caller.adminAuth.login({ password: "anything" })).rejects.toThrow(

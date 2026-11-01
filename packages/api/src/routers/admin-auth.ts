@@ -32,7 +32,14 @@ export const adminAuthRouter = router({
 
       if (!(await passwordsMatch(input.password, ctx.adminPassword))) {
         limiter.recordFailure(clientKey, now);
-        throw new TRPCError({ code: "UNAUTHORIZED", message: "Kata sandi salah." });
+        const left = limiter.remaining(clientKey, now);
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message:
+            left > 0
+              ? `Kata sandi salah. Sisa ${left} percobaan sebelum dikunci ${limiter.lockoutMinutes} menit.`
+              : `Kata sandi salah. Akses dikunci ${limiter.lockoutMinutes} menit.`,
+        });
       }
 
       limiter.reset(clientKey);
