@@ -123,6 +123,10 @@ tidak mengubah harga. Buka produk yang sudah tersimpan, lalu bagian
 - Matikan sakelar bila rasa sedang habis: rasa tetap tampil dengan tulisan
   "Habis" dan tidak bisa dipilih.
 - Tanda × menghapus rasa.
+- **Foto rasa** — klik kotak foto di kiri nama rasa untuk memasang/mengganti
+  foto; × kecil di pojoknya menghapus foto. Saat pelanggan memilih rasa itu,
+  foto utama produk berganti ke foto rasa (di HP, foto rasa juga muncul tepat
+  di bawah pilihan rasa).
 
 Pelanggan melihat rasa sebagai pilihan di halaman produk dan sebagai ringkasan
 di kartu menu. Rasa yang dipilih ikut tertulis di pesan WhatsApp, mis.

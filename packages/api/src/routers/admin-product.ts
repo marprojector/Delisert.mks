@@ -79,6 +79,8 @@ async function deleteUnusedPhoto(
   ctx: Context,
   url: string | null | undefined,
   productId: number | null,
+  /** Rasa yang fotonya sedang diganti/dihapus (tidak dihitung sebagai pemakai). */
+  flavorId: number | null = null,
 ): Promise<void> {
   if (!ctx.deletePhoto || !url) return;
   // Seluruhnya di dalam try: data produk sudah tersimpan saat ini dipanggil,
@@ -95,6 +97,17 @@ async function deleteUnusedPhoto(
       )
       .get();
     if (stillUsed) return;
+    // Foto rasa juga dihitung sebagai pemakai.
+    const usedByFlavor = await ctx.db
+      .select({ id: productFlavors.id })
+      .from(productFlavors)
+      .where(
+        flavorId === null
+          ? eq(productFlavors.imageUrl, url)
+          : and(eq(productFlavors.imageUrl, url), ne(productFlavors.id, flavorId)),
+      )
+      .get();
+    if (usedByFlavor) return;
     await Promise.all(photoKeysForUrl(url).map((key) => ctx.deletePhoto!(key)));
   } catch {
     /* objek yatim lebih baik daripada simpan yang gagal */
@@ -249,7 +262,10 @@ export const adminProductRouter = router({
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       await ctx.db.delete(productVariants).where(eq(productVariants.productId, input.id));
-      await ctx.db.delete(productFlavors).where(eq(productFlavors.productId, input.id));
+      const flavorPhotos = await ctx.db
+        .delete(productFlavors)
+        .where(eq(productFlavors.productId, input.id))
+        .returning({ imageUrl: productFlavors.imageUrl });
       const deleted = await ctx.db
         .delete(products)
         .where(eq(products.id, input.id))
@@ -259,6 +275,7 @@ export const adminProductRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
       }
       await deleteUnusedPhoto(ctx, deleted.imageUrl, input.id);
+      for (const flavor of flavorPhotos) await deleteUnusedPhoto(ctx, flavor.imageUrl, input.id);
       return { ok: true as const };
     }),
 
@@ -297,7 +314,13 @@ export const adminProductRouter = router({
 
   /** Varian rasa: tidak mengubah harga, hanya pilihan rasa saat memesan. */
   addFlavor: adminProcedure
-    .input(z.object({ productId: z.number().int().positive(), name: z.string().trim().min(1).max(60) }))
+    .input(
+      z.object({
+        productId: z.number().int().positive(),
+        name: z.string().trim().min(1).max(60),
+        imageUrl: imageUrlSchema.nullable().optional(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const existing = await ctx.db
         .select({ displayOrder: productFlavors.displayOrder })
@@ -306,7 +329,12 @@ export const adminProductRouter = router({
       const next = existing.reduce((highest, row) => Math.max(highest, row.displayOrder), 0) + 1;
       return ctx.db
         .insert(productFlavors)
-        .values({ productId: input.productId, name: input.name, displayOrder: next })
+        .values({
+          productId: input.productId,
+          name: input.name,
+          imageUrl: input.imageUrl ?? null,
+          displayOrder: next,
+        })
         .returning()
         .get();
     }),
@@ -317,6 +345,8 @@ export const adminProductRouter = router({
         id: z.number().int().positive(),
         name: z.string().trim().min(1).max(60).optional(),
         isAvailable: z.boolean().optional(),
+        /** Foto rasa; null menghapus foto. */
+        imageUrl: imageUrlSchema.nullable().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -324,6 +354,8 @@ export const adminProductRouter = router({
       if (Object.keys(changes).length === 0) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tidak ada perubahan." });
       }
+      const before = await ctx.db.select().from(productFlavors).where(eq(productFlavors.id, id)).get();
+      if (!before) throw new TRPCError({ code: "NOT_FOUND", message: "Rasa tidak ditemukan." });
       const updated = await ctx.db
         .update(productFlavors)
         .set(changes)
@@ -331,6 +363,9 @@ export const adminProductRouter = router({
         .returning()
         .get();
       if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Rasa tidak ditemukan." });
+      if (changes.imageUrl !== undefined && before.imageUrl && before.imageUrl !== updated.imageUrl) {
+        await deleteUnusedPhoto(ctx, before.imageUrl, null, id);
+      }
       return updated;
     }),
 
@@ -358,7 +393,12 @@ export const adminProductRouter = router({
   removeFlavor: adminProcedure
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.delete(productFlavors).where(eq(productFlavors.id, input.id));
+      const removed = await ctx.db
+        .delete(productFlavors)
+        .where(eq(productFlavors.id, input.id))
+        .returning()
+        .get();
+      if (removed?.imageUrl) await deleteUnusedPhoto(ctx, removed.imageUrl, null, input.id);
       return { ok: true as const };
     }),
 

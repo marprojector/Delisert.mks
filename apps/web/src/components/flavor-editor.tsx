@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Plus, X } from "lucide-react";
 import { useState } from "react";
 
 import { Toggle } from "@/components/admin/toggle";
+import { FlavorPhotoButton } from "@/components/flavor-photo-button";
 import { useTRPC } from "@/utils/trpc";
 
 /**
@@ -62,7 +63,8 @@ export function FlavorEditor({ productId }: { productId: number }) {
         <span className="text-xs text-muted-foreground lg:text-[0.8125rem]">Tersimpan otomatis</span>
       </div>
       <p className="text-[0.8125rem]/relaxed text-muted-foreground">
-        Tampil sebagai pilihan rasa di menu dan halaman produk. Matikan sakelar bila rasa sedang habis.
+        Tampil sebagai pilihan rasa di menu dan halaman produk. Pasang foto rasa supaya foto produk ikut
+        berganti saat pelanggan memilih rasa itu. Matikan sakelar bila rasa sedang habis.
       </p>
 
       {flavors.length === 0 ? (
@@ -71,7 +73,17 @@ export function FlavorEditor({ productId }: { productId: number }) {
         <ul className="flex flex-col divide-y divide-border rounded-2xl border border-border">
           {flavors.map((flavor, index) => (
             <li key={flavor.id} className="flex items-center gap-2 px-3 py-2.5">
-              <span className="w-6 shrink-0 text-center text-xs text-muted-foreground tabular-nums">{index + 1}</span>
+              <span className="w-5 shrink-0 text-center text-xs text-muted-foreground tabular-nums">{index + 1}</span>
+              <FlavorPhotoButton
+                flavorName={flavor.name}
+                imageUrl={flavor.imageUrl}
+                disabled={busy}
+                onError={setError}
+                onChange={(imageUrl) => {
+                  setError(null);
+                  update.mutate({ id: flavor.id, imageUrl });
+                }}
+              />
               <span
                 className={
                   flavor.isAvailable

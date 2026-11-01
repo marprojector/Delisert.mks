@@ -119,15 +119,24 @@ function ProductDetailComponent() {
   const current = product ?? initial;
   if (!current) return <ProductNotFound />;
 
-  const galleryImages = current.imageUrl
-    ? [{ url: current.imageUrl, alt: current.imageAlt ?? `Foto ${current.name} Delisert Makassar` }]
-    : [];
 
   // Varian yang dipesan selalu yang benar-benar tersedia (atau tanpa varian bila semua habis).
   const variantName = availableVariantName(current.variants, choiceForProduct(choice, current.slug));
   const variant = current.variants.find((item) => item.name === variantName);
   const flavorName = availableFlavorName(current.flavors, choiceForProduct(flavorChoice, current.slug));
   const orderLabel = [variantName, flavorName].filter(Boolean).join(" · ");
+
+  // Rasa terpilih yang punya foto sendiri tampil sebagai foto utama.
+  const selectedFlavor = current.flavors.find((flavor) => flavor.name === flavorName);
+  const productImage = current.imageUrl
+    ? { url: current.imageUrl, alt: current.imageAlt ?? `Foto ${current.name} Delisert Makassar` }
+    : null;
+  const flavorImage = selectedFlavor?.imageUrl
+    ? { url: selectedFlavor.imageUrl, alt: `${current.name} rasa ${selectedFlavor.name}` }
+    : null;
+  const galleryImages = [flavorImage, productImage].filter(
+    (image): image is { url: string; alt: string } => image !== null,
+  );
   const priceCents = variant ? variant.priceCents : current.priceCents;
   const orderHref = waLink(
     productOrderMessage({
@@ -171,6 +180,8 @@ function ProductDetailComponent() {
       <div className="lg:cn-shell lg:grid lg:grid-cols-[minmax(0,640fr)_minmax(0,496fr)] lg:gap-16 lg:pt-7">
         <div className="relative">
           <ProductGallery
+            // Ganti rasa → galeri mulai lagi dari foto pertama (foto rasa).
+            key={galleryImages[0]?.url ?? "kosong"}
             images={galleryImages}
             productName={current.name}
             categorySlug={current.category.slug}

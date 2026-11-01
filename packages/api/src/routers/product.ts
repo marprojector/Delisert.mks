@@ -93,6 +93,7 @@ export const productRouter = router({
         flavors: (flavorsByProduct.get(row.id) ?? []).map((flavor) => ({
           id: flavor.id,
           name: flavor.name,
+          imageUrl: flavor.imageUrl,
           isAvailable: flavor.isAvailable,
         })),
       }));
@@ -165,6 +166,7 @@ export const productRouter = router({
         flavors: flavorRows.map((flavor) => ({
           id: flavor.id,
           name: flavor.name,
+          imageUrl: flavor.imageUrl,
           isAvailable: flavor.isAvailable,
         })),
         related: relatedRows

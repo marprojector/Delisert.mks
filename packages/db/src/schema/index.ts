@@ -52,6 +52,8 @@ export const productFlavors = sqliteTable("product_flavors", {
     .notNull()
     .references(() => products.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  /** Foto khusus rasa ini; tampil saat pelanggan memilih rasanya. */
+  imageUrl: text("image_url"),
   isAvailable: integer("is_available", { mode: "boolean" }).notNull().default(true),
   displayOrder: integer("display_order").notNull().default(0),
 });

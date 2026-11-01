@@ -94,7 +94,9 @@ export function ProductGallery({
           width={960}
           height={900}
           decoding="async"
-          className="aspect-[16/15] w-full object-cover"
+          // key: foto berganti (mis. pilih rasa) → elemen baru dengan transisi masuk.
+          key={active.url}
+          className="animate-in fade-in-0 aspect-[16/15] w-full object-cover duration-300"
         />
       </div>
       {images.length > 1 ? (

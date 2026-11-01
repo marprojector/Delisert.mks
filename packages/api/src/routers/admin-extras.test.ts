@@ -157,3 +157,48 @@ describe("flavours", () => {
     expect(flavors.some((flavor) => flavor.name === "Taro")).toBe(false);
   });
 });
+
+describe("flavour photos", () => {
+  const photo = (n: number) => `/api/photos/products/0f8fad5b-d9cb-469f-a165-70867728950${n}-w960.webp`;
+
+  test("a flavour photo is public and replacing or removing it cleans up R2", async () => {
+    const { db } = await createTestDb();
+    const deleted: string[] = [];
+    const admin = await adminCaller(db, { deletePhoto: async (key) => void deleted.push(key) });
+    const anon = appRouter.createCaller(testCtx(db));
+    const mochi = (await anon.product.bySlug({ slug: "artisanal-mochi-daifuku" }))!;
+    const matcha = mochi.flavors.find((flavor) => flavor.name === "Matcha Oreo")!;
+
+    await admin.adminProduct.updateFlavor({ id: matcha.id, imageUrl: photo(1) });
+    const after = (await anon.product.bySlug({ slug: "artisanal-mochi-daifuku" }))!;
+    expect(after.flavors.find((flavor) => flavor.id === matcha.id)!.imageUrl).toBe(photo(1));
+    expect(deleted).toEqual([]);
+
+    await admin.adminProduct.updateFlavor({ id: matcha.id, imageUrl: photo(2) });
+    expect(deleted.some((key) => key.includes("70867728950" + "1"))).toBe(true);
+
+    deleted.length = 0;
+    await admin.adminProduct.removeFlavor({ id: matcha.id });
+    expect(deleted.some((key) => key.includes("70867728950" + "2"))).toBe(true);
+  });
+
+  test("a photo still used by a flavour is never discarded", async () => {
+    const { db } = await createTestDb();
+    const deleted: string[] = [];
+    const admin = await adminCaller(db, { deletePhoto: async (key) => void deleted.push(key) });
+    const mochi = (await appRouter.createCaller(testCtx(db)).product.bySlug({ slug: "artisanal-mochi-daifuku" }))!;
+    await admin.adminProduct.updateFlavor({ id: mochi.flavors[0]!.id, imageUrl: photo(3) });
+
+    await admin.adminProduct.discardPhoto({ url: photo(3) });
+    expect(deleted).toEqual([]);
+  });
+
+  test("rejects a flavour photo that is not an uploaded photo or https URL", async () => {
+    const { db } = await createTestDb();
+    const admin = await adminCaller(db);
+    const mochi = (await appRouter.createCaller(testCtx(db)).product.bySlug({ slug: "artisanal-mochi-daifuku" }))!;
+    await expect(
+      admin.adminProduct.updateFlavor({ id: mochi.flavors[0]!.id, imageUrl: "javascript:alert(1)" }),
+    ).rejects.toThrow();
+  });
+});

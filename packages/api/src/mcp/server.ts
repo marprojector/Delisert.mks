@@ -207,9 +207,15 @@ export const TOOLS: Tool[] = [
   tool({
     name: "update_flavor",
     title: "Ubah rasa",
-    description: "Ganti nama rasa, atau tandai rasa sedang habis (isAvailable: false).",
+    description:
+      "Ganti nama rasa, tandai rasa sedang habis (isAvailable: false), atau pasang foto rasa (imageUrl: URL https, null untuk menghapus).",
     scope: "write",
-    input: z.object({ id, name: z.string().min(1).max(60).optional(), isAvailable: z.boolean().optional() }),
+    input: z.object({
+      id,
+      name: z.string().min(1).max(60).optional(),
+      isAvailable: z.boolean().optional(),
+      imageUrl: z.string().max(500).nullable().optional(),
+    }),
     run: (caller, args) => caller.adminProduct.updateFlavor(args),
   }),
   tool({
