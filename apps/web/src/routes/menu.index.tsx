@@ -1,10 +1,14 @@
-import { waLink } from "@delisert.mks-1/api/data/business";
+import { productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
+import { CategoryChips } from "@delisert.mks-1/ui/components/category-chips";
+import { EmptyState } from "@delisert.mks-1/ui/components/empty-state";
 import { ProductCard } from "@delisert.mks-1/ui/components/product-card";
-import { SectionHeading } from "@delisert.mks-1/ui/components/section-heading";
+import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useMemo, useRef } from "react";
 import { z } from "zod";
+
+import { useReveal } from "@/lib/motion";
 
 import { useTRPC } from "@/utils/trpc";
 import { canonical } from "@/utils/seo";
@@ -50,7 +54,7 @@ function MenuComponent() {
 
   const products = useQuery(trpc.product.list.queryOptions());
   const categories = useQuery(trpc.product.categories.queryOptions());
-  // Data loader dipakai untuk render pertama (SSR) dan saat hydration belum selesai.
+  // Data loader dipakai untuk render pertama (SSR) dan sebelum hydration selesai.
   const initial = Route.useLoaderData();
 
   const allProducts = products.data ?? initial.products;
@@ -64,126 +68,74 @@ function MenuComponent() {
     [allProducts, activeCategory],
   );
 
-  const setCategory = (slug: string | undefined) => {
-    navigate({ search: (prev) => ({ ...prev, category: slug }), replace: true });
+  const activeName = allCategories.find((category) => category.slug === activeCategory)?.name;
+
+  const setCategory = (slug?: string) => {
+    void navigate({ search: (prev) => ({ ...prev, category: slug }), replace: true, resetScroll: false });
   };
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-      <SectionHeading
-        eyebrow="Menu"
-        title="Katalog produk Delisert."
-        description="Harga dapat berubah mengikuti musim buah. Ketersediaan setiap batch dipastikan ulang melalui WhatsApp sebelum pesanan diproses."
-        as="h1"
-      />
+  const pageRef = useRef<HTMLDivElement>(null);
+  // Animasi masuk diulang setiap kali filter berganti.
+  useReveal(pageRef, [activeCategory]);
 
-      <div className="flex flex-wrap items-center gap-2 pt-10">
-        <FilterChip active={!activeCategory} onClick={() => setCategory(undefined)}>
-          Semua
-        </FilterChip>
-        {allCategories.map((category) => (
-          <FilterChip
-            key={category.slug}
-            active={activeCategory === category.slug}
-            onClick={() => setCategory(category.slug)}
-          >
-            {category.name}
-          </FilterChip>
-        ))}
+  return (
+    <div ref={pageRef} className="cn-shell flex flex-col gap-4 pt-4 pb-16 lg:gap-7 lg:pt-12 lg:pb-24">
+      <div className="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-1.5 lg:gap-2.5">
+          <h1 className="text-4xl font-semibold text-foreground lg:text-[4rem] lg:leading-none">Menu</h1>
+          <p className="text-sm text-muted-foreground lg:text-[1.0625rem]">
+            {activeName
+              ? `${filtered.length} produk di ${activeName}`
+              : `${filtered.length} produk · harga per porsi`}
+          </p>
+        </div>
+        <p className="hidden text-sm text-muted-foreground lg:block">
+          Dibuat dalam batch harian terbatas · pesan via WhatsApp
+        </p>
       </div>
 
-      {products.isLoading ? (
-        <p className="pt-16 text-sm text-muted-foreground">Memuat katalog…</p>
-      ) : filtered.length === 0 ? (
-        <div className="mt-10 flex flex-col items-center gap-4 border border-dashed border-border p-12 text-center">
-          <h2 className="text-lg">Belum ada produk pada kategori ini.</h2>
-          <p className="max-w-md text-sm/relaxed text-muted-foreground">
-            Katalog kategori ini sedang disiapkan. Silakan lihat kategori lain atau tanyakan
-            langsung ketersediaannya melalui WhatsApp.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+      <CategoryChips items={allCategories} active={activeCategory} onSelect={setCategory} />
+
+      {filtered.length === 0 ? (
+        <EmptyState
+          className="mt-4"
+          title="Belum ada produk di sini"
+          description="Tanya stok batch berikutnya."
+          action={
+            <WhatsAppButton
+              size="sm"
+              href={waLink(
+                `Halo Delisert, apakah ada ${activeName ?? "produk"} untuk batch berikutnya?`,
+              )}
+            >
+              Tanya stok via WhatsApp
+            </WhatsAppButton>
+          }
+          secondary={
             <button
               type="button"
               onClick={() => setCategory(undefined)}
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+              className="text-sm font-semibold text-primary"
             >
-              Lihat semua produk
+              Lihat semua menu
             </button>
-            <a
-              href={waLink("Halo Delisert, apakah produk ini tersedia?")}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-            >
-              Tanya via WhatsApp
-            </a>
-          </div>
-        </div>
+          }
+        />
       ) : (
-        <ul className="grid gap-6 pt-10 sm:grid-cols-2 lg:grid-cols-3">
+        <ul
+          key={activeCategory ?? "semua"}
+          className="grid grid-cols-2 gap-x-3.5 gap-y-6 pt-2 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-10"
+        >
           {filtered.map((product) => (
-            <li key={product.id} className="flex">
+            <li key={product.id} className="min-w-0">
               <ProductCard
                 product={product}
-                waHref={waLink(
-                  `Halo Delisert, saya ingin memesan ${product.name}. Apakah masih tersedia?`,
-                )}
-                className="w-full"
+                waHref={waLink(productOrderMessage({ productName: product.name }))}
               />
             </li>
           ))}
         </ul>
       )}
-
-      <div className="mt-16 flex flex-col items-start gap-4 border border-border bg-secondary/30 p-8 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg">Tidak menemukan yang dicari?</h2>
-          <p className="text-sm/relaxed text-muted-foreground">
-            Tanyakan ketersediaan batch hari ini langsung melalui WhatsApp.
-          </p>
-        </div>
-        <a
-          href={waLink("Halo Delisert, saya ingin bertanya tentang ketersediaan produk.")}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex h-9 shrink-0 items-center border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Chat via WhatsApp
-        </a>
-      </div>
-
-      <p className="pt-8 text-sm text-muted-foreground">
-        Ingin tahu cara memesan?{" "}
-        <Link to="/kontak" className="text-primary underline-offset-4 hover:underline">
-          Lihat halaman Kontak & Pesan
-        </Link>
-        .
-      </p>
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={
-        active
-          ? "border border-primary bg-primary px-3.5 py-1.5 text-sm font-medium text-primary-foreground"
-          : "border border-border bg-background px-3.5 py-1.5 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-      }
-    >
-      {children}
-    </button>
   );
 }
