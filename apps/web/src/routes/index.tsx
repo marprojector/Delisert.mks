@@ -85,13 +85,6 @@ function Hero({ products }: { products: Product[] }) {
   return (
     <section className="cn-shell grid gap-8 pt-5 pb-4 lg:grid-cols-[minmax(0,560fr)_minmax(0,576fr)] lg:items-center lg:gap-16 lg:pt-12 lg:pb-20">
       <div className="flex flex-col gap-4 lg:gap-6">
-        <span
-          data-hero-fade
-          className="inline-flex w-fit items-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-primary lg:px-3.5 lg:text-[0.8125rem]"
-        >
-          <span aria-hidden="true" className="size-2 rounded-full bg-primary" />
-          Dessert Makassar · Sejak 2021
-        </span>
         <h1 className="text-[2.75rem] leading-[1.08] font-semibold text-foreground sm:text-6xl lg:text-[4.75rem] lg:leading-[1.05]">
           <span className="block overflow-hidden pb-1">
             <span data-hero-line className="block">
