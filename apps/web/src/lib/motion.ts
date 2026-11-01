@@ -106,7 +106,32 @@ export function useReveal(scope: Scope, dependencies: unknown[] = []) {
           if (added.length > 0) reveal(added, 0);
         });
         observer.observe(root, { childList: true, subtree: true });
-        return () => observer.disconnect();
+
+        // Jaring pengaman: animasi pembuka bisa terlewat (font terlambat dimuat,
+        // data diganti saat animasi berjalan). Elemen yang sudah di layar atau
+        // sudah dilewati tetapi masih transparan dan tidak sedang dianimasikan
+        // dimunculkan, supaya isi halaman tidak pernah tertinggal tersembunyi.
+        const showStranded = () => {
+          const fold = window.innerHeight;
+          const stranded = gsap.utils
+            .toArray<HTMLElement>("[data-reveal]", root)
+            .filter(
+              (element) =>
+                element.getBoundingClientRect().top < fold &&
+                element.getClientRects().length > 0 &&
+                Number(getComputedStyle(element).opacity) < 0.05 &&
+                !gsap.isTweening(element),
+            );
+          if (stranded.length > 0) gsap.to(stranded, { ...REVEAL_TO, duration: 0.4, overwrite: true });
+        };
+        ScrollTrigger.addEventListener("scrollEnd", showStranded);
+        const settle = window.setTimeout(showStranded, 2500);
+
+        return () => {
+          observer.disconnect();
+          window.clearTimeout(settle);
+          ScrollTrigger.removeEventListener("scrollEnd", showStranded);
+        };
       });
       return () => mm.revert();
     },

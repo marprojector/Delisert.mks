@@ -33,3 +33,10 @@ describe("hero parallax", () => {
     expect(source).toContain("clamp(");
   });
 });
+
+describe("reveal safety net", () => {
+  test("content that a reveal missed is shown once scrolling settles", () => {
+    expect(source).toContain("showStranded");
+    expect(source).toContain('ScrollTrigger.addEventListener("scrollEnd", showStranded)');
+  });
+});
