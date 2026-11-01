@@ -29,10 +29,10 @@ const baseCtx = (db: never) => ({
   authorization: undefined,
 });
 
-async function authedCaller(db: never) {
+async function authedCaller(db: never, extra: { deletePhoto?: (key: string) => Promise<void> } = {}) {
   const anon = appRouter.createCaller(baseCtx(db));
   const { token } = await anon.adminAuth.login({ password: "p" });
-  return appRouter.createCaller({ ...baseCtx(db), authorization: `Bearer ${token}` });
+  return appRouter.createCaller({ ...baseCtx(db), ...extra, authorization: `Bearer ${token}` });
 }
 
 describe("admin product", () => {
@@ -45,6 +45,32 @@ describe("admin product", () => {
     expect(mochi.variantCount).toBe(3);
     const mango = rows.find((row) => row.slug === "authentic-mango-sticky-rice")!;
     expect(mango.variantCount).toBe(0);
+  });
+
+  test("keeps a photo in R2 while another product still uses it", async () => {
+    const { db, client } = await setup();
+    const deleted: string[] = [];
+    const caller = await authedCaller(db as never, {
+      deletePhoto: async (key) => {
+        deleted.push(key);
+      },
+    });
+    const url = "/api/photos/products/0f8fad5b-d9cb-469f-a165-70867728950e-w960.webp";
+    client.exec(
+      `update products set image_url = '${url}' where slug in ('artisanal-mochi-daifuku', 'mille-crepes')`,
+    );
+    const rows = await caller.adminProduct.list();
+    const mochi = rows.find((row) => row.slug === "artisanal-mochi-daifuku")!;
+    const crepes = rows.find((row) => row.slug === "mille-crepes")!;
+
+    await caller.adminProduct.update({ id: mochi.id, imageUrl: null });
+    expect(deleted).toEqual([]);
+
+    await caller.adminProduct.remove({ id: crepes.id });
+    expect(deleted.sort()).toEqual([
+      "products/0f8fad5b-d9cb-469f-a165-70867728950e-w480.webp",
+      "products/0f8fad5b-d9cb-469f-a165-70867728950e-w960.webp",
+    ]);
   });
 
   test("rejects an unauthenticated caller", async () => {

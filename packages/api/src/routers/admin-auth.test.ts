@@ -54,6 +54,26 @@ describe("admin login guard", () => {
     expect(typeof (await other.adminAuth.login({ password: PASSWORD })).token).toBe("string");
   });
 
+  test("parallel wrong guesses cannot get past the attempt limit", async () => {
+    const loginLimiter = new LoginLimiter(5, 60_000);
+    const caller = appRouter.createCaller({ ...ctx(), clientIp: "7.7.7.7", loginLimiter });
+    const results = await Promise.allSettled(
+      Array.from({ length: 20 }, () => caller.adminAuth.login({ password: "wrong" })),
+    );
+    const checked = results.filter(
+      (result) => result.status === "rejected" && String(result.reason).includes("Kata sandi salah"),
+    );
+    expect(checked.length).toBe(5);
+  });
+
+  test("a correct password still works after a wrong one and clears the counter", async () => {
+    const loginLimiter = new LoginLimiter(5, 60_000);
+    const caller = appRouter.createCaller({ ...ctx(), clientIp: "8.8.8.8", loginLimiter });
+    await expect(caller.adminAuth.login({ password: "wrong" })).rejects.toThrow();
+    expect(typeof (await caller.adminAuth.login({ password: PASSWORD })).token).toBe("string");
+    expect(loginLimiter.remaining("8.8.8.8", Date.now())).toBe(5);
+  });
+
   test("tells the client how many attempts are left before the lockout", async () => {
     const loginLimiter = new LoginLimiter(5, 60_000);
     const caller = appRouter.createCaller({ ...ctx(), clientIp: "9.9.9.9", loginLimiter });

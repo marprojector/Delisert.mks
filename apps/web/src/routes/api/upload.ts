@@ -1,6 +1,6 @@
 import { verifySessionToken } from "@delisert.mks-1/api/lib/admin-session";
 import {
-  MAX_PHOTO_WIDTH,
+  isValidPhotoWidthSet,
   sizedPhotoKey,
   validateImageUpload,
 } from "@delisert.mks-1/api/lib/image";
@@ -74,15 +74,12 @@ export const Route = createFileRoute("/api/upload")({
 });
 
 async function storeSizedPhoto(sized: Array<{ width: number; file: File }>): Promise<Response> {
-  if (sized.length > 4) {
-    return Response.json({ error: "Terlalu banyak ukuran foto." }, { status: 400 });
+  if (!isValidPhotoWidthSet(sized.map(({ width }) => width))) {
+    return Response.json({ error: "Ukuran foto tidak valid." }, { status: 400 });
   }
 
   const extension = SIZED_TYPES[sized[0]!.file.type];
-  for (const { width, file } of sized) {
-    if (!Number.isInteger(width) || width < 1 || width > MAX_PHOTO_WIDTH) {
-      return Response.json({ error: "Lebar foto tidak valid." }, { status: 400 });
-    }
+  for (const { file } of sized) {
     if (SIZED_TYPES[file.type] !== extension || !extension) {
       return Response.json({ error: "Format foto harus WebP atau JPG." }, { status: 400 });
     }

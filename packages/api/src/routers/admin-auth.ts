@@ -30,8 +30,11 @@ export const adminAuthRouter = router({
         });
       }
 
+      // Catat percobaan SEBELUM menunggu pemeriksaan kata sandi. Kalau dicatat
+      // sesudahnya, permintaan paralel semuanya lolos pengecekan kunci di atas.
+      limiter.recordFailure(clientKey, now);
+
       if (!(await passwordsMatch(input.password, ctx.adminPassword))) {
-        limiter.recordFailure(clientKey, now);
         const left = limiter.remaining(clientKey, now);
         throw new TRPCError({
           code: "UNAUTHORIZED",

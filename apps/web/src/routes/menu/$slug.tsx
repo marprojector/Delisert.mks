@@ -11,7 +11,12 @@ import { Disclosure } from "@delisert.mks-1/ui/components/disclosure";
 import { PhotoPlaceholder } from "@delisert.mks-1/ui/components/photo-placeholder";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
 import { StickyOrderBar } from "@delisert.mks-1/ui/components/sticky-order-bar";
-import { VariantPicker, availableVariantName } from "@delisert.mks-1/ui/components/variant-picker";
+import {
+  type VariantChoice,
+  VariantPicker,
+  availableVariantName,
+  choiceForProduct,
+} from "@delisert.mks-1/ui/components/variant-picker";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
@@ -107,7 +112,7 @@ function ProductDetailComponent() {
   const trpc = useTRPC();
   const { data: product } = useQuery(trpc.product.bySlug.queryOptions({ slug }));
   const initial = Route.useLoaderData();
-  const [chosenVariant, setChosenVariant] = useState<string | null>(null);
+  const [choice, setChoice] = useState<VariantChoice>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   useReveal(pageRef, [slug]);
 
@@ -119,7 +124,7 @@ function ProductDetailComponent() {
     : [];
 
   // Varian yang dipesan selalu yang benar-benar tersedia (atau tanpa varian bila semua habis).
-  const variantName = availableVariantName(current.variants, chosenVariant);
+  const variantName = availableVariantName(current.variants, choiceForProduct(choice, current.slug));
   const variant = current.variants.find((item) => item.name === variantName);
   const priceCents = variant ? variant.priceCents : current.priceCents;
   const priceText = priceCents === null ? "Harga menyusul" : formatRupiah(priceCents);
@@ -204,7 +209,7 @@ function ProductDetailComponent() {
               name={`varian-${current.slug}`}
               variants={current.variants}
               value={variantName}
-              onChange={setChosenVariant}
+              onChange={(name) => setChoice({ slug: current.slug, name })}
             />
           ) : null}
 

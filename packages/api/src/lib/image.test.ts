@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { MAX_IMAGE_BYTES, photoKeysForUrl, sizedPhotoKey, validateImageUpload } from "./image";
+import {
+  MAX_IMAGE_BYTES,
+  isValidPhotoWidthSet,
+  photoKeysForUrl,
+  sizedPhotoKey,
+  validateImageUpload,
+} from "./image";
 
 const base = { filename: "mochi.jpg", contentType: "image/jpeg", size: 1024 };
 
@@ -64,5 +70,20 @@ describe("photoKeysForUrl", () => {
 
   test("builds sized keys", () => {
     expect(sizedPhotoKey(ID, 960, "webp")).toBe(`products/${ID}-w960.webp`);
+  });
+});
+
+describe("isValidPhotoWidthSet", () => {
+  test("accepts exactly the sizes the site will later look up and delete", () => {
+    expect(isValidPhotoWidthSet([480, 960, 1600])).toBe(true);
+    expect(isValidPhotoWidthSet([480, 960, 1200])).toBe(true);
+    expect(isValidPhotoWidthSet([400])).toBe(true);
+  });
+
+  test("rejects sizes outside that pattern, which would be orphaned in R2", () => {
+    expect(isValidPhotoWidthSet([100, 480, 960, 1600])).toBe(false);
+    expect(isValidPhotoWidthSet([960, 1600])).toBe(false);
+    expect(isValidPhotoWidthSet([480, 960, 2400])).toBe(false);
+    expect(isValidPhotoWidthSet([])).toBe(false);
   });
 });

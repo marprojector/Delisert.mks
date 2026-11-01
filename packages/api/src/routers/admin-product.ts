@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -8,6 +8,7 @@ import {
 } from "@delisert.mks-1/db/schema/index";
 import { TRPCError } from "@trpc/server";
 
+import type { Context } from "../context";
 import { adminProcedure, router } from "../index";
 import { photoKeysForUrl } from "../lib/image";
 
@@ -73,10 +74,18 @@ const isUniqueViolation = (error: unknown): boolean =>
  * Gagal menghapus tidak boleh menggagalkan simpan/hapus produk.
  */
 async function deleteUnusedPhoto(
-  ctx: { deletePhoto?: (key: string) => Promise<void> },
+  ctx: Context,
   url: string | null | undefined,
+  productId: number,
 ): Promise<void> {
   if (!ctx.deletePhoto || !url) return;
+  // Produk lain masih memakai foto yang sama? Biarkan di R2.
+  const stillUsed = await ctx.db
+    .select({ id: products.id })
+    .from(products)
+    .where(and(eq(products.imageUrl, url), ne(products.id, productId)))
+    .get();
+  if (stillUsed) return;
   try {
     await Promise.all(photoKeysForUrl(url).map((key) => ctx.deletePhoto!(key)));
   } catch {
@@ -191,7 +200,7 @@ export const adminProductRouter = router({
           throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
         }
         if (before?.imageUrl && before.imageUrl !== updated.imageUrl) {
-          await deleteUnusedPhoto(ctx, before.imageUrl);
+          await deleteUnusedPhoto(ctx, before.imageUrl, id);
         }
         return updated;
       } catch (error) {
@@ -214,7 +223,7 @@ export const adminProductRouter = router({
       if (!deleted) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
       }
-      await deleteUnusedPhoto(ctx, deleted.imageUrl);
+      await deleteUnusedPhoto(ctx, deleted.imageUrl, input.id);
       return { ok: true as const };
     }),
 

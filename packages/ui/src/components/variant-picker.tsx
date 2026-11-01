@@ -22,6 +22,17 @@ export function availableVariantName(
   return variants.find((variant) => variant.isAvailable)?.name ?? null;
 }
 
+/** Pilihan varian pengguna, diikat ke produk tempat pilihan itu dibuat. */
+export type VariantChoice = { slug: string; name: string } | null;
+
+/**
+ * Pilihan hanya berlaku di produk asalnya. Halaman detail memakai komponen yang
+ * sama untuk semua produk, jadi tanpa ini pilihan terbawa saat pindah produk.
+ */
+export function choiceForProduct(choice: VariantChoice, slug: string): string | null {
+  return choice && choice.slug === slug ? choice.name : null;
+}
+
 /** Pilihan ukuran/rasa berupa kartu yang bisa ditekan. Input radio asli tetap ada. */
 export function VariantPicker({
   name,

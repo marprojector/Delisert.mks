@@ -127,7 +127,13 @@ function ProductEditor() {
     else save.mutate({ id: Number(id), ...payload });
   };
 
+  // Ref, bukan state: dua unggahan beruntun dalam satu render sama-sama
+  // melihat state lama. Ref memastikan hanya satu unggahan berjalan.
+  const uploadingRef = useRef(false);
+
   const upload = async (file: File) => {
+    if (uploadingRef.current) return;
+    uploadingRef.current = true;
     setError(null);
     setUploading(true);
     try {
@@ -159,6 +165,7 @@ function ProductEditor() {
     } catch {
       setError("Gagal mengunggah foto. Periksa koneksi lalu coba lagi.");
     } finally {
+      uploadingRef.current = false;
       setUploading(false);
     }
   };

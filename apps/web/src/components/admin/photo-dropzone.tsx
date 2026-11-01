@@ -2,6 +2,12 @@ import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { ImageUp } from "lucide-react";
 import { useState } from "react";
 
+/** File yang diterima dari sebuah drop: file pertama, kecuali sedang mengunggah. */
+export function pickDroppedFile(files: ArrayLike<File>, uploading: boolean): File | null {
+  if (uploading) return null;
+  return files[0] ?? null;
+}
+
 /** Area unggah foto: klik untuk memilih file, atau tarik foto ke sini. */
 export function PhotoDropzone({
   onFile,
@@ -25,7 +31,7 @@ export function PhotoDropzone({
       onDrop={(event) => {
         event.preventDefault();
         setDragging(false);
-        const file = event.dataTransfer.files[0];
+        const file = pickDroppedFile(event.dataTransfer.files, uploading);
         if (file) onFile(file);
       }}
       className={cn(

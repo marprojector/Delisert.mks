@@ -43,6 +43,20 @@ export function validateImageUpload(input: ImageUploadInput): ImageUploadResult 
 export const PHOTO_WIDTHS = [480, 960, 1600] as const;
 export const MAX_PHOTO_WIDTH = 1600;
 
+/**
+ * Kumpulan lebar yang diunggah harus persis pola yang nanti dipakai untuk
+ * srcset dan untuk menghapus: lebar standar di bawah lebar terbesar, plus
+ * lebar terbesar itu sendiri (maks. 1600). Lebar lain akan tertinggal di R2.
+ */
+export function isValidPhotoWidthSet(widths: readonly number[]): boolean {
+  if (widths.length === 0) return false;
+  const sorted = [...widths].sort((a, b) => a - b);
+  const max = sorted[sorted.length - 1]!;
+  if (!Number.isInteger(max) || max < 1 || max > MAX_PHOTO_WIDTH) return false;
+  const expected = [...PHOTO_WIDTHS.filter((width) => width < max), max];
+  return expected.length === sorted.length && expected.every((width, index) => width === sorted[index]);
+}
+
 /** Kunci R2 untuk satu lebar foto bertingkat: products/<uuid>-w<lebar>.<ext>. */
 export function sizedPhotoKey(id: string, width: number, extension: string): string {
   return `products/${id}-w${width}.${extension}`;
