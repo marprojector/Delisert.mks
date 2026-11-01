@@ -25,4 +25,13 @@ describe("review fixes", () => {
   test("the kitchen address is never paired with opening days", () => {
     expect(read("../routes/jadwal.tsx")).not.toContain("Senin tutup");
   });
+
+  test("the html tag tolerates the class the motion gate adds before hydration", () => {
+    expect(read("../routes/__root.tsx")).toMatch(/<html lang="id" suppressHydrationWarning>/);
+  });
+
+  test("the footer leaves room for the floating WhatsApp button and the order bar on phones", () => {
+    expect(read("footer.tsx")).toContain("phoneBottomGap");
+    expect(read("../routes/__root.tsx")).toContain("<Footer phoneBottomGap");
+  });
 });

@@ -3,9 +3,9 @@ import { Link } from "@tanstack/react-router";
 
 const SCHEDULE = ["Sel–Sab · TikTok Live", "Minggu · CFD", "Senin · Libur"] as const;
 
-export function Footer() {
+export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean }) {
   return (
-    <footer className="bg-foreground text-background">
+    <footer className={phoneBottomGap ? "bg-foreground pb-24 text-background lg:pb-0" : "bg-foreground text-background"}>
       <div className="cn-shell grid gap-10 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:py-16">
         <div className="flex flex-col gap-4">
           <span className="cn-font-display text-[1.75rem] font-bold lg:text-[2rem]">Delisert</span>

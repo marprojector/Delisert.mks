@@ -82,32 +82,32 @@ function AboutComponent() {
         </div>
       </div>
 
-      <section className="cn-shell grid gap-7 pt-8 lg:grid-cols-[620fr_500fr] lg:gap-20 lg:pt-20">
-        <div data-reveal className="flex flex-col gap-3.5 lg:gap-5">
-          <p className="text-base/relaxed text-foreground lg:text-[1.375rem]/relaxed">
+      <section className="cn-shell flex flex-col gap-7 pt-8 lg:gap-14 lg:pt-20">
+        <div data-reveal className="grid gap-3.5 lg:grid-cols-2 lg:gap-16">
+          <p className="text-base/relaxed text-foreground lg:text-[1.625rem]/[1.45] lg:font-medium">
             Delisert dimulai pada 2021 dengan satu produk andalan: mochi buatan sendiri, dijual
             sepanjang Jalan Boulevard saat Car Free Day.
           </p>
-          <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:text-[1.0625rem]/relaxed">
+          <p className="text-[0.9375rem]/relaxed text-muted-foreground lg:pt-1.5 lg:text-[1.0625rem]/relaxed">
             Respons yang datang membuat lini produk berkembang. Dapur kami menambah pancake durian,
             mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake — semua tetap dibuat
             dalam batch terbatas agar kualitas terjaga.
           </p>
         </div>
-        <ul className="grid grid-cols-3 gap-2.5 lg:grid-cols-1 lg:gap-3.5">
+        <ul className="grid grid-cols-3 gap-2.5 lg:gap-6">
           {STATS.map((stat) => (
             <li
               key={stat.value}
               data-reveal
-              className="flex flex-col gap-1 rounded-[1.125rem] bg-secondary p-3.5 lg:flex-row lg:items-center lg:gap-5 lg:rounded-3xl lg:p-6"
+              className="flex flex-col gap-1.5 rounded-[1.125rem] bg-secondary p-3.5 lg:gap-3 lg:rounded-[1.75rem] lg:px-8 lg:py-7"
             >
               <span
                 data-count-to={stat.value}
-                className="cn-font-display text-[1.625rem] font-semibold text-primary tabular-nums lg:w-28 lg:text-[2.75rem]"
+                className="cn-font-display text-[1.75rem] leading-none font-semibold text-primary tabular-nums lg:text-[3.75rem]"
               >
                 {stat.value}
               </span>
-              <span className="text-xs text-muted-foreground lg:text-base">{stat.label}</span>
+              <span className="text-xs leading-snug text-muted-foreground lg:text-base">{stat.label}</span>
             </li>
           ))}
         </ul>

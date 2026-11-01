@@ -86,7 +86,8 @@ function RootDocument() {
   const showFloatingWhatsApp = !isAdmin && !isProductDetail;
 
   return (
-    <html lang="id">
+    // Skrip gerbang animasi menambah kelas ke <html> sebelum hydration.
+    <html lang="id" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -101,7 +102,8 @@ function RootDocument() {
           >
             <Outlet />
           </main>
-          {isAdmin ? null : <Footer />}
+          {/* Di HP, tombol WA melayang / bar pesan detail menutupi bagian bawah footer. */}
+          {isAdmin ? null : <Footer phoneBottomGap={showFloatingWhatsApp || isProductDetail} />}
           <FloatingWhatsApp hidden={!showFloatingWhatsApp} />
         </div>
         <Toaster richColors />

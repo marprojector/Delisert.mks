@@ -20,7 +20,10 @@ export function CategoryChips({
   return (
     <div
       className={cn(
-        "sticky top-[3.75rem] z-30 -mx-5 border-b border-border/70 bg-background/95 backdrop-blur-md lg:top-20 lg:mx-0 lg:border-0 lg:bg-transparent lg:backdrop-blur-none",
+        // Latar penuh selebar layar (juga di desktop) supaya kartu yang lewat di
+        // bawahnya tidak tembus terlihat. Bayangan 100vmax + clip-path melebarkan
+        // latar ke kiri-kanan tanpa membuat halaman bisa digeser horizontal.
+        "sticky top-[3.75rem] z-30 -mx-5 border-b border-border/70 bg-background/95 backdrop-blur-md lg:top-20 lg:mx-0 lg:border-0 lg:bg-background lg:py-3 lg:shadow-[0_0_0_100vmax_var(--background)] lg:[clip-path:inset(0_-100vmax)]",
         className,
       )}
     >
