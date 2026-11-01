@@ -8,7 +8,7 @@ const source = readFileSync(join(import.meta.dir, "motion.ts"), "utf8");
 describe("motion module", () => {
   test("only animates when the viewer has not asked for reduced motion", () => {
     expect(MOTION_QUERY).toBe("(prefers-reduced-motion: no-preference)");
-    const adds = source.match(/\.add\(\s*([A-Z_]+)/g) ?? [];
+    const adds = source.match(/mm\.add\(\s*([A-Z_]+)/g) ?? [];
     expect(adds.length).toBeGreaterThanOrEqual(4);
     for (const add of adds) expect(add).toContain("MOTION_QUERY");
   });

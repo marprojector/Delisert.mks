@@ -46,7 +46,7 @@ function ScheduleComponent() {
   useReveal(pageRef);
 
   return (
-    <div ref={pageRef} className="cn-shell flex flex-col gap-6 pt-4 pb-16 lg:gap-10 lg:pt-16 lg:pb-24">
+    <div ref={pageRef} data-motion-scope className="cn-shell flex flex-col gap-6 pt-4 pb-16 lg:gap-10 lg:pt-16 lg:pb-24">
       <div className="flex flex-col gap-2 lg:gap-3">
         <h1 className="text-4xl leading-tight font-semibold text-foreground lg:text-[4rem]">
           Jadwal & Lokasi

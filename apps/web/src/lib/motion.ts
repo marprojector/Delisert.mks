@@ -3,16 +3,19 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import type { RefObject } from "react";
 
+import { MOTION_DONE_CLASS } from "./motion-gate";
+
 /**
  * Semua animasi GSAP situs ada di sini.
  *
  * Aturan:
- * - Konten selalu terlihat tanpa JavaScript. Animasi memakai gsap.from(),
- *   jadi keadaan akhir = markup SSR. Jangan pernah menyembunyikan konten
- *   dengan CSS atau dengan mengeset keadaan awal GSAP sebelum JS jalan.
- * - Semua animasi hanya jalan bila pengunjung TIDAK meminta gerak dikurangi
- *   (prefers-reduced-motion). gsap.matchMedia() otomatis membatalkan semuanya
- *   saat preferensi berubah atau komponen dilepas.
+ * - Elemen beranimasi disembunyikan sejak cat pertama oleh gerbang di
+ *   motion-gate.ts (hanya bila JS jalan dan gerak tidak dikurangi), lalu
+ *   dimunculkan di sini dengan fromTo(). Jangan memakai gsap.from() pada
+ *   elemen yang sudah terlihat: hasilnya berkedip (terlihat → hilang → muncul).
+ * - Semua animasi hanya jalan bila pengunjung TIDAK meminta gerak dikurangi.
+ *   gsap.matchMedia() otomatis membatalkan semuanya saat preferensi berubah
+ *   atau komponen dilepas.
  * - Hanya transform dan opacity yang dianimasikan.
  */
 
@@ -21,13 +24,30 @@ export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 const EASE = "power3.out";
 
+/** Keadaan awal dan akhir elemen [data-reveal]. */
+const REVEAL_FROM = { y: 28, autoAlpha: 0 };
+const REVEAL_TO = { y: 0, autoAlpha: 1, duration: 0.8, ease: EASE };
+
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger, useGSAP);
+  // Tanda untuk gerbang: kode animasi sudah dimuat, jangan paksa tampil.
+  (window as Window & { __delisertMotion?: boolean }).__delisertMotion = true;
+  // Bila pengunjung beralih ke "gerak dikurangi", tampilkan semua konten.
+  const reduced = window.matchMedia(REDUCED_MOTION_QUERY);
+  const showAll = () => document.documentElement.classList.add(MOTION_DONE_CLASS);
+  if (reduced.matches) showAll();
+  reduced.addEventListener("change", (event) => {
+    if (event.matches) showAll();
+  });
 }
 
 type Scope = RefObject<HTMLElement | null>;
 
-/** Elemen [data-reveal] muncul naik saat masuk layar, berurutan per batch. */
+/**
+ * Elemen [data-reveal] muncul naik. Yang sudah ada di layar (atau di atasnya,
+ * mis. setelah reload di tengah halaman) muncul langsung berurutan; sisanya
+ * muncul saat masuk layar.
+ */
 export function useReveal(scope: Scope, dependencies: unknown[] = []) {
   useGSAP(
     () => {
@@ -35,23 +55,27 @@ export function useReveal(scope: Scope, dependencies: unknown[] = []) {
       mm.add(MOTION_QUERY, () => {
         const targets = gsap.utils.toArray<HTMLElement>("[data-reveal]", scope.current);
         if (targets.length === 0) return;
-        ScrollTrigger.batch(targets, {
-          start: "top 88%",
-          once: true,
-          onEnter: (batch) =>
-            gsap.from(batch, {
-              y: 24,
-              autoAlpha: 0,
-              duration: 0.7,
-              ease: EASE,
-              stagger: 0.08,
-              overwrite: true,
-            }),
-        });
+
+        const fold = window.innerHeight * 0.92;
+        const visibleNow = targets.filter((element) => element.getBoundingClientRect().top < fold);
+        const later = targets.filter((element) => !visibleNow.includes(element));
+
+        if (visibleNow.length > 0) {
+          gsap.fromTo(visibleNow, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.07, delay: 0.15 });
+        }
+        if (later.length > 0) {
+          ScrollTrigger.batch(later, {
+            start: "top 92%",
+            once: true,
+            onEnter: (batch) =>
+              gsap.fromTo(batch, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.08, overwrite: true }),
+          });
+        }
       });
       return () => mm.revert();
     },
-    { scope, dependencies },
+    // revertOnUpdate: saat filter/produk berganti, trigger lama dibersihkan dulu.
+    { scope, dependencies, revertOnUpdate: true },
   );
 }
 
@@ -61,13 +85,23 @@ export function useHeroIntro(scope: Scope) {
     () => {
       const mm = gsap.matchMedia();
       mm.add(MOTION_QUERY, () => {
-        const timeline = gsap.timeline({ defaults: { ease: EASE } });
-        timeline
-          .from("[data-hero-line]", { yPercent: 110, autoAlpha: 0, duration: 0.9, stagger: 0.12 })
-          .from("[data-hero-fade]", { y: 16, autoAlpha: 0, duration: 0.6, stagger: 0.08 }, "-=0.5")
-          .from(
+        gsap
+          .timeline({ defaults: { ease: EASE } })
+          .fromTo(
+            "[data-hero-line]",
+            { yPercent: 110, autoAlpha: 0 },
+            { yPercent: 0, autoAlpha: 1, duration: 0.9, stagger: 0.12 },
+          )
+          .fromTo(
+            "[data-hero-fade]",
+            { y: 16, autoAlpha: 0 },
+            { y: 0, autoAlpha: 1, duration: 0.6, stagger: 0.08 },
+            "-=0.5",
+          )
+          .fromTo(
             "[data-hero-media]",
-            { scale: 0.94, autoAlpha: 0, duration: 0.9, stagger: 0.1 },
+            { scale: 0.94, autoAlpha: 0 },
+            { scale: 1, autoAlpha: 1, duration: 0.9, stagger: 0.1 },
             "-=0.7",
           );
       });

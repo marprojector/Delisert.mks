@@ -53,7 +53,7 @@ function AboutComponent() {
   useReveal(pageRef);
 
   return (
-    <div ref={pageRef} className="flex flex-col pb-16 lg:pb-24">
+    <div ref={pageRef} data-motion-scope className="flex flex-col pb-16 lg:pb-24">
       <section className="cn-shell flex flex-col gap-3.5 pt-6 lg:gap-5 lg:pt-16">
         <span data-hero-fade className="cn-eyebrow text-primary">
           Tentang Delisert

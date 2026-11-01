@@ -16,6 +16,7 @@ import { FloatingWhatsApp } from "../components/floating-whatsapp";
 import { Footer } from "../components/footer";
 import Header from "../components/header";
 import { SkipLink } from "../components/skip-link";
+import { motionGateScript } from "../lib/motion-gate";
 import { analyticsScripts } from "../utils/analytics";
 import { localBusinessJsonLd } from "../utils/seo";
 
@@ -64,6 +65,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     ],
     links: [{ rel: "stylesheet", href: appCss }, ...FONT_LINKS],
     scripts: [
+      // Harus paling awal: menyembunyikan elemen beranimasi sebelum cat pertama.
+      { children: motionGateScript() },
       {
         type: "application/ld+json",
         children: JSON.stringify(localBusinessJsonLd()),

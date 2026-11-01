@@ -63,7 +63,7 @@ function HomeComponent() {
   useReveal(pageRef);
 
   return (
-    <div ref={pageRef} className="flex flex-col">
+    <div ref={pageRef} data-motion-scope className="flex flex-col">
       <Hero products={featuredProducts} />
       <ScheduleStrip />
       <Featured products={featuredProducts} />
@@ -165,11 +165,8 @@ function HeroMedia({
             className="size-full object-cover"
           />
         ) : (
-          // Lapisan parallax lebih tinggi dari wadah; label diberi jarak supaya tetap terlihat.
-          <PhotoPlaceholder
-            categorySlug={product?.category.slug ?? slug}
-            style={{ paddingBottom: parallaxOverscanPx(parallax) + 12 }}
-          />
+          // Ubin hero bersifat dekoratif; label "Foto menyusul" akan terpotong parallax.
+          <PhotoPlaceholder categorySlug={product?.category.slug ?? slug} label="" />
         )}
       </div>
     </div>

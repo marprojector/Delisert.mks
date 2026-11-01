@@ -42,7 +42,7 @@ function ContactComponent() {
 
   return (
     <div
-      ref={pageRef}
+      ref={pageRef} data-motion-scope
       className="cn-shell grid gap-8 pt-4 pb-16 lg:grid-cols-[560fr_576fr] lg:gap-16 lg:pt-16 lg:pb-24"
     >
       <div className="flex flex-col gap-2 lg:col-start-1 lg:gap-3">

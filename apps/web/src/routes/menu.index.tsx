@@ -79,7 +79,7 @@ function MenuComponent() {
   useReveal(pageRef, [activeCategory]);
 
   return (
-    <div ref={pageRef} className="cn-shell flex flex-col gap-4 pt-4 pb-16 lg:gap-7 lg:pt-12 lg:pb-24">
+    <div ref={pageRef} data-motion-scope className="cn-shell flex flex-col gap-4 pt-4 pb-16 lg:gap-7 lg:pt-12 lg:pb-24">
       <div className="flex flex-col gap-1.5 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-1.5 lg:gap-2.5">
           <h1 className="text-4xl font-semibold text-foreground lg:text-[4rem] lg:leading-none">Menu</h1>

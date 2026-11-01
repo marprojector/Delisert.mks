@@ -1,1 +1,14 @@
 @import "@delisert.mks-1/ui/globals.css";
+
+/*
+ * Gerbang animasi (lihat src/lib/motion-gate.ts): selama kelas motion-ready
+ * terpasang, elemen beranimasi di halaman bertanda data-motion-scope
+ * disembunyikan sejak cat pertama. GSAP lalu memunculkannya. Tanpa JS atau
+ * dengan gerak dikurangi, kelas ini tidak pernah ada — semua langsung tampil.
+ */
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-reveal],
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-line],
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-fade],
+html.motion-ready:not(.motion-done) [data-motion-scope] [data-hero-media] {
+  opacity: 0;
+}
