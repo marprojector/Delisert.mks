@@ -40,7 +40,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-*.log*
+*.log
+*.log.*
+# Jangan pakai pola `*.log*`: ia ikut menelan nama sumber seperti
+# `admin.login.tsx` karena ".log" muncul di tengah nama file.
+!src/**/*.ts
+!src/**/*.tsx
 
 # TypeScript
 *.tsbuildinfo
