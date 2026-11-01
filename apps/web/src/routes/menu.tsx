@@ -15,6 +15,13 @@ const menuSearchSchema = z.object({
 
 export const Route = createFileRoute("/menu")({
   validateSearch: menuSearchSchema,
+  loader: async ({ context }) => {
+    const [products, categories] = await Promise.all([
+      context.queryClient.fetchQuery(context.trpc.product.list.queryOptions()),
+      context.queryClient.fetchQuery(context.trpc.product.categories.queryOptions()),
+    ]);
+    return { products, categories };
+  },
   head: () => ({
     meta: [
       { title: "Menu Delisert — Mochi, Pancake Durian, Mille Crepes & Dessert Makassar" },
@@ -42,9 +49,11 @@ function MenuComponent() {
 
   const products = useQuery(trpc.product.list.queryOptions());
   const categories = useQuery(trpc.product.categories.queryOptions());
+  // Data loader dipakai untuk render pertama (SSR) dan saat hydration belum selesai.
+  const initial = Route.useLoaderData();
 
-  const allProducts = products.data ?? [];
-  const allCategories = categories.data ?? [];
+  const allProducts = products.data ?? initial.products;
+  const allCategories = categories.data ?? initial.categories;
 
   const filtered = useMemo(
     () =>
