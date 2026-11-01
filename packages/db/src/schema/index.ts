@@ -40,3 +40,42 @@ export const productVariants = sqliteTable("product_variants", {
   isAvailable: integer("is_available", { mode: "boolean" }).notNull().default(true),
   displayOrder: integer("display_order").notNull().default(0),
 });
+
+/**
+ * Konten website yang bisa diubah pemilik dari admin (teks beranda, jadwal,
+ * tentang, kontak, sosial media). Satu baris per bagian; `value` berisi JSON
+ * yang divalidasi di packages/api/src/lib/site-content.ts. Bagian yang belum
+ * pernah diubah memakai nilai bawaan dari kode.
+ */
+export const siteSettings = sqliteTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
+/**
+ * Token akses MCP yang dibuat pemilik di admin. Token mentah hanya ditampilkan
+ * sekali saat dibuat; yang disimpan hanya hash SHA-256-nya.
+ */
+export const mcpTokens = sqliteTable("mcp_tokens", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  /** Beberapa karakter awal token, untuk dikenali di daftar ("dlsrt_ab12…"). */
+  tokenPrefix: text("token_prefix").notNull(),
+  /** "read" = hanya membaca; "write" = boleh mengubah katalog dan konten. */
+  scope: text("scope").notNull().default("read"),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  lastUsedAt: text("last_used_at"),
+  revokedAt: text("revoked_at"),
+});
+
+/** Jejak perubahan dari admin maupun MCP, ditampilkan di Ringkasan. */
+export const activityLog = sqliteTable("activity_log", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** "admin" atau "mcp:<nama token>". */
+  actor: text("actor").notNull(),
+  action: text("action").notNull(),
+  summary: text("summary").notNull(),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});

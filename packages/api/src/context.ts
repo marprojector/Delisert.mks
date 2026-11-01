@@ -1,6 +1,7 @@
 import type { Database } from "@delisert.mks-1/db";
 
 import type { LoginLimiter } from "./lib/login-guard";
+import type { AnalyticsConfig } from "./lib/web-analytics";
 
 export type Context = {
   db: Database;
@@ -16,4 +17,10 @@ export type Context = {
   loginLimiter?: LoginLimiter;
   /** Hapus objek foto di R2 berdasarkan kuncinya (mis. "products/<uuid>.jpg"). */
   deletePhoto?: (key: string) => Promise<void>;
+  /** Siapa yang memanggil: "admin" (bawaan) atau "mcp:<nama token>". Dicatat di log aktivitas. */
+  actor?: string;
+  /** Akses Cloudflare Web Analytics; null bila token belum dipasang. */
+  analytics?: AnalyticsConfig | null;
+  /** fetch yang dipakai untuk API luar; diganti di tes. */
+  fetch?: typeof fetch;
 };

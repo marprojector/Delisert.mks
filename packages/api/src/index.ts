@@ -1,6 +1,9 @@
 import { TRPCError, initTRPC } from "@trpc/server";
 
 import type { Context } from "./context";
+import { activityLog } from "@delisert.mks-1/db/schema/index";
+
+import { describeActivity } from "./lib/activity";
 import { verifySessionToken } from "./lib/admin-session";
 
 export const t = initTRPC.context<Context>().create();
@@ -13,7 +16,7 @@ export const publicProcedure = t.procedure;
  * Prosedur yang hanya boleh dipanggil dengan token sesi admin yang sah.
  * Ini adalah batas keamanan sebenarnya — redirect di sisi klien hanya UX.
  */
-export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
+export const adminProcedure = t.procedure.use(async ({ ctx, next, type, path, getRawInput }) => {
   const token = ctx.authorization?.replace(/^Bearer\s+/i, "");
 
   if (!token || !(await verifySessionToken(ctx.adminSecret, token, Date.now()))) {
@@ -23,5 +26,20 @@ export const adminProcedure = t.procedure.use(async ({ ctx, next }) => {
     });
   }
 
-  return next({ ctx });
+  const result = await next({ ctx });
+
+  // Catat perubahan yang berhasil. Log bersifat pelengkap: gagal mencatat
+  // tidak boleh menggagalkan perubahan yang sudah tersimpan.
+  if (result.ok && type === "mutation") {
+    try {
+      const entry = describeActivity(path, await getRawInput());
+      if (entry) {
+        await ctx.db.insert(activityLog).values({ actor: ctx.actor ?? "admin", ...entry });
+      }
+    } catch {
+      // abaikan
+    }
+  }
+
+  return result;
 });

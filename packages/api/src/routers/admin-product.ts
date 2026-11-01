@@ -11,6 +11,7 @@ import { TRPCError } from "@trpc/server";
 import type { Context } from "../context";
 import { adminProcedure, router } from "../index";
 import { photoKeysForUrl } from "../lib/image";
+import { moveInOrder } from "../lib/reorder";
 
 const availabilityEnum = z.enum(["available", "preorder", "soldout"]);
 
@@ -260,6 +261,22 @@ export const adminProductRouter = router({
         throw new TRPCError({ code: "NOT_FOUND", message: "Produk tidak ditemukan." });
       }
       return updated;
+    }),
+
+  /** Geser produk naik/turun di urutan tampil katalog. */
+  move: adminProcedure
+    .input(z.object({ id: z.number().int().positive(), direction: z.enum(["up", "down"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const rows = await ctx.db
+        .select({ id: products.id })
+        .from(products)
+        .orderBy(asc(products.displayOrder), asc(products.id));
+      const order = moveInOrder(rows.map((row) => row.id), input.id, input.direction);
+      if (!order) return { moved: false };
+      for (const item of order) {
+        await ctx.db.update(products).set({ displayOrder: item.displayOrder }).where(eq(products.id, item.id));
+      }
+      return { moved: true };
     }),
 
   addVariant: adminProcedure.input(variantInput).mutation(async ({ ctx, input }) => {
