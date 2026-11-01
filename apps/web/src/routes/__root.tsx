@@ -47,7 +47,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content:
           "Delisert — dessert dan makanan homemade Makassar sejak 2021. Mochi, pancake durian, mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake. Pesan via WhatsApp.",
       },
-      { name: "theme-color", content: "#8c3b44" },
+      { name: "theme-color", content: "#84343e" },
       { property: "og:locale", content: "id_ID" },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Delisert" },
