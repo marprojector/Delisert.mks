@@ -43,7 +43,7 @@
   --chart-3: oklch(0.55 0.08 152);
   --chart-4: oklch(0.45 0.06 55);
   --chart-5: oklch(0.68 0.07 30);
-  --radius: 0.25rem;
+  --radius: 1rem;
   --sidebar: oklch(0.975 0.008 85);
   --sidebar-foreground: oklch(0.25 0.02 55);
   --sidebar-primary: oklch(0.44 0.110 15.7);
@@ -145,6 +145,25 @@
 
 @utility cn-font-display {
   font-family: var(--font-display);
+}
+
+/* Lebar konten situs: 1200px dengan gutter 20px di HP, 32px di desktop. */
+@utility cn-shell {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 75rem;
+  padding-inline: 1.25rem;
+  @media (min-width: 1024px) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Sembunyikan scrollbar pada baris yang digeser horizontal (chip, kartu). */
+@utility cn-no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @utility cn-eyebrow {
