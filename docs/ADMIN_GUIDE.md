@@ -74,6 +74,23 @@ bukan hanya warna. Pelanggan tetap bisa melihat produknya.
 
 ---
 
+## 5b. Mengelola varian (ukuran / rasa)
+
+Varian hanya bisa dikelola pada produk yang **sudah tersimpan**. Buka produk,
+lalu gulir ke bagian **Varian**.
+
+- **Tambah varian** — isi nama (mis. `Isi 4 pcs`) dan harga rupiah utuh, lalu
+  klik **Tambah varian**. Perubahan langsung tersimpan, tidak perlu klik
+  Simpan.
+- **Tandai habis / tersedia** — varian yang habis tetap tampil di halaman
+  produk dengan label "(habis)" dan tidak bisa dipilih pelanggan.
+- **Hapus** — menghapus varian dari produk. Riwayat pesanan lama tidak
+  terpengaruh karena pesanan berjalan lewat WhatsApp.
+
+Contoh produk dengan varian: **Mochi** punya `1 Pcs` Rp 8.000, `Isi 4 pcs`
+Rp 30.000, dan `Isi 8 pcs` Rp 50.000. Kalau semua varian seharga, halaman
+produk menampilkan satu harga saja, bukan rentang.
+
 ## 6. Mengganti foto produk
 
 1. Buka produk → bagian **Foto produk**.
