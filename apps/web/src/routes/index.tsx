@@ -64,10 +64,11 @@ function HomeComponent() {
   const categoryList = categories.data ?? initial.categories;
 
   const pageRef = useRef<HTMLDivElement>(null);
+  // Pin dulu: jarak scroll pin harus sudah ada sebelum reveal mengukur posisi.
+  useFeaturedPin(pageRef);
   useHeroIntro(pageRef);
   useParallax(pageRef);
   useReveal(pageRef);
-  useFeaturedPin(pageRef);
 
   return (
     <div ref={pageRef} data-motion-scope className="flex flex-col">
@@ -83,18 +84,15 @@ function HomeComponent() {
 function Hero({ products }: { products: Product[] }) {
   const [main, second, third] = products;
   return (
-    <section className="cn-shell grid gap-8 pt-5 pb-4 lg:grid-cols-[minmax(0,560fr)_minmax(0,576fr)] lg:items-center lg:gap-16 lg:pt-12 lg:pb-20">
+    <section className="cn-shell grid gap-8 pt-5 pb-4 lg:grid-cols-[minmax(0,620fr)_minmax(0,516fr)] lg:items-center lg:gap-16 lg:pt-12 lg:pb-20">
       <div className="flex flex-col gap-4 lg:gap-6">
-        <h1 className="text-[2.75rem] leading-[1.08] font-semibold text-foreground sm:text-6xl lg:text-[4.75rem] lg:leading-[1.05]">
-          <span className="block overflow-hidden pb-1">
-            <span data-hero-line className="block">
-              Mochi lembut,
-            </span>
+        {/* Tiap baris yang benar-benar tampil di-mask oleh SplitText (motion.ts). */}
+        <h1 className="text-[2.75rem] leading-[1.08] font-semibold text-balance text-foreground sm:text-6xl lg:text-[4.25rem] lg:leading-[1.06]">
+          <span data-hero-line className="block">
+            Mochi lembut,
           </span>
-          <span className="block overflow-hidden pb-1">
-            <span data-hero-line className="block">
-              dibuat setiap hari.
-            </span>
+          <span data-hero-line className="block">
+            dibuat setiap hari.
           </span>
         </h1>
         <p

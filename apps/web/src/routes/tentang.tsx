@@ -60,15 +60,11 @@ function AboutComponent() {
           Tentang Delisert
         </span>
         <h1 className="max-w-[62rem] text-[2.125rem] leading-[1.15] font-semibold text-foreground lg:text-[4rem] lg:leading-[1.1]">
-          <span className="block overflow-hidden">
-            <span data-hero-line className="block">
-              Dapur kecil di Makassar yang
-            </span>
+          <span data-hero-line className="block">
+            Dapur kecil di Makassar yang
           </span>
-          <span className="block overflow-hidden">
-            <span data-hero-line className="block">
-              memulai dari satu mangkuk mochi.
-            </span>
+          <span data-hero-line className="block">
+            memulai dari satu mangkuk mochi.
           </span>
         </h1>
       </section>
@@ -76,7 +72,7 @@ function AboutComponent() {
       <div className="cn-shell pt-6 lg:pt-12">
         <div
           data-hero-media
-          className="relative h-60 overflow-hidden rounded-3xl lg:h-[30rem] lg:rounded-[2.25rem]"
+          className="relative h-52 overflow-hidden rounded-3xl lg:h-80 lg:rounded-[2.25rem]"
         >
           <PhotoPlaceholder categorySlug="mochi" label="" />
         </div>

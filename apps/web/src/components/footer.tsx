@@ -5,7 +5,7 @@ const SCHEDULE = ["Sel–Sab · TikTok Live", "Minggu · CFD", "Senin · Libur"]
 
 export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean }) {
   return (
-    <footer className={phoneBottomGap ? "bg-foreground pb-24 text-background lg:pb-0" : "bg-foreground text-background"}>
+    <footer className="bg-foreground text-background">
       <div className="cn-shell grid gap-10 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:py-16">
         <div className="flex flex-col gap-4">
           <span className="cn-font-display text-[1.75rem] font-bold lg:text-[2rem]">Delisert</span>
@@ -67,7 +67,14 @@ export function Footer({ phoneBottomGap = false }: { phoneBottomGap?: boolean })
           </ul>
         </div>
       </div>
-      <div className="cn-shell border-t border-background/10 py-6 text-xs text-background/55">
+      {/* Di HP, baris terakhir diberi ruang setinggi tombol WA melayang / bar pesan. */}
+      <div
+        className={
+          phoneBottomGap
+            ? "cn-shell border-t border-background/10 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] text-xs text-background/55 lg:pb-6"
+            : "cn-shell border-t border-background/10 py-6 text-xs text-background/55"
+        }
+      >
         © {new Date().getFullYear()} Delisert Makassar
       </div>
     </footer>

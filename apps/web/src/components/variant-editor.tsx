@@ -84,12 +84,12 @@ export function VariantEditor({ productId }: { productId: number }) {
               key={variant.id}
               className="flex items-center gap-3 rounded-2xl border border-border px-3.5 py-3"
             >
-              <span className="flex min-w-0 flex-1 flex-col lg:flex-row lg:items-center lg:gap-6">
+              <span className="flex min-w-0 flex-1 flex-col xl:flex-row xl:items-center xl:gap-6">
                 <span
                   className={
                     variant.isAvailable
-                      ? "truncate text-sm font-semibold text-foreground lg:w-60 lg:text-[0.9375rem]"
-                      : "truncate text-sm font-semibold text-muted-foreground line-through lg:w-60 lg:text-[0.9375rem]"
+                      ? "truncate text-sm font-semibold text-foreground xl:w-60 lg:text-[0.9375rem]"
+                      : "truncate text-sm font-semibold text-muted-foreground line-through xl:w-60 lg:text-[0.9375rem]"
                   }
                 >
                   {variant.name}
@@ -121,7 +121,8 @@ export function VariantEditor({ productId }: { productId: number }) {
       )}
 
       {/* Bukan <form>: editor ini berada di dalam form produk. */}
-      <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+      {/* Kolom kiri editor sempit di 1024–1280px: susun bertumpuk sampai xl. */}
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row lg:flex-col xl:flex-row">
         <label className="flex-1">
           <span className="sr-only">Nama varian baru</span>
           <input
@@ -137,7 +138,7 @@ export function VariantEditor({ productId }: { productId: number }) {
             className="h-[2.875rem] w-full rounded-xl border border-border bg-white px-3.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/25"
           />
         </label>
-        <label className="flex h-[2.875rem] items-center gap-2 rounded-xl border border-border bg-white px-3.5 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25 sm:w-40">
+        <label className="flex h-[2.875rem] items-center gap-2 rounded-xl border border-border bg-white px-3.5 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25 sm:w-40 lg:w-auto xl:w-40">
           <span className="text-sm text-muted-foreground">Rp</span>
           <span className="sr-only">Harga varian baru</span>
           <input

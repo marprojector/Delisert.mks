@@ -28,7 +28,10 @@ export function SaveBar({
       aria-hidden={!visible}
     >
       <div className="flex items-center justify-between gap-3 rounded-[1.25rem] bg-foreground p-2.5 pl-4 text-background shadow-xl shadow-foreground/20 lg:p-4.5 lg:pl-6">
-        <span className="min-w-0 truncate text-[0.8125rem] text-background/80 lg:text-sm">{message}</span>
+        <span className="min-w-0 truncate text-[0.8125rem] text-background/80 lg:text-sm">
+          <span className="sm:hidden">Belum disimpan</span>
+          <span className="hidden sm:inline">{message}</span>
+        </span>
         <span className="flex shrink-0 gap-2">
           <button
             type="button"
@@ -45,7 +48,11 @@ export function SaveBar({
             tabIndex={visible ? 0 : -1}
             className="h-11 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60 lg:h-[2.875rem] lg:px-6.5"
           >
-            {busy ? "Menyimpan…" : "Simpan perubahan"}
+            {busy ? "Menyimpan…" : (
+              <>
+                Simpan<span className="hidden sm:inline"> perubahan</span>
+              </>
+            )}
           </button>
         </span>
       </div>

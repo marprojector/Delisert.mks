@@ -50,7 +50,8 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      // viewport-fit=cover: env(safe-area-inset-*) baru bernilai di HP berponi.
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Delisert — Mochi & Dessert Makassar | Sejak 2021" },
       {
         name: "description",
@@ -98,7 +99,7 @@ function RootDocument() {
           <main
             id="main-content"
             tabIndex={-1}
-            className={showFloatingWhatsApp ? "flex-1 pb-24 lg:pb-0" : "flex-1"}
+            className="flex-1"
           >
             <Outlet />
           </main>

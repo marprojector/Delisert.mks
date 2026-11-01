@@ -24,7 +24,10 @@ import { MOTION_DONE_CLASS } from "./motion-gate";
 export const MOTION_QUERY = "(prefers-reduced-motion: no-preference)";
 export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 /** Efek yang hanya masuk akal dengan layar lebar dan mouse (mis. section yang menempel). */
-export const DESKTOP_MOTION_QUERY = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
+// Tinggi minimum: di layar laptop pendek kartu yang di-pin terpotong di bawah,
+// jadi di sana baris cukup digeser horizontal seperti biasa.
+export const DESKTOP_MOTION_QUERY =
+  "(min-width: 1024px) and (min-height: 760px) and (prefers-reduced-motion: no-preference)";
 
 const EASE = "power3.out";
 
@@ -61,8 +64,11 @@ export function useReveal(scope: Scope, dependencies: unknown[] = []) {
         if (targets.length === 0) return;
 
         const fold = window.innerHeight * 0.92;
-        const visibleNow = targets.filter((element) => element.getBoundingClientRect().top < fold);
+        // Elemen tersembunyi (display:none, mis. kartu kategori lain) tidak ikut antre stagger.
+        const shown = targets.filter((element) => element.getClientRects().length > 0);
+        const visibleNow = shown.filter((element) => element.getBoundingClientRect().top < fold);
         const later = targets.filter((element) => !visibleNow.includes(element));
+        // Yang tersembunyi tetap didaftarkan agar muncul saat filter menampilkannya.
 
         if (visibleNow.length > 0) {
           gsap.fromTo(visibleNow, REVEAL_FROM, { ...REVEAL_TO, stagger: 0.07, delay: 0.15 });
@@ -91,14 +97,26 @@ export function useHeroIntro(scope: Scope) {
       mm.add(MOTION_QUERY, () => {
         // Judul dipecah per huruf. SplitText menambahkan aria-label sehingga
         // pembaca layar tetap membaca kalimat utuh; dibatalkan otomatis bersama mm.
-        const split = SplitText.create("[data-hero-line]", { type: "words,chars", aria: "auto" });
+        const split = SplitText.create("[data-hero-line]", {
+          type: "lines,words,chars",
+          mask: "lines",
+          aria: "auto",
+        });
         gsap
           .timeline({ defaults: { ease: EASE } })
           .set("[data-hero-line]", { autoAlpha: 1 })
           .fromTo(
             split.chars,
             { yPercent: 115, rotate: 6, autoAlpha: 0 },
-            { yPercent: 0, rotate: 0, autoAlpha: 1, duration: 0.8, stagger: 0.022 },
+            {
+              yPercent: 0,
+              rotate: 0,
+              autoAlpha: 1,
+              duration: 0.8,
+              stagger: 0.022,
+              // Kembalikan teks utuh setelah selesai: baris ikut menyesuaikan saat layar diubah.
+              onComplete: () => split.revert(),
+            },
           )
           .fromTo(
             "[data-hero-fade]",
@@ -202,7 +220,13 @@ export function useFeaturedPin(scope: Scope) {
         const track = section?.querySelector<HTMLElement>("[data-pin-track]");
         if (!section || !viewport || !track) return;
 
-        const distance = () => Math.max(0, track.scrollWidth - viewport.clientWidth);
+        // Lebar isi viewport tanpa padding kiri-kanan (cn-shell), supaya kartu
+        // terakhir berhenti sejajar tepi konten, bukan 64px lewat.
+        const innerWidth = () => {
+          const style = getComputedStyle(viewport);
+          return viewport.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        };
+        const distance = () => Math.max(0, track.scrollWidth - innerWidth());
         if (distance() === 0) return;
 
         // Saat di-pin, gulir horizontal bawaan dimatikan; GSAP yang menggeser.
@@ -212,7 +236,8 @@ export function useFeaturedPin(scope: Scope) {
           ease: "none",
           scrollTrigger: {
             trigger: section,
-            start: "top top+=88",
+            // Mulai dari dalam padding atas section supaya judul + kartu muat di layar.
+            start: "top+=64 top+=80",
             end: () => `+=${distance()}`,
             pin: true,
             // Wajib eksplisit: induk flex membuat ScrollTrigger mematikan jarak
@@ -309,14 +334,27 @@ export function useFlipFilter(scope: Scope, filterKey: string | undefined) {
     const animation = Flip.from(previous, {
       duration: 0.6,
       ease: "power3.inOut",
-      absolute: true,
+      // Hanya kartu yang keluar dilepas dari alur; grid tetap punya tinggi
+      // sehingga footer tidak melompat naik selama animasi.
+      absoluteOnLeave: true,
       scale: true,
+      onComplete: () => {
+        // Posisi pemicu scroll diukur ulang untuk tata letak yang baru.
+        ScrollTrigger.refresh();
+      },
       onEnter: (elements) =>
         gsap.fromTo(elements, { autoAlpha: 0, scale: 0.85 }, { autoAlpha: 1, scale: 1, duration: 0.5, delay: 0.15 }),
       onLeave: (elements) => gsap.to(elements, { autoAlpha: 0, scale: 0.85, duration: 0.35 }),
     });
+    // Kartu yang dibawa Flip ke layar belum tentu pernah dimunculkan oleh reveal
+    // (pemicunya diukur di tata letak lama). Munculkan langsung.
+    const revealNow = gsap.to(
+      gsap.utils.toArray<HTMLElement>("[data-flip-item]:not(.hidden) [data-reveal]", scope.current),
+      { autoAlpha: 1, y: 0, duration: 0.4, ease: EASE, overwrite: "auto" },
+    );
     return () => {
       animation.kill();
+      revealNow.kill();
     };
   }, [filterKey]);
 

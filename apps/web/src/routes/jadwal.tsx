@@ -90,16 +90,16 @@ function ScheduleComponent() {
         >
           <h2 className="cn-eyebrow font-sans text-primary">CFD Minggu · {CFD.hours}</h2>
           <p className="text-sm/relaxed text-muted-foreground">{CFD.description}</p>
-          <ul className="flex flex-col divide-y divide-border lg:grid lg:grid-cols-2 lg:gap-4 lg:divide-y-0">
+          <ul className="flex flex-col divide-y divide-border lg:gap-3 lg:divide-y-0">
             {CFD.locations.map((location) => (
               <li
                 key={location.id}
-                className="flex items-center justify-between gap-3 py-3 lg:flex-col lg:items-stretch lg:rounded-[1.375rem] lg:bg-background lg:p-5"
+                className="flex items-center justify-between gap-3 py-3 lg:gap-4 lg:rounded-[1.375rem] lg:bg-background lg:p-5"
               >
-                <span className="hidden h-28 items-center justify-center rounded-2xl bg-[#e9e3d8] text-muted-foreground lg:flex">
-                  <MapPin aria-hidden="true" className="size-6" />
+                <span className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-secondary text-primary lg:flex">
+                  <MapPin aria-hidden="true" className="size-5" />
                 </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="text-base font-semibold text-foreground lg:text-lg">{location.name}</span>
                   <span className="text-[0.8125rem] text-muted-foreground lg:text-sm">{location.landmark}</span>
                 </span>
@@ -107,10 +107,9 @@ function ScheduleComponent() {
                   href={CFD_MAPS_URLS[location.id]}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary px-3.5 py-2 text-xs font-semibold text-primary lg:w-fit lg:border-0 lg:p-0 lg:text-sm"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full border border-primary px-3.5 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground lg:text-[0.8125rem]"
                 >
-                  <span className="lg:hidden">Peta</span>
-                  <span className="hidden lg:inline">Buka di Google Maps</span>
+                  Peta
                   <ArrowUpRight aria-hidden="true" className="size-3.5" />
                   <span className="sr-only"> untuk {location.name}</span>
                 </a>
@@ -130,7 +129,7 @@ function ScheduleComponent() {
           href={OPERATIONAL_ADDRESS_MAPS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-40 items-center justify-center gap-2 rounded-[1.25rem] bg-[#e9e3d8] text-sm font-medium text-muted-foreground lg:order-none lg:h-72 lg:rounded-3xl"
+          className="flex h-40 items-center justify-center gap-2 rounded-[1.25rem] bg-[#e9e3d8] text-sm font-medium text-muted-foreground lg:order-none lg:h-56 lg:rounded-3xl"
         >
           <MapPin aria-hidden="true" className="size-5" />
           Buka peta alamat

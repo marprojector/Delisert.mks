@@ -206,15 +206,15 @@ function AdminProductList() {
           </ul>
 
           {/* Desktop: tabel */}
-          <div className="hidden rounded-[1.375rem] bg-background px-6 py-2 lg:block">
+          <div className="hidden overflow-x-auto rounded-[1.375rem] bg-background px-6 py-2 lg:block">
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-border text-xs font-semibold text-muted-foreground uppercase">
                   <th scope="col" className="w-20 py-3.5 font-semibold">Foto</th>
                   <th scope="col" className="py-3.5 font-semibold">Produk</th>
-                  <th scope="col" className="w-40 py-3.5 font-semibold">Harga</th>
-                  <th scope="col" className="w-48 py-3.5 font-semibold">Ketersediaan</th>
-                  <th scope="col" className="w-36 py-3.5 font-semibold">Aksi</th>
+                  <th scope="col" className="w-32 py-3.5 font-semibold xl:w-40">Harga</th>
+                  <th scope="col" className="w-40 py-3.5 font-semibold xl:w-48">Ketersediaan</th>
+                  <th scope="col" className="w-28 py-3.5 font-semibold xl:w-36">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">

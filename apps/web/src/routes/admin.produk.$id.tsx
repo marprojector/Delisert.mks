@@ -303,7 +303,7 @@ function ProductEditor() {
           event.preventDefault();
           submit();
         }}
-        className="grid gap-4 lg:grid-cols-[minmax(0,660fr)_minmax(0,400fr)] lg:items-start lg:gap-6"
+        className="grid gap-4 lg:grid-cols-[minmax(0,660fr)_minmax(18rem,400fr)] lg:items-start lg:gap-6"
       >
         {/* HP: foto lebih dulu. Desktop: kolom kanan. */}
         <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1 lg:gap-5">

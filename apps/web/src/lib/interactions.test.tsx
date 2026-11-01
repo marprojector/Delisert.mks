@@ -31,7 +31,7 @@ describe("scroll storytelling", () => {
   });
 
   test("pins the featured row only on desktop", () => {
-    expect(motion).toContain('DESKTOP_MOTION_QUERY = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)"');
+    expect(motion).toContain('"(min-width: 1024px) and (min-height: 760px) and (prefers-reduced-motion: no-preference)"');
     expect(motion).toMatch(/mm\.add\(\s*DESKTOP_MOTION_QUERY[\s\S]*pin: true/);
   });
 

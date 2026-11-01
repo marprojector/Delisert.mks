@@ -70,6 +70,8 @@ export const getRouter = () => {
   const router = createTanStackRouter({
     routeTree,
     scrollRestoration: true,
+    // Pindah halaman langsung ke atas, bukan scroll halus melewati seluruh isi.
+    scrollRestorationBehavior: "instant",
     defaultPreloadStaleTime: 0,
     context: { trpc, queryClient },
     defaultPendingComponent: () => <Loader />,

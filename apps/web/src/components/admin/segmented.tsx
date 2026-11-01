@@ -24,7 +24,7 @@ export function Segmented<Value extends string>({
             <label
               key={option.value}
               className={cn(
-                "flex h-[2.375rem] cursor-pointer items-center justify-center rounded-full text-[0.8125rem] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
+                "flex h-[2.375rem] cursor-pointer items-center justify-center rounded-full px-1 text-[0.8125rem] whitespace-nowrap transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-ring",
                 checked
                   ? cn("bg-white font-semibold shadow-sm", option.tone ?? "text-foreground")
                   : "text-muted-foreground hover:text-foreground",

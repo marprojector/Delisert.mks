@@ -143,7 +143,7 @@ function ProductDetailComponent() {
   };
 
   return (
-    <div ref={pageRef} data-motion-scope className="pb-28 lg:pb-24">
+    <div ref={pageRef} data-motion-scope className="pb-12 lg:pb-24">
       <nav aria-label="Breadcrumb" className="cn-shell hidden pt-6 lg:block">
         <ol className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
           <li>
