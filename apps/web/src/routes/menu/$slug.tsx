@@ -54,7 +54,35 @@ export const Route = createFileRoute("/menu/$slug")({
     };
   },
   component: ProductDetailComponent,
+  notFoundComponent: ProductNotFound,
 });
+
+function ProductNotFound() {
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center sm:px-6">
+      <p className="cn-eyebrow text-primary">404</p>
+      <h1 className="text-3xl leading-tight text-balance sm:text-4xl">Produk tidak ditemukan.</h1>
+      <p className="text-sm/relaxed text-muted-foreground">
+        Produk yang Anda cari tidak tersedia atau sudah diganti. Jelajahi katalog menu Delisert
+        untuk melihat produk lain.
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <Link
+          to="/menu"
+          className="inline-flex h-10 items-center border border-primary bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Lihat semua menu
+        </Link>
+        <Link
+          to="/"
+          className="inline-flex h-10 items-center border border-border px-5 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+        >
+          Kembali ke Beranda
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function ProductDetailComponent() {
   const { slug } = Route.useParams();
@@ -70,7 +98,7 @@ function ProductDetailComponent() {
   }
 
   if (!product) {
-    throw notFound();
+    return <ProductNotFound />;
   }
 
   const galleryImages = product.imageUrl

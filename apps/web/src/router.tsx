@@ -2,6 +2,8 @@ import type { AppRouter } from "@delisert.mks-1/api/routers/index";
 import { QueryCache, QueryClient } from "@tanstack/react-query";
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestUrl } from "@tanstack/react-start/server";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
 import { Link } from "@tanstack/react-router";
@@ -11,10 +13,17 @@ import Loader from "./components/loader";
 import { routeTree } from "./routeTree.gen";
 import { TRPCProvider } from "./utils/trpc";
 
-function getTrpcUrl(): string {
-  // Path relatif: browser memakai origin halaman, SSR memakai origin server yang sama.
-  return "/api/trpc";
-}
+/**
+ * Saat SSR, `fetch` Node menolak URL relatif, jadi request tRPC harus memakai
+ * origin absolut dari request yang sedang diproses. Di browser cukup relatif
+ * agar tetap mengikuti origin halaman (termasuk preview deployment).
+ */
+const getTrpcUrl = createIsomorphicFn()
+  .server(() => {
+    const url = getRequestUrl({ xForwardedHost: true });
+    return `${url.origin}/api/trpc`;
+  })
+  .client(() => "/api/trpc");
 
 function createQueryClient() {
   return new QueryClient({
@@ -34,15 +43,17 @@ function createQueryClient() {
   });
 }
 
-const trpcClient = createTRPCClient<AppRouter>({
-  links: [
-    httpBatchLink({
-      url: getTrpcUrl(),
-    }),
-  ],
-});
-
 export const getRouter = () => {
+  // Dibuat per pemanggilan getRouter (per request di server) supaya
+  // getRequestUrl() di dalam getTrpcUrl() punya konteks request yang benar.
+  const trpcClient = createTRPCClient<AppRouter>({
+    links: [
+      httpBatchLink({
+        url: getTrpcUrl(),
+      }),
+    ],
+  });
+
   const queryClient = createQueryClient();
   const trpc = createTRPCOptionsProxy({
     client: trpcClient,
