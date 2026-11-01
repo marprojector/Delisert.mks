@@ -2,6 +2,8 @@ import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { Toggle } from "@/components/admin/toggle";
+
 import { useTRPC } from "@/utils/trpc";
 
 /**
@@ -50,101 +52,115 @@ export function VariantEditor({ productId }: { productId: number }) {
 
   const variants = detail.data?.variants ?? [];
 
+  const submitVariant = () => {
+    if (!name.trim()) return setError("Nama varian wajib diisi.");
+    const digits = price.replace(/[^\d]/g, "");
+    add.mutate({
+      productId,
+      name: name.trim(),
+      priceCents: digits ? Number(digits) : null,
+      isAvailable: true,
+      displayOrder: variants.length + 1,
+    });
+  };
+
   return (
-    <section className="flex flex-col gap-3 border-t border-border pt-6">
-      <h2 className="text-xl leading-snug">Varian</h2>
-      <p className="text-sm/relaxed text-muted-foreground">
-        Tambahkan pilihan ukuran atau rasa. Kalau produk tidak punya varian, biarkan kosong.
+    <section className="flex flex-col gap-3 rounded-[1.25rem] bg-background p-4.5 lg:gap-3.5 lg:rounded-[1.375rem] lg:p-7">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-sans text-base font-semibold text-foreground lg:text-lg">Varian</h2>
+        <span className="text-xs text-muted-foreground lg:text-[0.8125rem]">Tersimpan otomatis</span>
+      </div>
+      <p className="text-[0.8125rem]/relaxed text-muted-foreground">
+        Pilihan ukuran atau rasa. Matikan sakelar bila varian sedang habis.
       </p>
 
       {variants.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Belum ada varian.</p>
+        <p className="rounded-2xl bg-muted px-4 py-3 text-sm text-muted-foreground">Belum ada varian.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-border border-y border-border">
+        <ul className="flex flex-col gap-2">
           {variants.map((variant) => (
-            <li key={variant.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-              <span className="flex items-center gap-3 text-sm">
-                <span className={variant.isAvailable ? "" : "text-muted-foreground line-through"}>
+            <li
+              key={variant.id}
+              className="flex items-center gap-3 rounded-2xl border border-border px-3.5 py-3"
+            >
+              <span className="flex min-w-0 flex-1 flex-col lg:flex-row lg:items-center lg:gap-6">
+                <span
+                  className={
+                    variant.isAvailable
+                      ? "truncate text-sm font-semibold text-foreground lg:w-60 lg:text-[0.9375rem]"
+                      : "truncate text-sm font-semibold text-muted-foreground line-through lg:w-60 lg:text-[0.9375rem]"
+                  }
+                >
                   {variant.name}
                 </span>
-                <span className="text-primary">
+                <span className="text-[0.8125rem] text-muted-foreground lg:text-[0.9375rem] lg:text-foreground">
                   {variant.priceCents === null ? "Harga menyusul" : formatRupiah(variant.priceCents)}
                 </span>
               </span>
-              <span className="flex items-center gap-3 text-sm">
-                <button
-                  type="button"
-                  onClick={() =>
-                    toggle.mutate({ id: variant.id, isAvailable: !variant.isAvailable })
-                  }
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  {variant.isAvailable ? "Tandai habis" : "Tandai tersedia"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm(`Hapus varian "${variant.name}"?`)) {
-                      remove.mutate({ id: variant.id });
-                    }
-                  }}
-                  className="text-destructive underline-offset-4 hover:underline"
-                >
-                  Hapus
-                </button>
-              </span>
+              <Toggle
+                checked={variant.isAvailable}
+                disabled={toggle.isPending}
+                label={`${variant.name} tersedia`}
+                onChange={(isAvailable) => toggle.mutate({ id: variant.id, isAvailable })}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Hapus varian "${variant.name}"?`)) remove.mutate({ id: variant.id });
+                }}
+                className="hidden text-[0.8125rem] text-destructive sm:block"
+              >
+                Hapus
+                <span className="sr-only"> varian {variant.name}</span>
+              </button>
             </li>
           ))}
         </ul>
       )}
 
-      <form
-        className="flex flex-wrap items-end gap-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!name.trim()) return setError("Nama varian wajib diisi.");
-          add.mutate({
-            productId,
-            name: name.trim(),
-            priceCents: price.replace(/[^\d]/g, "") ? Number(price.replace(/[^\d]/g, "")) : null,
-            isAvailable: true,
-            displayOrder: variants.length + 1,
-          });
-        }}
-      >
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="variant-name" className="text-sm font-medium">
-            Nama varian
-          </label>
+      {/* Bukan <form>: editor ini berada di dalam form produk. */}
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+        <label className="flex-1">
+          <span className="sr-only">Nama varian baru</span>
           <input
-            id="variant-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Isi 4 pcs"
-            className="h-10 border border-border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                submitVariant();
+              }
+            }}
+            placeholder="Nama varian, mis. Isi 12 pcs"
+            className="h-[2.875rem] w-full rounded-xl border border-border bg-white px-3.5 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/25"
           />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="variant-price" className="text-sm font-medium">
-            Harga (rupiah)
-          </label>
+        </label>
+        <label className="flex h-[2.875rem] items-center gap-2 rounded-xl border border-border bg-white px-3.5 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25 sm:w-40">
+          <span className="text-sm text-muted-foreground">Rp</span>
+          <span className="sr-only">Harga varian baru</span>
           <input
-            id="variant-price"
             inputMode="numeric"
             value={price}
             onChange={(event) => setPrice(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                submitVariant();
+              }
+            }}
             placeholder="30000"
-            className="h-10 border border-border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
+            className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none"
           />
-        </div>
+        </label>
         <button
-          type="submit"
+          type="button"
+          onClick={submitVariant}
           disabled={add.isPending}
-          className="inline-flex h-10 items-center border border-primary bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+          className="h-[2.875rem] rounded-full border border-primary px-5 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:opacity-60"
         >
-          {add.isPending ? "Menambah…" : "Tambah varian"}
+          {add.isPending ? "Menambah…" : "+ Tambah varian"}
         </button>
-      </form>
+      </div>
 
       {error ? (
         <p role="alert" className="text-sm text-destructive">

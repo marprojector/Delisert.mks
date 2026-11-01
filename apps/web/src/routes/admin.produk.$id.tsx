@@ -1,18 +1,26 @@
 import { photoSrcSet } from "@delisert.mks-1/ui/lib/photo";
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { PhotoDropzone } from "@/components/admin/photo-dropzone";
+import { SaveBar } from "@/components/admin/save-bar";
+import { Segmented } from "@/components/admin/segmented";
+import { Toggle } from "@/components/admin/toggle";
 import { VariantEditor } from "@/components/variant-editor";
+import { adminHeaders, readAdminToken, rupiahToCents } from "@/utils/admin-client";
 import { resizePhoto } from "@/utils/image-resize";
-import { useTRPC } from "@/utils/trpc";
 import {
-  adminHeaders,
-  centsToRupiahInput,
-  readAdminToken,
-  rupiahToCents,
-} from "@/utils/admin-client";
+  type Availability,
+  EMPTY_FORM,
+  type ProductForm,
+  isDirty,
+  toForm,
+  toPayload,
+} from "@/utils/product-form";
+import { useTRPC } from "@/utils/trpc";
 
 export const Route = createFileRoute("/admin/produk/$id")({
   head: () => ({
@@ -24,13 +32,16 @@ export const Route = createFileRoute("/admin/produk/$id")({
   component: ProductEditor,
 });
 
-const AVAILABILITY_OPTIONS = [
-  { value: "available", label: "Tersedia" },
-  { value: "preorder", label: "Pre-Order" },
-  { value: "soldout", label: "Habis" },
-] as const;
+const FORM_ID = "product-form";
 
-type Availability = (typeof AVAILABILITY_OPTIONS)[number]["value"];
+const AVAILABILITY_OPTIONS: ReadonlyArray<{ value: Availability; label: string; tone: string }> = [
+  { value: "available", label: "Tersedia", tone: "text-success" },
+  { value: "preorder", label: "Pre-Order", tone: "text-[#9a6a12]" },
+  { value: "soldout", label: "Habis", tone: "text-muted-foreground" },
+];
+
+const inputClass =
+  "h-12 w-full rounded-xl border border-border bg-white px-3.5 text-[0.9375rem] text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/25";
 
 function ProductEditor() {
   const { id } = Route.useParams();
@@ -46,17 +57,15 @@ function ProductEditor() {
     enabled: !isNew,
   });
 
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [categoryId, setCategoryId] = useState<number | "">("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [availability, setAvailability] = useState<Availability>("available");
-  const [isFeatured, setIsFeatured] = useState(false);
-  const [imageUrl, setImageUrl] = useState("");
-  const [imageAlt, setImageAlt] = useState("");
+  const [initial, setInitial] = useState<ProductForm>(EMPTY_FORM);
+  const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  // HP: kategori, deskripsi, dan slug dilipat. Produk baru langsung terbuka.
+  const [showMore, setShowMore] = useState(isNew);
+
+  const set = <Key extends keyof ProductForm>(key: Key, value: ProductForm[Key]) =>
+    setForm((current) => ({ ...current, [key]: value }));
 
   // Isi form SEKALI per produk. byId ikut di-refetch setiap kali varian
   // berubah atau jendela kembali fokus; kalau efek ini jalan lagi, isian yang
@@ -66,78 +75,41 @@ function ProductEditor() {
     const product = existing.data;
     if (!product || filledFor.current === product.id) return;
     filledFor.current = product.id;
-    setName(product.name);
-    setSlug(product.slug);
-    setCategoryId(product.categoryId);
-    setDescription(product.description ?? "");
-    setPrice(centsToRupiahInput(product.priceCents));
-    setAvailability(product.availability);
-    setIsFeatured(product.isFeatured);
-    setImageUrl(product.imageUrl ?? "");
-    setImageAlt(product.imageAlt ?? "");
+    const loaded = toForm(product);
+    setInitial(loaded);
+    setForm(loaded);
   }, [existing.data]);
 
-  const invalidate = () => {
+  const dirty = isNew || isDirty(initial, form);
+
+  const afterSave = () => {
     void queryClient.invalidateQueries(trpc.adminProduct.list.queryFilter());
     if (!isNew) {
-      void queryClient.invalidateQueries(
-        trpc.adminProduct.byId.queryFilter({ id: Number(id) }),
-      );
+      void queryClient.invalidateQueries(trpc.adminProduct.byId.queryFilter({ id: Number(id) }));
     }
+    void navigate({ to: "/admin/produk" });
   };
 
-  const save = useMutation(
-    trpc.adminProduct.update.mutationOptions({
-      onSuccess: () => {
-        invalidate();
-        void navigate({ to: "/admin/produk" });
-      },
-      onError: (mutationError) => {
-        setError(
-          mutationError.data?.code === "CONFLICT"
-            ? "Slug sudah dipakai produk lain."
-            : "Gagal menyimpan. Periksa isian lalu coba lagi.",
-        );
-      },
-    }),
-  );
+  const onSaveError = (mutationError: { data?: { code?: string } | null }) => {
+    setError(
+      mutationError.data?.code === "CONFLICT"
+        ? "Slug sudah dipakai produk lain."
+        : "Gagal menyimpan. Periksa isian lalu coba lagi.",
+    );
+  };
 
-  const create = useMutation(
-    trpc.adminProduct.create.mutationOptions({
-      onSuccess: () => {
-        invalidate();
-        void navigate({ to: "/admin/produk" });
-      },
-      onError: (mutationError) => {
-        setError(
-          mutationError.data?.code === "CONFLICT"
-            ? "Slug sudah dipakai produk lain."
-            : "Gagal menyimpan. Periksa isian lalu coba lagi.",
-        );
-      },
-    }),
-  );
+  const save = useMutation(trpc.adminProduct.update.mutationOptions({ onSuccess: afterSave, onError: onSaveError }));
+  const create = useMutation(trpc.adminProduct.create.mutationOptions({ onSuccess: afterSave, onError: onSaveError }));
 
   const submit = () => {
     setError(null);
-    if (!name.trim()) return setError("Nama produk wajib diisi.");
-    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    if (!form.name.trim()) return setError("Nama produk wajib diisi.");
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug)) {
       return setError("Slug hanya boleh huruf kecil, angka, dan tanda hubung.");
     }
-    if (categoryId === "") return setError("Pilih kategori.");
+    if (form.categoryId === "") return setError("Pilih kategori.");
 
-    const payload = {
-      categoryId,
-      name: name.trim(),
-      slug,
-      description: description.trim() || null,
-      priceCents: rupiahToCents(price),
-      availability,
-      isFeatured,
-      imageUrl: imageUrl.trim() || null,
-      imageAlt: imageAlt.trim() || null,
-    };
-
+    const payload = toPayload({ ...form, categoryId: form.categoryId });
     if (isNew) create.mutate(payload);
     else save.mutate({ id: Number(id), ...payload });
   };
@@ -146,36 +118,31 @@ function ProductEditor() {
     setError(null);
     setUploading(true);
     try {
-      const form = new FormData();
+      const body = new FormData();
       const sized = await resizePhoto(file);
       if (sized) {
         const extension = sized[0]?.blob.type === "image/webp" ? "webp" : "jpg";
-        for (const { width, blob } of sized) {
-          form.append(`w${width}`, blob, `foto-${width}.${extension}`);
-        }
+        for (const { width, blob } of sized) body.append(`w${width}`, blob, `foto-${width}.${extension}`);
       } else {
         // Browser tidak bisa mengubah ukuran: unggah file asli apa adanya.
-        form.append("file", file);
+        body.append("file", file);
       }
       const response = await fetch("/api/upload", {
         method: "POST",
         headers: adminHeaders(readAdminToken()),
-        body: form,
+        body,
       });
       if (response.status === 401) {
         setError("Sesi admin sudah berakhir. Keluar lalu masuk lagi, kemudian unggah ulang fotonya.");
         return;
       }
       // Respons error tidak selalu JSON (misalnya halaman error dari proxy).
-      const body = (await response.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
-      if (!response.ok || !body.url) {
-        setError(body.error ?? "Gagal mengunggah foto. Coba lagi.");
+      const result = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!response.ok || !result.url) {
+        setError(result.error ?? "Gagal mengunggah foto. Coba lagi.");
         return;
       }
-      setImageUrl(body.url);
+      set("imageUrl", result.url);
     } catch {
       setError("Gagal mengunggah foto. Periksa koneksi lalu coba lagi.");
     } finally {
@@ -184,47 +151,68 @@ function ProductEditor() {
   };
 
   const busy = save.isPending || create.isPending;
+  const priceCents = rupiahToCents(form.price);
 
-  return (
-    <div className="flex max-w-2xl flex-col gap-6">
-      <h2 className="text-xl leading-snug">{isNew ? "Tambah produk" : "Ubah produk"}</h2>
+  if (!isNew && existing.isError) {
+    return (
+      <div className="flex flex-col gap-3">
+        <h1 className="text-[1.75rem] font-semibold">Ubah produk</h1>
+        <p role="alert" className="text-sm text-destructive">
+          Produk tidak ditemukan atau gagal dimuat.
+        </p>
+        <Link to="/admin/produk" className="text-sm font-semibold text-primary">
+          ← Kembali ke daftar produk
+        </Link>
+      </div>
+    );
+  }
 
-      <form
-        className="flex flex-col gap-5"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submit();
-        }}
-      >
-        <Field label="Nama produk" htmlFor="name">
-          <input
-            id="name"
-            required
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className={inputClass}
+  const photoCard = (
+    <section className="flex flex-col gap-3.5 rounded-[1.25rem] bg-background p-4.5 lg:rounded-[1.375rem] lg:p-6">
+      <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Foto produk</h2>
+      {form.imageUrl ? (
+        <div className="relative overflow-hidden rounded-[1.125rem]">
+          <img
+            src={form.imageUrl}
+            srcSet={photoSrcSet(form.imageUrl)}
+            sizes="(min-width: 1024px) 352px, 100vw"
+            alt={form.imageAlt || `Foto ${form.name || "produk"}`}
+            width={352}
+            height={264}
+            className="aspect-[4/3] w-full object-cover"
           />
-        </Field>
+          <label
+            htmlFor="photo"
+            className="absolute right-2.5 bottom-2.5 cursor-pointer rounded-full bg-background px-3.5 py-2 text-[0.8125rem] font-semibold text-primary"
+          >
+            Ganti foto
+          </label>
+        </div>
+      ) : null}
+      <PhotoDropzone onFile={(file) => void upload(file)} uploading={uploading} />
+      <label className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-foreground">Alt text foto</span>
+        <input
+          value={form.imageAlt}
+          onChange={(event) => set("imageAlt", event.target.value)}
+          placeholder="Mochi daifuku Delisert Makassar"
+          className={inputClass}
+        />
+        <span className="text-xs text-muted-foreground">Deskripsi singkat untuk pembaca layar.</span>
+      </label>
+    </section>
+  );
 
-        <Field label="Slug URL" htmlFor="slug" hint="Contoh: mochi-stroberi">
-          <input
-            id="slug"
-            required
-            value={slug}
-            onChange={(event) => setSlug(event.target.value)}
-            className={inputClass}
-          />
-        </Field>
-
-        <Field label="Kategori" htmlFor="category">
+  const secondaryFields = (
+    <>
+      <label className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-foreground">Kategori</span>
+        <span className="relative">
           <select
-            id="category"
             required
-            value={categoryId}
-            onChange={(event) =>
-              setCategoryId(event.target.value === "" ? "" : Number(event.target.value))
-            }
-            className={inputClass}
+            value={form.categoryId}
+            onChange={(event) => set("categoryId", event.target.value === "" ? "" : Number(event.target.value))}
+            className={`${inputClass} appearance-none pr-10`}
           >
             <option value="">Pilih kategori…</option>
             {(categories.data ?? []).map((category) => (
@@ -233,153 +221,167 @@ function ProductEditor() {
               </option>
             ))}
           </select>
-        </Field>
+          <ChevronDown aria-hidden="true" className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
+        </span>
+      </label>
+      <label className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-foreground">Deskripsi</span>
+        <textarea
+          rows={4}
+          value={form.description}
+          onChange={(event) => set("description", event.target.value)}
+          className="w-full rounded-xl border border-border bg-white px-3.5 py-3 text-[0.9375rem]/relaxed text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/25"
+        />
+      </label>
+      <label className="flex flex-col gap-2">
+        <span className="text-sm font-semibold text-foreground">Slug URL</span>
+        <span className="flex h-12 items-center rounded-xl border border-border bg-muted px-3.5 text-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25">
+          <span className="text-muted-foreground">/menu/</span>
+          <input
+            required
+            value={form.slug}
+            onChange={(event) => set("slug", event.target.value)}
+            placeholder="mochi-stroberi"
+            className="h-full min-w-0 flex-1 bg-transparent text-foreground outline-none"
+          />
+        </span>
+      </label>
+    </>
+  );
 
-        <Field
-          label="Harga (rupiah)"
-          htmlFor="price"
-          hint={
-            price && rupiahToCents(price) !== null
-              ? `Tampil sebagai ${formatRupiah(rupiahToCents(price)!)}`
-              : "Kosongkan bila harga belum ditentukan"
-          }
+  return (
+    <div className="flex flex-col gap-5 pb-28 lg:gap-6 lg:pb-32">
+      <div className="flex flex-col gap-1.5">
+        <Link
+          to="/admin/produk"
+          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
         >
-          <input
-            id="price"
-            inputMode="numeric"
-            value={price}
-            onChange={(event) => setPrice(event.target.value)}
-            placeholder="8000"
-            className={inputClass}
-          />
-        </Field>
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Produk
+        </Link>
+        <h1 className="text-[1.75rem] font-semibold text-foreground lg:text-4xl">
+          {isNew ? "Tambah produk" : "Ubah produk"}
+        </h1>
+      </div>
 
-        <Field label="Ketersediaan" htmlFor="availability">
-          <select
-            id="availability"
-            value={availability}
-            onChange={(event) => setAvailability(event.target.value as Availability)}
-            className={inputClass}
-          >
-            {AVAILABILITY_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+      {error ? (
+        <p role="alert" className="rounded-xl bg-[#fbe9e7] px-3.5 py-3 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
-        <Field label="Deskripsi" htmlFor="description">
-          <textarea
-            id="description"
-            rows={4}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            className="border border-border bg-background px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50"
-          />
-        </Field>
-
-        <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-medium">Foto produk</legend>
-          <input
-            id="photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void upload(file);
-            }}
-            className="text-sm"
-          />
-          <label htmlFor="photo" className="sr-only">
-            Unggah foto produk
-          </label>
-          {uploading ? <p className="text-sm text-muted-foreground">Mengunggah…</p> : null}
-          {imageUrl ? (
-            <img
-              src={imageUrl}
-              srcSet={photoSrcSet(imageUrl)}
-              sizes="240px"
-              alt={imageAlt || `Foto ${name || "produk"}`}
-              width={240}
-              height={180}
-              className="h-[180px] w-[240px] border border-border object-cover"
+      <form
+        id={FORM_ID}
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        className="grid gap-4 lg:grid-cols-[minmax(0,660fr)_minmax(0,400fr)] lg:items-start lg:gap-6"
+      >
+        {/* HP: foto lebih dulu. Desktop: kolom kanan. */}
+        <div className="flex flex-col gap-4 lg:col-start-2 lg:row-start-1 lg:gap-5">
+          {photoCard}
+          <section className="flex flex-col gap-4 rounded-[1.25rem] bg-background p-4.5 lg:rounded-[1.375rem] lg:p-6">
+            <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Tampilan di website</h2>
+            <Segmented
+              name="availability"
+              label="Ketersediaan"
+              value={form.availability}
+              options={AVAILABILITY_OPTIONS}
+              onChange={(value) => set("availability", value)}
             />
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold text-foreground">Produk unggulan</span>
+                <span className="text-xs text-muted-foreground">Tampil di beranda</span>
+              </span>
+              <Toggle
+                checked={form.isFeatured}
+                label="Produk unggulan"
+                onChange={(value) => set("isFeatured", value)}
+              />
+            </div>
+          </section>
+        </div>
+
+        <div className="flex flex-col gap-4 lg:col-start-1 lg:row-start-1 lg:gap-5">
+          <section className="flex flex-col gap-4 rounded-[1.25rem] bg-background p-4.5 lg:gap-4.5 lg:rounded-[1.375rem] lg:p-7">
+            <h2 className="hidden font-sans text-lg font-semibold text-foreground lg:block">Informasi produk</h2>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-foreground">Nama produk</span>
+              <input
+                required
+                value={form.name}
+                onChange={(event) => set("name", event.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-foreground">Harga dasar (rupiah)</span>
+              <span className="flex h-12 items-center gap-2 rounded-xl border border-border bg-white px-3.5 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/25">
+                <span className="text-[0.9375rem] text-muted-foreground">Rp</span>
+                <input
+                  inputMode="numeric"
+                  value={form.price}
+                  onChange={(event) => set("price", event.target.value)}
+                  placeholder="8000"
+                  className="h-full min-w-0 flex-1 bg-transparent text-[0.9375rem] text-foreground outline-none"
+                />
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {form.price && priceCents !== null
+                  ? `Tampil sebagai ${formatRupiah(priceCents)}`
+                  : "Kosongkan bila harga belum ditentukan"}
+              </span>
+            </label>
+
+            {/* Desktop: semua isian terbuka. HP: dilipat supaya layar tidak panjang. */}
+            <button
+              type="button"
+              aria-expanded={showMore}
+              aria-controls="secondary-fields"
+              onClick={() => setShowMore((value) => !value)}
+              className="flex items-center justify-between py-1.5 text-sm text-foreground lg:hidden"
+            >
+              Kategori, deskripsi, slug
+              <span className="flex items-center gap-1 font-semibold text-primary">
+                {showMore ? "Tutup" : "Buka"}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={showMore ? "size-4 rotate-180 transition-transform" : "size-4 transition-transform"}
+                />
+              </span>
+            </button>
+            <div
+              id="secondary-fields"
+              className={showMore ? "flex flex-col gap-4 lg:gap-4.5" : "hidden flex-col gap-4.5 lg:flex"}
+            >
+              {secondaryFields}
+            </div>
+          </section>
+
+          {/* Varian hanya bisa dikelola setelah produk punya id. */}
+          {isNew ? (
+            <p className="rounded-[1.25rem] bg-background p-4.5 text-sm text-muted-foreground lg:p-7">
+              Simpan produk dulu, lalu tambahkan varian ukuran atau rasa.
+            </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Belum ada foto.</p>
+            <VariantEditor productId={Number(id)} />
           )}
-        </fieldset>
-
-        <Field label="Alt text foto" htmlFor="imageAlt" hint="Deskripsi singkat untuk pembaca layar">
-          <input
-            id="imageAlt"
-            value={imageAlt}
-            onChange={(event) => setImageAlt(event.target.value)}
-            className={inputClass}
-          />
-        </Field>
-
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isFeatured}
-            onChange={(event) => setIsFeatured(event.target.checked)}
-            className="size-4 accent-primary"
-          />
-          Tampilkan sebagai produk unggulan di beranda
-        </label>
-
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={busy || uploading}
-            className="inline-flex h-10 items-center border border-primary bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
-          >
-            {busy ? "Menyimpan…" : "Simpan"}
-          </button>
-          <button
-            type="button"
-            onClick={() => void navigate({ to: "/admin/produk" })}
-            className="inline-flex h-10 items-center border border-border px-5 text-sm transition-colors hover:border-primary hover:text-primary"
-          >
-            Batal
-          </button>
         </div>
       </form>
 
-      {/* Varian hanya bisa dikelola setelah produk punya id. */}
-      {!isNew ? <VariantEditor productId={Number(id)} /> : null}
-    </div>
-  );
-}
-
-const inputClass =
-  "h-10 border border-border bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50";
-
-function Field({
-  label,
-  htmlFor,
-  hint,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={htmlFor} className="text-sm font-medium">
-        {label}
-      </label>
-      {children}
-      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      <SaveBar
+        visible={dirty}
+        busy={busy}
+        disabled={uploading}
+        formId={FORM_ID}
+        message={isNew ? "Produk baru belum disimpan" : "Ada perubahan yang belum disimpan"}
+        onCancel={() => {
+          if (isNew) void navigate({ to: "/admin/produk" });
+          else setForm(initial);
+        }}
+      />
     </div>
   );
 }
