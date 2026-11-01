@@ -1,24 +1,30 @@
+import { priceToNumber } from "@delisert.mks-1/ui/lib/price";
 import {
   OPERATIONAL_ADDRESS,
   SOCIAL_MEDIA,
   WHATSAPP_NUMBER,
   waLink,
 } from "@delisert.mks-1/api/data/business";
+import { createIsomorphicFn } from "@tanstack/react-start";
+import { getRequestUrl } from "@tanstack/react-start/server";
 
 /**
- * Helper metadata SEO terpusat. SITE_URL di-resolve saat runtime agar
- * canonical/OG/sitemap mengikuti environment (lokal vs produksi).
+ * Helper metadata SEO terpusat. Origin diambil dari request saat SSR dan dari
+ * `window.location` di browser, sehingga canonical/OG/sitemap selalu menunjuk
+ * ke domain yang benar-benar melayani halaman (lokal maupun produksi).
  * Tidak memfabricasi klaim — hanya fakta dari business.ts.
  */
-export function siteUrl(): string {
-  return (
-    (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.VITE_SITE_URL ??
-    "http://localhost:3001"
-  );
+export function joinOrigin(origin: string, path: string): string {
+  const base = origin.replace(/\/$/, "");
+  return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function canonical(path: string): string {
-  return `${siteUrl().replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
+export const siteUrl = createIsomorphicFn()
+  .server(() => getRequestUrl({ xForwardedHost: true }).origin)
+  .client(() => window.location.origin);
+
+export function canonical(path: string, origin?: string): string {
+  return joinOrigin(origin ?? siteUrl(), path);
 }
 
 type JsonLd = Record<string, unknown>;
@@ -45,28 +51,46 @@ export function localBusinessJsonLd(): JsonLd {
   };
 }
 
-export function productJsonLd(product: {
-  name: string;
-  description: string | null;
-  priceCents: number | null;
-  imageUrl: string | null;
-}): JsonLd {
-  // priceCents menyimpan rupiah*1000 (80.000 sen = Rp 8.000).
-  const price = product.priceCents !== null ? product.priceCents / 1000 : undefined;
+export function productJsonLd(
+  product: {
+    name: string;
+    description: string | null;
+    priceCents: number | null;
+    imageUrl: string | null;
+    slug?: string;
+    availability?: "available" | "preorder" | "soldout";
+  },
+  origin?: string,
+): JsonLd {
+  // priceCents menyimpan rupiah ×100, jadi nilainya langsung dipakai
+  // sebagai nominal rupiah di schema.org (Rp 8.000 → 8000).
+  const price = product.priceCents !== null ? priceToNumber(product.priceCents) : undefined;
+  const base = origin ?? siteUrl();
+  const availability =
+    product.availability === "soldout"
+      ? "https://schema.org/OutOfStock"
+      : product.availability === "preorder"
+        ? "https://schema.org/PreOrder"
+        : "https://schema.org/InStock";
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
+    ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
     ...(product.description ? { description: product.description } : {}),
     ...(product.imageUrl ? { image: [product.imageUrl] } : {}),
     brand: { "@type": "Brand", name: "Delisert" },
+    // Tanpa harga, `offers` sengaja dihilangkan — jangan pernah mengarang
+    // harga 0 untuk produk yang harganya belum ditentukan.
     ...(price !== undefined
       ? {
           offers: {
             "@type": "Offer",
             priceCurrency: "IDR",
             price,
-            availability: "https://schema.org/InStock",
+            availability,
+            ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
           },
         }
       : {}),

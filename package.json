@@ -1,6 +1,9 @@
 {
   "name": "delisert.mks-1",
   "private": true,
+  "overrides": {
+    "@effect/platform-node-shared": "4.0.6"
+  },
   "workspaces": {
     "packages": [
       "apps/*",
@@ -29,7 +32,8 @@
     "deploy": "turbo run deploy -F @delisert.mks-1/infra --",
     "destroy": "turbo run destroy -F @delisert.mks-1/infra --",
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
-    "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/"
+    "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./packages/db/",
+    "dev:infra": "cd packages/infra && env -u npm_execpath -u npm_config_user_agent node node_modules/alchemy/bin/cli.js dev"
   },
   "dependencies": {
     "zod": "catalog:"

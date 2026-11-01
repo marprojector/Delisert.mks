@@ -26,6 +26,7 @@ export const Route = createFileRoute("/jadwal")({
       },
       { property: "og:title", content: "Jadwal & Lokasi Delisert — TikTok Live, CFD Minggu" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/jadwal") },
     ],
     links: [{ rel: "canonical", href: canonical("/jadwal") }],
   }),
@@ -39,6 +40,7 @@ function ScheduleComponent() {
         eyebrow="Jadwal & Lokasi"
         title="Kapan dan di mana Delisert hadir."
         description="Empat informasi yang berbeda, dipisahkan dengan jelas agar tidak tertukar."
+        as="h1"
       />
 
       <div className="flex flex-col gap-6 pt-12">

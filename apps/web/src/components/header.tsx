@@ -56,6 +56,7 @@ export default function Header() {
           <Button
             size="sm"
             className="hidden sm:inline-flex"
+            nativeButton={false}
             render={
               <a href={waLink("Halo Delisert, saya ingin bertanya tentang produk.")} target="_blank" rel="noopener noreferrer">
                 <MessageCircle aria-hidden="true" />
@@ -107,6 +108,7 @@ export default function Header() {
               <Button
                 size="sm"
                 className="w-full"
+                nativeButton={false}
                 render={
                   <a
                     href={waLink("Halo Delisert, saya ingin bertanya tentang produk.")}

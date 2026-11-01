@@ -30,9 +30,19 @@ export const Route = createFileRoute("/")({
           "Dessert dan makanan homemade Makassar sejak 2021. Mochi, pancake durian, mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/") },
     ],
     links: [{ rel: "canonical", href: canonical("/") }],
   }),
+  loader: async ({ context }) => {
+    const [featured, categories] = await Promise.all([
+      context.queryClient.fetchQuery(
+        context.trpc.product.list.queryOptions({ featuredOnly: true }),
+      ),
+      context.queryClient.fetchQuery(context.trpc.product.categories.queryOptions()),
+    ]);
+    return { featured, categories };
+  },
   component: HomeComponent,
 });
 
@@ -40,15 +50,18 @@ function HomeComponent() {
   const trpc = useTRPC();
   const featured = useQuery(trpc.product.list.queryOptions({ featuredOnly: true }));
   const categories = useQuery(trpc.product.categories.queryOptions());
+  // Data loader dipakai untuk render pertama (SSR) dan saat hydration belum selesai.
+  const initial = Route.useLoaderData();
 
-  const featuredProducts = (featured.data ?? []).slice(0, 4);
+  const featuredProducts = (featured.data ?? initial.featured).slice(0, 4);
+  const categoryList = categories.data ?? initial.categories;
 
   return (
     <div className="flex flex-col">
       <HeroSection />
       <BrandIntroSection />
       <FeaturedProductsSection products={featuredProducts} isLoading={featured.isLoading} />
-      <CategoriesSection categories={categories.data ?? []} />
+      <CategoriesSection categories={categoryList} />
       <BrandStorySection />
       <TikTokLiveSection />
       <CfdSection />
@@ -289,6 +302,7 @@ function CfdSection() {
             <h2 className="text-3xl leading-tight text-balance sm:text-4xl">
               Car Free Day, setiap hari Minggu.
             </h2>
+            <p className="cn-eyebrow text-muted-foreground">Minggu · {CFD.hours}</p>
             <p className="text-base/relaxed text-muted-foreground">{CFD.description}</p>
             <Link
               to="/jadwal"

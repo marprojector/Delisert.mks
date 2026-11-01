@@ -18,6 +18,7 @@ export const Route = createFileRoute("/tentang")({
       },
       { property: "og:title", content: "Tentang Delisert — Dessert & Mochi Makassar Sejak 2021" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/tentang") },
     ],
     links: [{ rel: "canonical", href: canonical("/tentang") }],
   }),
@@ -33,6 +34,7 @@ function AboutComponent() {
             eyebrow="Tentang Delisert"
             title="Dapur kecil di Makassar yang memulai dari satu mangkuk mochi."
             description="Delisert berdiri pada 2021 dan tumbuh dari aktivitas Car Free Day di Jalan Boulevard, Makassar."
+            as="h1"
           />
         </div>
       </section>

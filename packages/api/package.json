@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@delisert.mks-1/config": "workspace:*",
+    "@types/bun": "^1.4.4",
     "typescript": "catalog:"
   }
 }

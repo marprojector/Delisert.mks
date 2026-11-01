@@ -6,9 +6,9 @@
 | **Nama Produk** | Website Delisert |
 | **Kategori Bisnis** | Dessert & Homemade Food (UMKM) |
 | **Lokasi** | Makassar, Sulawesi Selatan, Indonesia |
-| **Versi Dokumen** | 1.1 |
+| **Versi Dokumen** | 1.2 |
 | **Tanggal** | 30 Oktober 2026 |
-| **Status** | Draft — Menunggu konfirmasi pemilik bisnis |
+| **Status** | MVP + Admin terimplementasi — menunggu review pemilik dan deploy |
 | **Pemilik Dokumen** | Product / Engineering |
 | **Sumber Kebenaran** | Dokumen ini adalah *single source of truth* untuk desain UI (Google Stitch, wajib) dan implementasi kode (Claude Code) |
 
@@ -1130,17 +1130,21 @@ Daftar lengkap asumsi ada di `docs/OPEN_QUESTIONS.md` §Asumsi. Ringkasan asumsi
 
 ### 16.2 Definition of Done — Implementasi (untuk referensi)
 
-- [ ] Semua halaman MVP terbangun dan responsif
-- [ ] Semua tombol WhatsApp membuka `wa.me` dengan pesan terisi yang benar
-- [ ] Semua foto memiliki alt text dan dimensi eksplisit
-- [ ] Metadata SEO dan Open Graph unik per halaman
-- [ ] Sitemap.xml dan robots.txt terbit
-- [ ] Structured data valid (diuji dengan Rich Results Test)
-- [ ] Skor Lighthouse: Performance > 90, Accessibility > 95, SEO > 95
-- [ ] Tidak ada konten yang dikarang atau placeholder yang terbit
-- [ ] Semua klaim pemasaran memiliki status verifikasi yang jelas
-- [ ] Deploy produksi berhasil di Cloudflare
-- [ ] Pemilik bisnis melakukan review dan persetujuan
+Status per 2026-11-01. Hanya butir yang benar-benar diverifikasi yang dicentang.
+
+- [x] Semua halaman MVP terbangun dan responsif — 5 halaman publik + admin mengembalikan HTTP 200
+- [x] Semua tombol WhatsApp membuka `wa.me` dengan pesan terisi yang benar — pesan detail produk menyertakan nama dan varian
+- [x] Semua foto memiliki alt text dan dimensi eksplisit — diterapkan di kode; belum teruji dengan foto asli karena belum ada foto yang diunggah
+- [x] Metadata SEO dan Open Graph unik per halaman — 1 title, 1 description, 1 canonical, 1 og:title per halaman (diuji)
+- [x] Sitemap.xml dan robots.txt terbit — keduanya route server dengan URL absolut (diuji)
+- [x] Structured data valid — `LocalBusiness` + `Product` dengan `price` rupiah yang benar; `offers` dihilangkan bila harga kosong (diuji). **Belum** diuji lewat Google Rich Results Test
+- [ ] Skor Lighthouse: Performance > 90, Accessibility > 95, SEO > 95 — **belum dijalankan**; Lighthouse tidak terpasang di repo dan tidak dipasang tanpa persetujuan
+- [x] Tidak ada konten yang dikarang atau placeholder yang terbit — harga sesuai `docs/DESIGN_AUDIT.md` §2; foto kosong menampilkan "Foto menyusul", bukan gambar palsu
+- [x] Semua klaim pemasaran memiliki status verifikasi yang jelas — klaim halal/"Pelopor"/asal bahan tidak ditampilkan (dijaga tes)
+- [ ] Deploy produksi berhasil di Cloudflare — **belum dijalankan**; menunggu persetujuan pemilik (lihat README)
+- [ ] Pemilik bisnis melakukan review dan persetujuan — **belum dilakukan**
+
+**Tambahan di luar ruang lingkup awal:** dashboard admin (FR-101, FR-102) sudah dibangun — login satu pengguna, ringkasan, CRUD produk, unggah foto ke R2, dan toggle ketersediaan. Lihat `docs/ADMIN_GUIDE.md`.
 
 ---
 
@@ -1177,6 +1181,7 @@ Repositori: https://github.com/google-labs-code/stitch-sdk
 |---|---|---|---|
 | 1.0 | 30 Oktober 2026 | Draft awal lengkap | Product / Engineering |
 | 1.1 | 30 Oktober 2026 | Menambahkan ketetapan wajib desain UI via Google Stitch (MCP `@google/stitch`), project `delisert premium website ui design`; konfigurasi `.mcp.json` + `.env`; Fase 0 pada roadmap; asumsi A13–A14 | Product / Engineering |
+| 1.2 | 1 November 2026 | Implementasi MVP + dashboard admin (FR-101/102). Perbaikan: harga rupiah ×100, SSR detail produk, katalog ter-render di server, canonical dari origin request, sitemap/robots dinamis, satu h1 per halaman, warna merek rosewood. Status DoD §16.2 diperbarui apa adanya | Product / Engineering |
 
 ---
 

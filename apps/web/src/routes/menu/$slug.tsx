@@ -1,14 +1,15 @@
-import { waLink } from "@delisert.mks-1/api/data/business";
+import { productOrderMessage, waLink } from "@delisert.mks-1/api/data/business";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
-import { formatRupiah } from "@delisert.mks-1/ui/components/product-card";
+import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import { useState } from "react";
 
 import { useTRPC } from "@/utils/trpc";
-import { canonical, productJsonLd } from "@/utils/seo";
+import { canonical, productJsonLd, siteUrl } from "@/utils/seo";
 
 export const Route = createFileRoute("/menu/$slug")({
   loader: async ({ context, params }) => {
@@ -42,24 +43,56 @@ export const Route = createFileRoute("/menu/$slug")({
             `${product.name} dari Delisert Makassar. Pesan via WhatsApp.`,
         },
         { property: "og:type", content: "product" },
+        { property: "og:url", content: canonical(`/menu/${product.slug}`) },
         ...(product.imageUrl ? [{ property: "og:image", content: product.imageUrl }] : []),
       ],
       links: [{ rel: "canonical", href: canonical(`/menu/${product.slug}`) }],
       scripts: [
         {
           type: "application/ld+json",
-          children: JSON.stringify(productJsonLd(product)),
+          children: JSON.stringify(productJsonLd(product, siteUrl())),
         },
       ],
     };
   },
   component: ProductDetailComponent,
+  notFoundComponent: ProductNotFound,
 });
+
+function ProductNotFound() {
+  return (
+    <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center sm:px-6">
+      <p className="cn-eyebrow text-primary">404</p>
+      <h1 className="text-3xl leading-tight text-balance sm:text-4xl">Produk tidak ditemukan.</h1>
+      <p className="text-sm/relaxed text-muted-foreground">
+        Produk yang Anda cari tidak tersedia atau sudah diganti. Jelajahi katalog menu Delisert
+        untuk melihat produk lain.
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        <Link
+          to="/menu"
+          className="inline-flex h-10 items-center border border-primary bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Lihat semua menu
+        </Link>
+        <Link
+          to="/"
+          className="inline-flex h-10 items-center border border-border px-5 text-sm font-medium transition-colors hover:border-primary hover:text-primary"
+        >
+          Kembali ke Beranda
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function ProductDetailComponent() {
   const { slug } = Route.useParams();
   const trpc = useTRPC();
   const { data: product, isLoading } = useQuery(trpc.product.bySlug.queryOptions({ slug }));
+  // Hook harus dipanggil sebelum early return. Pilihan efektif jatuh ke varian
+  // pertama yang tersedia selama pengguna belum memilih sendiri.
+  const [chosenVariant, setChosenVariant] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -70,17 +103,17 @@ function ProductDetailComponent() {
   }
 
   if (!product) {
-    throw notFound();
+    return <ProductNotFound />;
   }
 
   const galleryImages = product.imageUrl
     ? [{ url: product.imageUrl, alt: product.imageAlt ?? `Foto ${product.name} Delisert Makassar` }]
     : [];
 
-  const variantText =
-    product.variants.length > 0
-      ? ` (varian: ${product.variants.map((variant) => variant.name).join(", ")})`
-      : "";
+  // Default ke varian tersedia pertama supaya CTA langsung membawa pilihan
+  // yang masuk akal, tanpa menunggu pengguna mengklik.
+  const selectedVariant =
+    chosenVariant ?? product.variants.find((variant) => variant.isAvailable)?.name ?? null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
@@ -131,31 +164,49 @@ function ProductDetailComponent() {
           ) : null}
 
           {product.variants.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <h2 className="cn-eyebrow text-muted-foreground">Varian & harga</h2>
-              <ul className="flex flex-col divide-y divide-border border-y border-border">
-                {product.variants.map((variant) => (
-                  <li
-                    key={variant.id}
-                    className="flex items-center justify-between gap-4 py-3 text-sm"
-                  >
-                    <span className="flex items-center gap-2">
-                      {variant.name}
-                      {!variant.isAvailable ? (
-                        <span className="text-xs text-muted-foreground">(habis)</span>
-                      ) : null}
-                    </span>
-                    <span className="font-medium text-primary">
-                      {variant.priceCents !== null ? (
-                        formatRupiah(variant.priceCents)
-                      ) : (
-                        <span className="text-muted-foreground">Harga menyusul</span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <fieldset className="flex flex-col gap-3">
+              <legend className="cn-eyebrow text-muted-foreground">Pilih varian</legend>
+              <div className="flex flex-col divide-y divide-border border-y border-border">
+                {product.variants.map((variant) => {
+                  const inputId = `variant-${variant.id}`;
+                  return (
+                    <label
+                      key={variant.id}
+                      htmlFor={inputId}
+                      className={
+                        variant.isAvailable
+                          ? "flex cursor-pointer items-center justify-between gap-4 py-3 text-sm transition-colors hover:text-primary"
+                          : "flex cursor-not-allowed items-center justify-between gap-4 py-3 text-sm text-muted-foreground"
+                      }
+                    >
+                      <span className="flex items-center gap-2">
+                        <input
+                          id={inputId}
+                          type="radio"
+                          name="variant"
+                          value={variant.name}
+                          disabled={!variant.isAvailable}
+                          checked={selectedVariant === variant.name}
+                          onChange={() => setChosenVariant(variant.name)}
+                          className="size-4 accent-primary"
+                        />
+                        <span>{variant.name}</span>
+                        {!variant.isAvailable ? (
+                          <span className="text-xs text-muted-foreground">(habis)</span>
+                        ) : null}
+                      </span>
+                      <span className="font-medium text-primary">
+                        {variant.priceCents !== null ? (
+                          formatRupiah(variant.priceCents)
+                        ) : (
+                          <span className="text-muted-foreground">Harga menyusul</span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
           ) : (
             <div className="flex flex-col gap-1">
               <h2 className="cn-eyebrow text-muted-foreground">Harga</h2>
@@ -173,13 +224,16 @@ function ProductDetailComponent() {
             <h2 className="text-sm font-medium">Cara memesan</h2>
             <p className="text-sm/relaxed text-muted-foreground">
               Klik tombol di bawah untuk membuka WhatsApp dengan pesan yang sudah terisi nama produk
-              ini{variantText ? " dan varian pilihan Anda" : ""}. Tim Delisert akan mengonfirmasi
+              ini{selectedVariant ? " dan varian pilihan Anda" : ""}. Tim Delisert akan mengonfirmasi
               ketersediaan, total harga, dan opsi pengiriman.
             </p>
             <WhatsAppButton
               size="lg"
               href={waLink(
-                `Halo Delisert, saya ingin memesan ${product.name}${variantText}. Apakah masih tersedia?`,
+                productOrderMessage({
+                  productName: product.name,
+                  variantName: selectedVariant ?? undefined,
+                }),
               )}
               fullWidth
             >

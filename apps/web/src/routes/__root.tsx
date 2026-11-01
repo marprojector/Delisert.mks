@@ -7,7 +7,8 @@ import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import type { TRPCOptionsProxy } from "@trpc/tanstack-react-query";
 
 import Header from "../components/header";
-import { canonical, localBusinessJsonLd, siteUrl } from "../utils/seo";
+import { SkipLink } from "../components/skip-link";
+import { localBusinessJsonLd } from "../utils/seo";
 
 import appCss from "../index.css?url";
 export interface RouterAppContext {
@@ -46,18 +47,13 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         content:
           "Delisert — dessert dan makanan homemade Makassar sejak 2021. Mochi, pancake durian, mango sticky rice, mille crepes, Dubai chewy cookie, dan slice cake. Pesan via WhatsApp.",
       },
-      { name: "theme-color", content: "#8c3b44" },
+      { name: "theme-color", content: "#84343e" },
       { property: "og:locale", content: "id_ID" },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Delisert" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:url", content: siteUrl() },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-      ...FONT_LINKS,
-      { rel: "canonical", href: canonical("/") },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }, ...FONT_LINKS],
     scripts: [
       {
         type: "application/ld+json",
@@ -76,9 +72,10 @@ function RootDocument() {
         <HeadContent />
       </head>
       <body>
+        <SkipLink />
         <div className="flex min-h-svh flex-col">
           <Header />
-          <main className="flex-1">
+          <main id="main-content" tabIndex={-1} className="flex-1">
             <Outlet />
           </main>
           <SiteFooter />

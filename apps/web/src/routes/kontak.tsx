@@ -26,6 +26,7 @@ export const Route = createFileRoute("/kontak")({
       },
       { property: "og:title", content: "Kontak & Pesan Delisert — Makassar" },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: canonical("/kontak") },
     ],
     links: [{ rel: "canonical", href: canonical("/kontak") }],
   }),
@@ -39,6 +40,7 @@ function ContactComponent() {
         eyebrow="Kontak & Pesan"
         title="Pesan, konfirmasi, lalu kami siapkan."
         description="Semua pemesanan Delisert berjalan melalui WhatsApp. Tidak ada pembayaran daring di website ini."
+        as="h1"
       />
 
       <div className="flex flex-col gap-6 pt-12">

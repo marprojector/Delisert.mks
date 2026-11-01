@@ -3,7 +3,10 @@
  * Data di file ini sangat jarang berubah dan tidak disimpan di database.
  */
 
-export const WHATSAPP_NUMBER = "6285190021421";
+import { WHATSAPP_NUMBER, productOrderMessage, waLink } from "../lib/whatsapp";
+
+export { WHATSAPP_NUMBER, productOrderMessage, waLink };
+
 export const WHATSAPP_DISPLAY = "0851 9002 1421";
 
 export const SOCIAL_MEDIA = [
@@ -47,7 +50,7 @@ export const CFD = {
     },
   ],
   scheduleNote:
-    "Jam operasional kedua titik diumumkan melalui media sosial Delisert. Tidak ada jaminan kedua lokasi aktif setiap Minggu.",
+    "Kedua titik bersifat sementara dan bukan cabang tetap. Tidak ada jaminan kedua lokasi aktif setiap Minggu — lokasi terkini diumumkan melalui media sosial Delisert.",
 } as const;
 
 export const CLOSED_DAY = {
@@ -98,7 +101,3 @@ export const NAV_LINKS = [
   { to: "/jadwal", label: "Jadwal & Lokasi" },
   { to: "/kontak", label: "Kontak" },
 ] as const;
-
-export function waLink(message: string): string {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-}
