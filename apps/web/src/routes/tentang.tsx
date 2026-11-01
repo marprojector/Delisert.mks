@@ -79,9 +79,6 @@ function AboutComponent() {
           className="relative h-60 overflow-hidden rounded-3xl lg:h-[30rem] lg:rounded-[2.25rem]"
         >
           <PhotoPlaceholder categorySlug="mochi" label="" />
-          <span className="absolute bottom-4 left-4 rounded-full bg-background px-3 py-1.5 text-xs font-semibold text-primary lg:bottom-7 lg:left-7 lg:px-4 lg:py-2 lg:text-sm">
-            Sejak 2021 · CFD Boulevard
-          </span>
         </div>
       </div>
 
