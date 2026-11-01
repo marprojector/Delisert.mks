@@ -28,17 +28,13 @@ describe("validateImageUpload", () => {
     expect(validateImageUpload({ ...base, size: MAX_IMAGE_BYTES + 1 }).ok).toBe(false);
   });
 
-  test("never puts the user filename in the key", () => {
+  test("rejects traversal filenames before generating an R2 key", () => {
     const result = validateImageUpload({
       filename: "../../etc/passwd.jpg",
       contentType: "image/jpeg",
       size: 1024,
     });
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.key).not.toContain("..");
-      expect(result.key).not.toContain("passwd");
-    }
+    expect(result).toEqual({ ok: false, reason: "Nama file tidak valid." });
   });
 
   test("rejects an empty file", () => {

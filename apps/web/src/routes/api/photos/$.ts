@@ -10,7 +10,12 @@ export const Route = createFileRoute("/api/photos/$")({
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
-        const key = decodeURIComponent(url.pathname.replace(/^\/api\/photos\//, ""));
+        let key: string;
+        try {
+          key = decodeURIComponent(url.pathname.replace(/^\/api\/photos\//, ""));
+        } catch {
+          return new Response("Not found", { status: 404 });
+        }
 
         if (!key.startsWith("products/") || key.includes("..")) {
           return new Response("Not found", { status: 404 });

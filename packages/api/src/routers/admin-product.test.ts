@@ -45,7 +45,6 @@ describe("admin product", () => {
   test("creates, updates, and deletes a product", async () => {
     const { db, client } = await setup();
     const caller = await authedCaller(db as never);
-
     const categories = await caller.adminProduct.categories();
     const mochiCategory = categories.find((category) => category.slug === "mochi")!;
 
@@ -75,20 +74,37 @@ describe("admin product", () => {
     expect(row).toBeNull();
   });
 
-  test("rejects a duplicate slug", async () => {
+  test("preserves unrelated fields during a partial update", async () => {
+    const { db } = await setup();
+    const caller = await authedCaller(db as never);
+    const created = await caller.adminProduct.create({
+      categoryId: 1,
+      slug: "partial-update",
+      name: "Partial Update",
+      priceCents: 8000,
+      isFeatured: true,
+      availability: "preorder",
+      displayOrder: 42,
+    });
+    const updated = await caller.adminProduct.update({ id: created.id, priceCents: 9000 });
+    expect(updated.isFeatured).toBe(true);
+    expect(updated.availability).toBe("preorder");
+    expect(updated.displayOrder).toBe(42);
+  });
+
+  test("rejects a duplicate slug with CONFLICT", async () => {
     const { db } = await setup();
     const caller = await authedCaller(db as never);
     const categories = await caller.adminProduct.categories();
-    await expect(
-      caller.adminProduct.create({
-        categoryId: categories[0]!.id,
-        slug: "mille-crepes",
-        name: "Duplikat",
-        priceCents: 1000,
-        isFeatured: false,
-        availability: "available",
-      }),
-    ).rejects.toThrow();
+    const result = await caller.adminProduct.create({
+      categoryId: categories[0]!.id,
+      slug: "mille-crepes",
+      name: "Duplikat",
+      priceCents: 1000,
+      isFeatured: false,
+      availability: "available",
+    }).catch((error) => error);
+    expect((result as { code?: string; data?: { code?: string } }).code ?? (result as { data?: { code?: string } }).data?.code).toBe("CONFLICT");
   });
 
   test("rejects a negative price", async () => {

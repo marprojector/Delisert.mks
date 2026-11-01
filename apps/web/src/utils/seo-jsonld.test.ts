@@ -16,7 +16,6 @@ describe("productJsonLd", () => {
   });
 
   test("omits offers entirely when the price is unknown", () => {
-    // Review Focus #1: a null price must never become Rp 0 in structured data.
     const ld = productJsonLd({ ...base, priceCents: null, slug: "mille-crepes" }, "https://delisert.id");
     expect(ld).not.toHaveProperty("offers");
   });
@@ -24,5 +23,17 @@ describe("productJsonLd", () => {
   test("includes an absolute product URL when a slug is known", () => {
     const ld = productJsonLd({ ...base, priceCents: 16000, slug: "mille-crepes" }, "https://delisert.id");
     expect(ld.url).toBe("https://delisert.id/menu/mille-crepes");
+  });
+
+  test.each([
+    ["available", "https://schema.org/InStock"],
+    ["preorder", "https://schema.org/PreOrder"],
+    ["soldout", "https://schema.org/OutOfStock"],
+  ] as const)("maps %s availability to schema.org", (availability, expected) => {
+    const ld = productJsonLd(
+      { ...base, priceCents: 16000, slug: "mille-crepes", availability },
+      "https://delisert.id",
+    );
+    expect((ld.offers as Record<string, unknown>).availability).toBe(expected);
   });
 });

@@ -12,6 +12,7 @@ import "varlock/auto-load";
  */
 export const db = Cloudflare.D1.Database("database", {
   migrations: "../../packages/db/src/migrations",
+  importFiles: ["../../packages/db/src/seed.production.sql"],
 });
 
 /** Foto produk. Workers tidak punya disk yang bisa ditulis, jadi R2. */

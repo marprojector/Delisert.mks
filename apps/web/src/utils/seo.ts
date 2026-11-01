@@ -58,6 +58,7 @@ export function productJsonLd(
     priceCents: number | null;
     imageUrl: string | null;
     slug?: string;
+    availability?: "available" | "preorder" | "soldout";
   },
   origin?: string,
 ): JsonLd {
@@ -65,6 +66,12 @@ export function productJsonLd(
   // sebagai nominal rupiah di schema.org (Rp 8.000 → 8000).
   const price = product.priceCents !== null ? priceToNumber(product.priceCents) : undefined;
   const base = origin ?? siteUrl();
+  const availability =
+    product.availability === "soldout"
+      ? "https://schema.org/OutOfStock"
+      : product.availability === "preorder"
+        ? "https://schema.org/PreOrder"
+        : "https://schema.org/InStock";
 
   return {
     "@context": "https://schema.org",
@@ -82,7 +89,7 @@ export function productJsonLd(
             "@type": "Offer",
             priceCurrency: "IDR",
             price,
-            availability: "https://schema.org/InStock",
+            availability,
             ...(product.slug ? { url: canonical(`/menu/${product.slug}`, base) } : {}),
           },
         }

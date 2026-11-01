@@ -22,6 +22,10 @@ export type ImageUploadResult =
   | { ok: false; reason: string };
 
 export function validateImageUpload(input: ImageUploadInput): ImageUploadResult {
+  if (input.filename.includes("..") || input.filename.includes("/") || input.filename.includes("\\")) {
+    return { ok: false, reason: "Nama file tidak valid." };
+  }
+
   const extension = EXTENSION_BY_TYPE[input.contentType];
   if (!extension) {
     return { ok: false, reason: "Format foto harus JPG, PNG, atau WebP." };

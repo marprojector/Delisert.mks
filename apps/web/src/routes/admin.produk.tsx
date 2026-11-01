@@ -1,6 +1,6 @@
 import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
 import { useTRPC } from "@/utils/trpc";
 
@@ -34,7 +34,8 @@ function AdminProductList() {
   const rows = products.data ?? [];
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
+      <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl leading-snug">Semua produk</h2>
         <Link
@@ -100,6 +101,8 @@ function AdminProductList() {
           ))}
         </ul>
       )}
-    </div>
+      </div>
+      <Outlet />
+    </>
   );
 }

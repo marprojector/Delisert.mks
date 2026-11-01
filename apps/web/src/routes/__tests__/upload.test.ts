@@ -27,4 +27,9 @@ describe("photo endpoint", () => {
     const response = await fetch(`${BASE}/api/photos/products/..%2F..%2Fsecrets`);
     expect(response.status).toBe(404);
   });
+
+  test("refuses malformed percent encoding", async () => {
+    const response = await fetch(`${BASE}/api/photos/%E0%A4%A`);
+    expect([400, 404]).toContain(response.status);
+  });
 });

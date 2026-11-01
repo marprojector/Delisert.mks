@@ -19,18 +19,34 @@ const slugSchema = z
   .max(80)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug hanya boleh huruf kecil, angka, dan tanda hubung.");
 
-const productInput = z.object({
+const imageUrlSchema = z
+  .string()
+  .refine(
+    (value) => value.startsWith("/api/photos/products/") || /^https:\/\//.test(value),
+    "URL foto harus berupa path foto internal atau URL HTTPS.",
+  );
+
+const productFields = {
   categoryId: z.number().int().positive(),
   slug: slugSchema,
   name: z.string().min(1).max(120),
   description: z.string().max(2000).nullable().optional(),
   priceCents: z.number().int().min(0).nullable(),
-  imageUrl: z.string().url().nullable().optional(),
+  imageUrl: imageUrlSchema.nullable().optional(),
   imageAlt: z.string().max(200).nullable().optional(),
-  isFeatured: z.boolean().default(false),
-  availability: availabilityEnum.default("available"),
-  displayOrder: z.number().int().min(0).default(0),
+  isFeatured: z.boolean(),
+  availability: availabilityEnum,
+  displayOrder: z.number().int().min(0),
+};
+
+const productInput = z.object({
+  ...productFields,
+  isFeatured: productFields.isFeatured.default(false),
+  availability: productFields.availability.default("available"),
+  displayOrder: productFields.displayOrder.default(0),
 });
+
+const productUpdateInput = z.object(productFields).partial();
 
 const variantInput = z.object({
   productId: z.number().int().positive(),
@@ -40,8 +56,14 @@ const variantInput = z.object({
   displayOrder: z.number().int().min(0).default(0),
 });
 
+const errorText = (error: unknown): string => {
+  if (!(error instanceof Error)) return "";
+  const cause = "cause" in error ? error.cause : undefined;
+  return `${error.message} ${cause instanceof Error ? cause.message : ""}`;
+};
+
 const isUniqueViolation = (error: unknown): boolean =>
-  error instanceof Error && /UNIQUE constraint failed/i.test(error.message);
+  /UNIQUE constraint failed/i.test(errorText(error));
 
 export const adminProductRouter = router({
   categories: adminProcedure.query(async ({ ctx }) => {
@@ -112,7 +134,7 @@ export const adminProductRouter = router({
   }),
 
   update: adminProcedure
-    .input(productInput.partial().extend({ id: z.number().int().positive() }))
+    .input(productUpdateInput.extend({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const { id, ...changes } = input;
       if (Object.keys(changes).length === 0) {

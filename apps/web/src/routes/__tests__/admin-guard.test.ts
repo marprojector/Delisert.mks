@@ -29,4 +29,16 @@ describe("admin routes", () => {
     });
     expect(response.status).toBe(401);
   });
+
+  test("new product route renders the editor", async () => {
+    const html = await (await fetch(`${BASE}/admin/produk/baru`)).text();
+    expect(html).toContain("Tambah produk");
+    expect(html).toContain("Nama produk");
+  });
+
+  test("existing product route renders the editor", async () => {
+    const html = await (await fetch(`${BASE}/admin/produk/1`)).text();
+    expect(html).toContain("Ubah produk");
+    expect(html).toContain("Nama produk");
+  });
 });
