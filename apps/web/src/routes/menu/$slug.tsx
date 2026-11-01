@@ -1,7 +1,7 @@
 import { waLink } from "@delisert.mks-1/api/data/business";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { ProductGallery } from "@delisert.mks-1/ui/components/product-gallery";
-import { formatRupiah } from "@delisert.mks-1/ui/components/product-card";
+import { formatRupiah } from "@delisert.mks-1/ui/lib/price";
 import { WhatsAppButton } from "@delisert.mks-1/ui/components/whatsapp-button";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";

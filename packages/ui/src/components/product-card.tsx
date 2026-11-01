@@ -1,8 +1,11 @@
+import { formatRupiah, summariseVariantPrice } from "@delisert.mks-1/ui/lib/price";
 import type { ProductAvailability } from "@delisert.mks-1/ui/components/availability-badge";
 import { AvailabilityBadge } from "@delisert.mks-1/ui/components/availability-badge";
 import { Card } from "@delisert.mks-1/ui/components/card";
 import { cn } from "@delisert.mks-1/ui/lib/utils";
 import { MessageCircle } from "lucide-react";
+
+export { formatRupiah };
 
 export type ProductCardData = {
   id: number;
@@ -17,10 +20,6 @@ export type ProductCardData = {
   variants: Array<{ id: number; name: string; priceCents: number | null; isAvailable: boolean }>;
 };
 
-export function formatRupiah(cents: number): string {
-  return `Rp ${cents.toLocaleString("id-ID")}`;
-}
-
 export function ProductPrice({
   priceCents,
   variants,
@@ -30,27 +29,26 @@ export function ProductPrice({
   variants?: Array<{ name: string; priceCents: number | null }>;
   className?: string;
 }) {
-  if (variants && variants.length > 0) {
-    const prices = variants
-      .map((variant) => variant.priceCents)
-      .filter((price): price is number => price !== null);
-    if (prices.length === 0) {
-      return <span className={cn("text-muted-foreground", className)}>Harga menyusul</span>;
-    }
-    const min = Math.min(...prices);
-    const max = Math.max(...prices);
-    return (
-      <span className={className}>
-        {min === max ? formatRupiah(min) : `${formatRupiah(min)} – ${formatRupiah(max)}`}
-      </span>
-    );
-  }
+  const summary =
+    variants && variants.length > 0
+      ? summariseVariantPrice(variants.map((variant) => variant.priceCents))
+      : priceCents === null
+        ? ({ kind: "none" } as const)
+        : ({ kind: "single", cents: priceCents } as const);
 
-  if (priceCents === null) {
+  if (summary.kind === "none") {
     return <span className={cn("text-muted-foreground", className)}>Harga menyusul</span>;
   }
 
-  return <span className={className}>{formatRupiah(priceCents)}</span>;
+  if (summary.kind === "single") {
+    return <span className={className}>{formatRupiah(summary.cents)}</span>;
+  }
+
+  return (
+    <span className={className}>
+      {formatRupiah(summary.min)} – {formatRupiah(summary.max)}
+    </span>
+  );
 }
 
 export function ProductCard({

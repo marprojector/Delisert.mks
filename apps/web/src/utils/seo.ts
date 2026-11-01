@@ -1,3 +1,4 @@
+import { priceToNumber } from "@delisert.mks-1/ui/lib/price";
 import {
   OPERATIONAL_ADDRESS,
   SOCIAL_MEDIA,
@@ -51,8 +52,9 @@ export function productJsonLd(product: {
   priceCents: number | null;
   imageUrl: string | null;
 }): JsonLd {
-  // priceCents menyimpan rupiah*1000 (80.000 sen = Rp 8.000).
-  const price = product.priceCents !== null ? product.priceCents / 1000 : undefined;
+  // priceCents menyimpan rupiah ×100, jadi nilainya langsung dipakai
+  // sebagai nominal rupiah di schema.org (Rp 8.000 → 8000).
+  const price = product.priceCents !== null ? priceToNumber(product.priceCents) : undefined;
   return {
     "@context": "https://schema.org",
     "@type": "Product",
