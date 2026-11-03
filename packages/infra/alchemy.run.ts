@@ -31,6 +31,13 @@ function requiredSecret(name: "ADMIN_PASSWORD" | "ADMIN_SESSION_SECRET") {
  */
 const analyticsToken = process.env.CF_ANALYTICS_API_TOKEN;
 
+/**
+ * Domain publik (diisi di GitHub Actions: CUSTOM_DOMAIN=delisert.me). Zona
+ * harus sudah ada di akun Cloudflare; DNS dan sertifikat dikelola otomatis.
+ * www diarahkan 301 ke domain utama. Kosong (dev lokal) = domain tidak diubah.
+ */
+const customDomain = process.env.CUSTOM_DOMAIN;
+
 export const db = Cloudflare.D1.Database("database", {
   migrations: "../../packages/db/src/migrations",
   importFiles: ["../../packages/db/src/seed.production.sql"],
@@ -53,6 +60,7 @@ export const web = Cloudflare.Website.Vite("web", {
     ADMIN_SESSION_SECRET: requiredSecret("ADMIN_SESSION_SECRET"),
     ...(analyticsToken ? { CF_ANALYTICS_API_TOKEN: Redacted.make(analyticsToken) } : {}),
   },
+  ...(customDomain ? { domain: { name: customDomain, redirects: [`www.${customDomain}`] } } : {}),
   dev: {
     port: 3001,
   },
