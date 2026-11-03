@@ -15,7 +15,7 @@
  * keduanya, supaya kunjungan tidak terhitung dua kali.
  */
 /**
- * Situs Web Analytics untuk domain workers.dev produksi, dibuat lewat API
+ * Situs Web Analytics untuk delisert.me (dulu domain workers.dev), dibuat lewat API
  * Cloudflare. Hanya dimuat di build produksi supaya dev lokal tidak tercatat.
  */
 export const CLOUDFLARE_ANALYTICS_TOKEN: string | null = import.meta.env.PROD
