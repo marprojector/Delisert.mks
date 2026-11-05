@@ -13,6 +13,7 @@ const ORDER_MESSAGE = "Halo Delisert, saya ingin bertanya tentang produk.";
 export default function Header() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [open, setOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const { schedule } = useSiteContent();
   const waLink = useWaLink();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -20,10 +21,17 @@ export default function Header() {
   const openRef = useRef<HTMLButtonElement>(null);
   const headerRef = useRef<HTMLElement>(null);
 
-  useMenuOverlay(open, overlayRef);
+  const handleClose = () => {
+    setIsClosing(true);
+  };
+
+  useMenuOverlay(open, isClosing, overlayRef, () => {
+    setOpen(false);
+    setIsClosing(false);
+  });
 
   useEffect(() => {
-    setOpen(false);
+    if (open) handleClose();
   }, [pathname]);
 
   // Saat menu terbuka: kunci scroll halaman, fokus ke tombol tutup, Escape menutup.
@@ -33,7 +41,7 @@ export default function Header() {
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", onKey);
     return () => {
@@ -62,9 +70,9 @@ export default function Header() {
     if (!open) return;
     const desktop = window.matchMedia("(min-width: 1024px)");
     const onChange = (event: MediaQueryListEvent) => {
-      if (event.matches) setOpen(false);
+      if (event.matches) handleClose();
     };
-    if (desktop.matches) setOpen(false);
+    if (desktop.matches) handleClose();
     desktop.addEventListener("change", onChange);
     return () => desktop.removeEventListener("change", onChange);
   }, [open]);
@@ -119,7 +127,7 @@ export default function Header() {
             className="flex size-10 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-95 lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
-            onClick={() => setOpen(true)}
+            onClick={() => { setOpen(true); setIsClosing(false); }}
           >
             <Menu aria-hidden="true" className="size-5" />
             <span className="sr-only">Buka menu</span>
@@ -128,7 +136,7 @@ export default function Header() {
       </div>
     </header>
 
-      {open ? (
+      {(open || isClosing) ? (
         <div
           ref={overlayRef}
           id="mobile-menu"
@@ -143,7 +151,7 @@ export default function Header() {
               ref={closeRef}
               type="button"
               className="flex size-10 items-center justify-center rounded-full bg-primary-foreground/15"
-              onClick={() => setOpen(false)}
+              onClick={handleClose}
             >
               <X aria-hidden="true" className="size-5" />
               <span className="sr-only">Tutup menu</span>
@@ -157,7 +165,7 @@ export default function Header() {
                   <Link
                     to={link.to}
                     // Tutup juga saat mengetuk halaman yang sedang dibuka (path tidak berubah).
-                    onClick={() => setOpen(false)}
+                    onClick={handleClose}
                     className={cn(
                       "flex items-center justify-between py-3 cn-font-display text-4xl font-semibold",
                       isActive(link.to) ? "text-accent" : "text-primary-foreground",

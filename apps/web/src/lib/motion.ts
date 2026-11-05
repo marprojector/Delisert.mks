@@ -232,27 +232,55 @@ export function useParallax(scope: Scope) {
 }
 
 /** Menu layar penuh di HP: panel terbuka melingkar, tautan masuk berurutan. */
-export function useMenuOverlay(open: boolean, scope: Scope) {
+export function useMenuOverlay(
+  open: boolean,
+  isClosing: boolean,
+  scope: Scope,
+  onCloseComplete: () => void,
+) {
   useGSAP(
     () => {
-      if (!open) return;
       const mm = gsap.matchMedia();
       mm.add(MOTION_QUERY, () => {
-        gsap
-          .timeline({ defaults: { ease: EASE } })
-          .from(scope.current, {
-            clipPath: "circle(0% at 92% 4%)",
-            duration: 0.6,
-          })
-          .from(
-            "[data-menu-item]",
-            { y: 28, autoAlpha: 0, duration: 0.5, stagger: 0.06 },
-            "-=0.3",
-          );
+        if (open && !isClosing) {
+          // Opening animation
+          gsap
+            .timeline({ defaults: { ease: EASE } })
+            .from(scope.current, {
+              clipPath: "circle(0% at 92% 4%)",
+              duration: 0.6,
+            })
+            .from(
+              "[data-menu-item]",
+              { y: 28, autoAlpha: 0, duration: 0.5, stagger: 0.06 },
+              "-=0.3",
+            );
+        } else if (isClosing) {
+          // Closing animation
+          gsap
+            .timeline({
+              defaults: { ease: EASE },
+              onComplete: onCloseComplete,
+            })
+            .to("[data-menu-item]", {
+              y: 28,
+              autoAlpha: 0,
+              duration: 0.4,
+              stagger: 0.04,
+            })
+            .to(
+              scope.current,
+              {
+                clipPath: "circle(0% at 92% 4%)",
+                duration: 0.5,
+              },
+              "-=0.2",
+            );
+        }
       });
       return () => mm.revert();
     },
-    { scope, dependencies: [open] },
+    { scope, dependencies: [open, isClosing] },
   );
 }
 
