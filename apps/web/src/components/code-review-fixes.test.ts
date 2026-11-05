@@ -23,7 +23,7 @@ describe("code review fixes", () => {
 
   test("tapping any link in the phone menu closes it, even the current page", () => {
     const header = read("header.tsx");
-    expect(header).toMatch(/<Link[\s\S]{0,200}onClick=\{\(\) => setOpen\(false\)\}/);
+    expect(header).toMatch(/<Link[\s\S]{0,200}onClick=\{handleClose\}/);
   });
 
   test("the editor discards photos uploaded but not kept", () => {
