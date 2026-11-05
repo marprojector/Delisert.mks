@@ -124,7 +124,7 @@ export default function Header() {
           <button
             ref={openRef}
             type="button"
-            className="flex size-10 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-95 lg:hidden"
+            className="flex size-10 items-center justify-center rounded-full bg-secondary text-foreground transition-transform active:scale-95 lg:hidden touch-manipulation"
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={() => { setOpen(true); setIsClosing(false); }}
